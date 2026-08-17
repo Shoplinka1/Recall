@@ -1,0 +1,1 @@
+- [Recall integrations](recall-integrations.md) — the first build keeps AI, billing, and user-file storage behind explicit seams with a grounded demo fallback.

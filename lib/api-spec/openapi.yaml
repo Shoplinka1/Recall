@@ -3,13 +3,20 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Recall learning workspace API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: dashboard
+  - name: subjects
+  - name: materials
+  - name: practice
+  - name: progress
+  - name: billing
+  - name: auth
 paths:
   /healthz:
     get:
@@ -24,7 +31,299 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get the student's personalized dashboard
+      responses:
+        "200":
+          description: Dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+  /subjects:
+    get:
+      operationId: listSubjects
+      tags: [subjects]
+      summary: List subjects
+      responses:
+        "200":
+          description: Subjects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Subject"
+    post:
+      operationId: createSubject
+      tags: [subjects]
+      summary: Create a subject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubjectInput"
+      responses:
+        "201":
+          description: Subject
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subject"
+  /materials:
+    get:
+      operationId: listMaterials
+      tags: [materials]
+      summary: List study materials
+      responses:
+        "200":
+          description: Materials
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Material"
+    post:
+      operationId: createMaterial
+      tags: [materials]
+      summary: Add pasted or uploaded study material
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MaterialInput"
+      responses:
+        "201":
+          description: Material
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Material"
+  /materials/{id}:
+    get:
+      operationId: getMaterial
+      tags: [materials]
+      summary: Get material details
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Material
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Material"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteMaterial
+      tags: [materials]
+      summary: Delete a material
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Deleted
+  /concepts:
+    get:
+      operationId: listConcepts
+      tags: [progress]
+      summary: List concepts with mastery
+      responses:
+        "200":
+          description: Concepts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Concept"
+  /practice:
+    post:
+      operationId: createPractice
+      tags: [practice]
+      summary: Create a practice session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PracticeInput"
+      responses:
+        "201":
+          description: Practice session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PracticeSession"
+  /practice/weakness:
+    post:
+      operationId: createWeaknessPractice
+      tags: [practice]
+      summary: Create a targeted weakness session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WeaknessPracticeInput"
+      responses:
+        "201":
+          description: Practice session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PracticeSession"
+  /practice/{id}:
+    get:
+      operationId: getPractice
+      tags: [practice]
+      summary: Get a practice session
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Practice session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PracticeSession"
+    post:
+      operationId: answerPractice
+      tags: [practice]
+      summary: Submit an answer
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnswerInput"
+      responses:
+        "200":
+          description: Answer result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnswerResult"
+  /practice/{id}/complete:
+    post:
+      operationId: completePractice
+      tags: [practice]
+      summary: Complete a practice session
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Practice results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PracticeResults"
+  /progress:
+    get:
+      operationId: getProgress
+      tags: [progress]
+      summary: Get progress overview
+      responses:
+        "200":
+          description: Progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Progress"
+  /mistakes:
+    get:
+      operationId: listMistakes
+      tags: [progress]
+      summary: List mistakes and low-confidence answers
+      responses:
+        "200":
+          description: Mistakes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Mistake"
+  /recommendations:
+    get:
+      operationId: listRecommendations
+      tags: [dashboard]
+      summary: Get study recommendations
+      responses:
+        "200":
+          description: Recommendations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recommendation"
+  /subscription:
+    get:
+      operationId: getSubscription
+      tags: [billing]
+      summary: Get subscription and usage
+      responses:
+        "200":
+          description: Subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+  /billing/checkout:
+    post:
+      operationId: createCheckout
+      tags: [billing]
+      summary: Create a billing checkout session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutInput"
+      responses:
+        "200":
+          description: Checkout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Checkout"
+  /auth/session:
+    get:
+      operationId: getSession
+      tags: [auth]
+      summary: Get the current session
+      responses:
+        "200":
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
 components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +332,255 @@ components:
           type: string
       required:
         - status
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    Subject:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        color: { type: string }
+        materialCount: { type: number }
+      required: [id, name, description, color, materialCount]
+    SubjectInput:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string }
+        color: { type: string }
+      required: [name]
+    Material:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        subjectId: { type: string }
+        subjectName: { type: string }
+        fileType: { type: string }
+        processingStatus: { type: string }
+        concepts: { type: number }
+        sessions: { type: number }
+        lastStudied: { type: ["string", "null"] }
+        createdAt: { type: string }
+        excerpt: { type: string }
+      required: [id, title, subjectId, subjectName, fileType, processingStatus, concepts, sessions, lastStudied, createdAt, excerpt]
+    MaterialInput:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        subjectId: { type: string }
+        fileType: { type: string }
+        extractedText: { type: string }
+      required: [title, subjectId, fileType]
+    Concept:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        subjectId: { type: string }
+        subjectName: { type: string }
+        masteryScore: { type: number }
+        status: { type: string }
+        questionsAttempted: { type: number }
+        lastPracticed: { type: ["string", "null"] }
+        sourceMaterial: { type: string }
+      required: [id, name, subjectId, subjectName, masteryScore, status, questionsAttempted, lastPracticed, sourceMaterial]
+    Question:
+      type: object
+      properties:
+        id: { type: string }
+        questionText: { type: string }
+        type: { type: string }
+        options:
+          type: array
+          items: { type: string }
+        concept: { type: string }
+        difficulty: { type: string }
+        sourceExcerpt: { type: string }
+        sourcePage: { type: number }
+        explanation: { type: string }
+        correctAnswer: { type: string }
+      required: [id, questionText, type, options, concept, difficulty, sourceExcerpt, sourcePage, explanation, correctAnswer]
+    PracticeSession:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        sessionType: { type: string }
+        subjectName: { type: string }
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Question"
+        currentIndex: { type: number }
+        completed: { type: boolean }
+      required: [id, title, sessionType, subjectName, questions, currentIndex, completed]
+    PracticeInput:
+      type: object
+      properties:
+        subjectId: { type: ["string", "null"] }
+        materialId: { type: ["string", "null"] }
+        durationMinutes: { type: number }
+        difficulty: { type: string }
+        questionCount: { type: number }
+      required: [durationMinutes, difficulty, questionCount]
+    WeaknessPracticeInput:
+      type: object
+      properties:
+        conceptIds:
+          type: array
+          items: { type: string }
+        durationMinutes: { type: number }
+      required: [conceptIds, durationMinutes]
+    AnswerInput:
+      type: object
+      properties:
+        questionId: { type: string }
+        answer: { type: string }
+        confidence: { type: string }
+        responseTimeMs: { type: number }
+      required: [questionId, answer, confidence]
+    AnswerResult:
+      type: object
+      properties:
+        isCorrect: { type: boolean }
+        correctAnswer: { type: string }
+        explanation: { type: string }
+        concept: { type: string }
+        sourceExcerpt: { type: string }
+      required: [isCorrect, correctAnswer, explanation, concept, sourceExcerpt]
+    PracticeResults:
+      type: object
+      properties:
+        id: { type: string }
+        score: { type: number }
+        questionsAnswered: { type: number }
+        correct: { type: number }
+        incorrect: { type: number }
+        averageConfidence: { type: string }
+        averageResponseTime: { type: string }
+        strongConcepts:
+          type: array
+          items: { type: string }
+        needsAttention:
+          type: array
+          items: { type: string }
+        weakConcepts:
+          type: array
+          items: { type: string }
+        diagnosis: { type: string }
+        improvement: { type: number }
+      required: [id, score, questionsAnswered, correct, incorrect, averageConfidence, averageResponseTime, strongConcepts, needsAttention, weakConcepts, diagnosis, improvement]
+    Recommendation:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        reason: { type: string }
+        concept: { type: string }
+        recommendedMinutes: { type: number }
+        questionCount: { type: number }
+        difficulty: { type: string }
+        action: { type: string }
+      required: [id, title, reason, concept, recommendedMinutes, questionCount, difficulty, action]
+    Dashboard:
+      type: object
+      properties:
+        greeting: { type: string }
+        subtitle: { type: string }
+        recommendation:
+          $ref: "#/components/schemas/Recommendation"
+        stats:
+          type: object
+          properties:
+            weeklyMinutes: { type: number }
+            weeklyGoal: { type: number }
+            streak: { type: number }
+            questionsAnswered: { type: number }
+            overallMastery: { type: number }
+          required: [weeklyMinutes, weeklyGoal, streak, questionsAnswered, overallMastery]
+        recentMaterials:
+          type: array
+          items:
+            $ref: "#/components/schemas/Material"
+        concepts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Concept"
+      required: [greeting, subtitle, recommendation, stats, recentMaterials, concepts]
+    Progress:
+      type: object
+      properties:
+        overallMastery: { type: number }
+        changeThisWeek: { type: number }
+        accuracy: { type: number }
+        confidence: { type: number }
+        studyMinutes: { type: number }
+        questionsAnswered: { type: number }
+        weekly:
+          type: array
+          items:
+            type: object
+            properties:
+              day: { type: string }
+              minutes: { type: number }
+              questions: { type: number }
+            required: [day, minutes, questions]
+        concepts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Concept"
+      required: [overallMastery, changeThisWeek, accuracy, confidence, studyMinutes, questionsAnswered, weekly, concepts]
+    Mistake:
+      type: object
+      properties:
+        id: { type: string }
+        question: { type: string }
+        userAnswer: { type: string }
+        correctAnswer: { type: string }
+        explanation: { type: string }
+        concept: { type: string }
+        sourceExcerpt: { type: string }
+        confidence: { type: string }
+      required: [id, question, userAnswer, correctAnswer, explanation, concept, sourceExcerpt, confidence]
+    Subscription:
+      type: object
+      properties:
+        plan: { type: string }
+        status: { type: string }
+        sessionsUsed: { type: number }
+        sessionsLimit: { type: number }
+        materialsUsed: { type: number }
+        materialsLimit: { type: number }
+        resetDate: { type: string }
+      required: [plan, status, sessionsUsed, sessionsLimit, materialsUsed, materialsLimit, resetDate]
+    CheckoutInput:
+      type: object
+      properties:
+        interval: { type: string }
+      required: [interval]
+    Checkout:
+      type: object
+      properties:
+        url: { type: ["string", "null"] }
+        configured: { type: boolean }
+        message: { type: string }
+      required: [url, configured, message]
+    Session:
+      type: object
+      properties:
+        authenticated: { type: boolean }
+        user:
+          type: ["object", "null"]
+          properties:
+            id: { type: string }
+            name: { type: string }
+            email: { type: string }
+          required: [id, name, email]
+      required: [authenticated, user]
 

@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Recall"
+description = "An intelligent study and practice workspace that turns personal learning material into grounded questions, weakness diagnosis, targeted practice, and measurable progress."
+version = "1.0.0"
+id = "artifacts/recall"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23566
+
+[services.development]
+run = "pnpm --filter @workspace/recall run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/recall", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/recall/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23566"
+BASE_PATH = "/"

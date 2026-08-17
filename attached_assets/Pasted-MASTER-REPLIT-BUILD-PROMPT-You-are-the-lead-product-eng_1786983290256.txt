@@ -1,0 +1,2348 @@
+MASTER REPLIT BUILD PROMPT
+===========================
+
+You are the lead product engineer, UI/UX designer, AI engineer, database architect, QA engineer, and security engineer for this project.
+
+BUILD THE ENTIRE APPLICATION.
+
+Do not merely create a prototype or landing page.
+Do not stop after creating the frontend.
+Do not ask me to manually implement missing pieces.
+Build a working, production-oriented web application from end to end.
+
+PRODUCT NAME
+------------
+
+Recall
+
+TAGLINE
+-------
+
+"Stop rereading. Find what you don't know."
+
+PRODUCT DESCRIPTION
+-------------------
+
+Recall is an intelligent AI study and practice workspace.
+
+The user gives Recall their own learning material — PDFs, lecture slides, documents, images, pasted notes, or text.
+
+Recall understands the material, identifies topics and concepts, creates grounded practice questions, evaluates the student's answers, identifies weaknesses, and continuously generates personalized practice based on what the student actually does and does not understand.
+
+The product MUST NOT feel like a generic ChatGPT wrapper.
+
+The core experience is:
+
+MATERIAL
+   ↓
+UNDERSTAND
+   ↓
+PRACTICE
+   ↓
+DIAGNOSE
+   ↓
+IDENTIFY WEAKNESSES
+   ↓
+TARGETED PRACTICE
+   ↓
+MEASURE IMPROVEMENT
+   ↓
+RECOMMEND WHAT TO DO NEXT
+
+The goal is to make the student have the feeling:
+
+"Holy shit, this actually knows what I don't know."
+
+IMPORTANT PRODUCT PHILOSOPHY
+----------------------------
+
+Existing products such as Quizlet, Anki, Jungle, NotebookLM, ChatGPT, etc. are NOT reasons to avoid building Recall.
+
+Competition validates that students want this category.
+
+Do NOT attempt to copy these products feature-for-feature.
+
+Recall should win through:
+
+1. Better learning loop.
+2. Better diagnosis.
+3. Better personalization.
+4. Better weakness targeting.
+5. Better progress visibility.
+6. Better simplicity.
+7. Better user experience.
+8. Better explanation of WHY the student is weak.
+9. Better recommendations for what to study next.
+10. A product that feels like an intelligent personal study coach rather than a question generator.
+
+DO NOT turn Recall into a bloated all-in-one education platform.
+
+CORE PRODUCT LOOP
+-----------------
+
+The most important loop in the entire application is:
+
+Upload material
+→ understand material
+→ generate grounded practice
+→ answer questions
+→ diagnose knowledge
+→ identify weak concepts
+→ generate targeted practice
+→ compare performance
+→ update mastery
+→ recommend next action.
+
+Everything else is secondary.
+
+TARGET USERS
+------------
+
+Start broad enough that Recall can be useful to:
+
+- College/university students
+- High-school students
+- Medical students
+- Nursing students
+- STEM students
+- Professional certification candidates
+- Anyone learning from their own documents
+
+Do NOT lock the product permanently to medical students.
+
+The architecture must allow different subjects and learning styles.
+
+The application should work for:
+
+- Anatomy
+- Biology
+- Chemistry
+- Physics
+- Mathematics
+- Computer science
+- Law
+- Business
+- History
+- Languages
+- Nursing
+- Medicine
+- Certification preparation
+- General university coursework
+
+The user can create multiple subjects/workspaces.
+
+IMPORTANT:
+Recall is NOT ONLY an exam-preparation app.
+
+Students should be able to use it:
+
+- Before class
+- After class
+- During weekly study
+- When reviewing old material
+- When preparing assignments
+- When preparing for tests
+- During exam season
+- For long-term learning
+
+TECH STACK
+----------
+
+Use a modern, maintainable full-stack architecture.
+
+Preferred:
+
+Frontend:
+- React
+- TypeScript
+- Vite or the existing Replit-supported React framework
+
+Backend:
+- Node.js
+- TypeScript
+- Express or an equivalent clean server architecture
+
+Database:
+- PostgreSQL
+
+ORM:
+- Drizzle ORM or Prisma
+
+Authentication:
+- Secure email/password authentication
+- Session-based authentication or secure JWT architecture
+- Password hashing
+- Protected routes
+
+Storage:
+- Object storage compatible with Replit
+- Store uploaded files securely
+- Never expose private user files publicly
+
+AI:
+- Create a provider abstraction so the application is NOT hard-coded to one AI provider.
+
+Support configuration through environment variables.
+
+Possible providers:
+- Google Gemini
+- OpenAI
+- Anthropic
+
+The application should be able to switch providers without rewriting the application.
+
+Payments:
+- Stripe Billing
+
+Subscriptions must be implemented through Stripe webhooks rather than trusting frontend state.
+
+Email:
+- Use a transactional email provider abstraction.
+- Keep it configurable through environment variables.
+
+IMPORTANT:
+Do not hard-code API keys.
+
+Use environment variables for every secret.
+
+ENVIRONMENT VARIABLES
+---------------------
+
+Create a clear .env.example containing variables such as:
+
+DATABASE_URL=
+SESSION_SECRET=
+
+AI_PROVIDER=
+OPENAI_API_KEY=
+GEMINI_API_KEY=
+ANTHROPIC_API_KEY=
+
+STRIPE_SECRET_KEY=
+STRIPE_PUBLISHABLE_KEY=
+STRIPE_WEBHOOK_SECRET=
+
+STRIPE_PRO_MONTHLY_PRICE_ID=
+STRIPE_PRO_YEARLY_PRICE_ID=
+
+EMAIL_PROVIDER_API_KEY=
+EMAIL_FROM=
+
+APP_URL=
+
+Do not expose secret keys to the browser.
+
+DATABASE DESIGN
+---------------
+
+Create a proper relational database.
+
+Minimum tables:
+
+users
+
+Fields:
+- id
+- email
+- passwordHash
+- name
+- avatarUrl
+- createdAt
+- updatedAt
+
+user_preferences
+
+Fields:
+- id
+- userId
+- preferredLanguage
+- studyGoal
+- dailyStudyGoalMinutes
+- preferredQuestionTypes
+- preferredDifficulty
+- createdAt
+- updatedAt
+
+subscriptions
+
+Fields:
+- id
+- userId
+- stripeCustomerId
+- stripeSubscriptionId
+- plan
+- status
+- currentPeriodStart
+- currentPeriodEnd
+- cancelAtPeriodEnd
+- createdAt
+- updatedAt
+
+subjects
+
+Fields:
+- id
+- userId
+- name
+- description
+- color
+- createdAt
+- updatedAt
+
+materials
+
+Fields:
+- id
+- userId
+- subjectId
+- title
+- originalFileName
+- fileType
+- fileSize
+- storagePath
+- processingStatus
+- extractedText
+- createdAt
+- updatedAt
+
+material_sections
+
+Fields:
+- id
+- materialId
+- title
+- content
+- pageNumber
+- sectionNumber
+- createdAt
+
+concepts
+
+Fields:
+- id
+- subjectId
+- name
+- description
+- createdAt
+- updatedAt
+
+material_concepts
+
+Fields:
+- id
+- materialId
+- conceptId
+- relevanceScore
+
+questions
+
+Fields:
+- id
+- userId
+- subjectId
+- materialId
+- conceptId
+- type
+- difficulty
+- questionText
+- options
+- correctAnswer
+- explanation
+- sourceExcerpt
+- sourcePage
+- generationVersion
+- createdAt
+
+practice_sessions
+
+Fields:
+- id
+- userId
+- subjectId
+- sessionType
+- questionCount
+- startedAt
+- completedAt
+- score
+- createdAt
+
+session_questions
+
+Fields:
+- id
+- sessionId
+- questionId
+- orderIndex
+- userAnswer
+- isCorrect
+- confidence
+- responseTimeMs
+- createdAt
+
+concept_mastery
+
+Fields:
+- id
+- userId
+- subjectId
+- conceptId
+- masteryScore
+- confidenceScore
+- questionsAttempted
+- questionsCorrect
+- lastPracticedAt
+- updatedAt
+
+study_sessions
+
+Fields:
+- id
+- userId
+- subjectId
+- durationMinutes
+- activityType
+- createdAt
+
+daily_goals
+
+Fields:
+- id
+- userId
+- date
+- targetMinutes
+- completedMinutes
+- targetQuestions
+- completedQuestions
+
+achievements
+
+Fields:
+- id
+- userId
+- type
+- metadata
+- achievedAt
+
+usage_events
+
+Fields:
+- id
+- userId
+- eventType
+- metadata
+- createdAt
+
+AI generation jobs:
+
+- id
+- userId
+- materialId
+- status
+- provider
+- model
+- tokenUsage
+- error
+- createdAt
+- completedAt
+
+Do not store unnecessary sensitive information.
+
+AI GROUNDING SYSTEM
+-------------------
+
+This is one of the most important technical requirements.
+
+Recall MUST NOT randomly generate questions that merely sound related to the student's subject.
+
+Questions must be grounded in the student's uploaded material.
+
+Every generated question must internally maintain:
+
+- source material
+- source section
+- source page where available
+- source excerpt
+- concept
+- difficulty
+- question type
+
+For example:
+
+Question:
+"What is the function of the sinoatrial node?"
+
+Source:
+Anatomy Lecture 4
+Page 12
+Excerpt: "...the sinoatrial node..."
+
+Concept:
+Cardiac conduction
+
+Difficulty:
+Medium
+
+This information should be stored in the database.
+
+When possible, the student should be able to click:
+
+"View source"
+
+and see the relevant source material/excerpt.
+
+If the AI cannot find sufficient evidence in the user's material, it should NOT invent the answer.
+
+Instead:
+
+"Not enough information in your material to create a reliable question."
+
+QUALITY OVER QUESTION COUNT.
+
+FILE PROCESSING
+---------------
+
+Support:
+
+- PDF
+- PPTX
+- DOCX
+- TXT
+- Images
+- Pasted text
+
+Build a processing pipeline:
+
+1. Upload file.
+2. Validate file type.
+3. Validate file size.
+4. Store securely.
+5. Extract text.
+6. Divide content into logical sections/chunks.
+7. Identify headings/topics.
+8. Identify concepts.
+9. Generate embeddings or another searchable representation if useful.
+10. Store extracted material.
+11. Mark material as ready.
+
+The UI must show processing progress.
+
+Statuses:
+
+Uploading
+Processing
+Understanding material
+Finding concepts
+Ready
+
+If processing fails:
+
+Show a useful error and allow retry.
+
+MATERIAL LIBRARY
+----------------
+
+Create a beautiful material library.
+
+Users should see:
+
+- Recent materials
+- Subjects
+- Search
+- Sort
+- Processing status
+- Last studied
+- Number of practice sessions
+- Concepts learned
+
+Each material can be opened.
+
+Material detail should show:
+
+- Title
+- Subject
+- Pages/sections
+- Concepts found
+- Study history
+- Practice button
+- Review button
+- Delete button
+
+SUBJECTS
+--------
+
+Users can create subjects.
+
+Example:
+
+Biology
+
+Inside:
+
+- Cell Biology
+- Genetics
+- Anatomy
+- Physiology
+
+Do not force the student to manually organize everything.
+
+Recall should automatically suggest concepts.
+
+DASHBOARD
+---------
+
+Create a premium, clean dashboard.
+
+Main sections:
+
+1. Good morning / personalized greeting.
+
+2. Today's study recommendation.
+
+Example:
+
+"Your weakest area right now is Cardiac Conduction."
+
+"10 minutes could improve it."
+
+Button:
+
+"Practice Cardiac Conduction"
+
+3. Continue studying.
+
+4. Recent materials.
+
+5. Knowledge overview.
+
+6. Today's progress.
+
+7. Weekly progress.
+
+8. Current streak.
+
+9. Recommended next action.
+
+10. Upcoming study goals if configured.
+
+The dashboard should answer:
+
+"What should I study right now?"
+
+The student should never have to figure this out manually.
+
+INTELLIGENT STUDY RECOMMENDATION ENGINE
+---------------------------------------
+
+Build a recommendation system.
+
+Use:
+
+- mastery score
+- confidence score
+- recent mistakes
+- time since last practice
+- difficulty
+- frequency of mistakes
+- material importance
+- user's study goals
+- recent performance
+
+Generate a recommendation.
+
+Example:
+
+"Practice Genetics — Mendelian inheritance."
+
+Reason:
+
+"You missed 4 of your last 7 questions on this concept."
+
+Another:
+
+"Review Photosynthesis."
+
+Reason:
+
+"You haven't practiced this concept in 12 days."
+
+Another:
+
+"You're improving."
+
+"Your score on Cell Respiration increased from 58% to 84%."
+
+Do not simply randomize recommendations.
+
+KNOWLEDGE MAP
+-------------
+
+This is a core feature.
+
+Display concepts as:
+
+Strong
+Needs Work
+Weak
+
+Example:
+
+BIOLOGY
+
+Cell Structure       91% Strong
+Genetics              74% Needs Work
+Mitosis               48% Weak
+DNA Replication       82% Strong
+Protein Synthesis     61% Needs Work
+
+Clicking a concept opens:
+
+- mastery score
+- recent questions
+- correct/incorrect history
+- common mistakes
+- source materials
+- last practiced
+- recommended next session
+
+MASTERy CALCULATION
+-------------------
+
+Create a sensible mastery algorithm.
+
+Do NOT simply use:
+
+correct answers / total questions.
+
+Account for:
+
+- recent performance
+- difficulty
+- repeated performance
+- confidence
+- recency
+- question diversity
+
+The system should become more confident in mastery after repeated successful performance.
+
+If the user gets one question correct, do not immediately mark the concept "mastered."
+
+QUESTION TYPES
+--------------
+
+V1 should support:
+
+1. Multiple choice
+2. True/false
+3. Short answer
+
+Architecture should allow future:
+
+- Fill in the blank
+- Ordering
+- Matching
+- Case-based questions
+- Scenario questions
+
+QUESTION GENERATION
+-------------------
+
+The AI should generate questions based on:
+
+- selected material
+- selected concepts
+- desired difficulty
+- desired question count
+- question type
+- previous performance
+
+Avoid:
+
+- duplicate questions
+- trivial questions
+- questions whose answer isn't supported by source material
+- ambiguous questions
+- questions with multiple correct answers unless explicitly intended
+
+Difficulty:
+
+Easy
+Medium
+Hard
+
+The AI should adapt difficulty based on performance.
+
+If a student consistently scores 95%:
+
+Increase difficulty.
+
+If a student struggles:
+
+Reduce difficulty temporarily while targeting the concept.
+
+PRACTICE SESSION
+----------------
+
+Practice screen should feel like a real modern testing environment.
+
+Include:
+
+- question number
+- progress
+- question
+- answer choices
+- submit
+- next
+- confidence selector
+
+Confidence options:
+
+"Guessing"
+"Somewhat sure"
+"Very sure"
+
+This is important.
+
+A student who answers correctly while guessing should not receive the same mastery confidence as a student who answers confidently.
+
+Allow:
+
+- Pause
+- Exit
+- Resume
+
+Do not make the UI cluttered.
+
+RESULTS SCREEN
+--------------
+
+After a practice session:
+
+Show:
+
+Score
+
+Example:
+
+78%
+
+Then:
+
+"You know this well:"
+- Cell membrane
+- Diffusion
+
+"Needs attention:"
+- Osmosis
+- Active transport
+
+"Weak:"
+- Membrane potential
+
+Show:
+
+Questions answered
+Correct
+Incorrect
+Average confidence
+Average response time
+
+Then:
+
+BIG BUTTON:
+
+"Practice My Weak Areas"
+
+Also:
+
+"Review Mistakes"
+
+"View Knowledge Map"
+
+"Continue Studying"
+
+WEAKNESS DIAGNOSIS
+-------------------
+
+Do more than say:
+
+"You got 5 wrong."
+
+Explain the pattern.
+
+Example:
+
+"You missed 4 questions related to active transport."
+
+"The pattern suggests you understand the definition but struggle to distinguish primary vs secondary active transport."
+
+Then:
+
+"Let's fix that."
+
+Button:
+
+"Practice this concept"
+
+This diagnostic layer is one of Recall's major differentiators.
+
+TARGETED RETEST
+---------------
+
+When the user clicks:
+
+"Practice My Weak Areas"
+
+Generate a new session focused primarily on:
+
+- weak concepts
+- recent mistakes
+- concepts with low confidence
+
+Do not simply repeat the same questions.
+
+Generate new questions.
+
+The retest should measure whether the student's understanding actually improved.
+
+Example:
+
+Previous:
+Mitosis — 52%
+
+After targeted practice:
+Mitosis — 81%
+
+Show:
+
+"Nice. You improved by 29 points."
+
+PROGRESS
+--------
+
+Create a progress screen.
+
+Show:
+
+- Overall mastery
+- Subject mastery
+- Concept mastery
+- Practice history
+- Accuracy
+- Confidence
+- Study time
+- Questions answered
+- Weekly progress
+- Monthly progress
+
+Show improvement visually.
+
+Example:
+
+Before: 54%
+After: 83%
+
+Do not make the dashboard feel like a complicated analytics platform.
+
+Keep it understandable.
+
+DAILY STUDY SYSTEM
+------------------
+
+Recall should be useful even when the user doesn't have an exam.
+
+Every day:
+
+"Today's recommended study"
+
+could be:
+
+- 10-minute weakness session
+- Review old concepts
+- Practice new material
+- Quick knowledge check
+- Revisit concepts that are fading
+
+Allow user to choose:
+
+5 min
+10 min
+20 min
+30 min
+45 min
+60 min
+
+The app should generate a session matching the available time.
+
+Example:
+
+"I have 10 minutes."
+
+Recall creates:
+
+10-minute focused session.
+
+This is critical because the product should be a DAILY/WEEKLY learning tool, not merely an exam-cram product.
+
+QUICK PRACTICE
+--------------
+
+Add a "Quick Practice" button.
+
+User chooses:
+
+- Subject
+- Duration
+- Difficulty
+
+Recall creates an appropriate session.
+
+Example:
+
+"Biology · 10 minutes"
+
+Then immediately begins practice.
+
+REVIEW MISTAKES
+---------------
+
+Create a mistake review system.
+
+Users can review:
+
+- Questions they got wrong
+- Questions they guessed
+- Low-confidence correct answers
+- Frequently missed concepts
+
+Each mistake should show:
+
+- question
+- user's answer
+- correct answer
+- explanation
+- source
+- concept
+
+Allow:
+
+"Practice similar question"
+
+BOOKMARKS
+---------
+
+Allow users to bookmark:
+
+- Questions
+- Concepts
+- Materials
+
+Create a simple saved area.
+
+AI EXPLANATIONS
+---------------
+
+When the user gets a question wrong:
+
+Show a short explanation.
+
+Structure:
+
+Why your answer was incorrect.
+
+Correct idea.
+
+Source from your material.
+
+Keep explanations concise.
+
+Do not overwhelm students with giant AI responses.
+
+Option:
+
+"Explain deeper"
+
+can generate a longer explanation.
+
+AI STUDY ASSISTANT
+------------------
+
+DO NOT build a full ChatGPT clone.
+
+Instead, provide contextual AI assistance.
+
+On a material/concept/question:
+
+"Explain this"
+
+"Give me an example"
+
+"Explain like I'm a beginner"
+
+"Give me a harder example"
+
+"Why did I get this wrong?"
+
+The assistant must remain grounded in the user's material whenever the question concerns uploaded material.
+
+STUDY MODES
+-----------
+
+V1 should have:
+
+1. Practice
+2. Quick Practice
+3. Weakness Fix
+4. Review Mistakes
+
+Future architecture can support:
+
+- Flashcards
+- Spaced repetition
+- Study plans
+- Voice
+- Tutor mode
+
+But do NOT let these features become required for V1.
+
+ONBOARDING
+----------
+
+After signup:
+
+Ask:
+
+1. What are you studying?
+
+Examples:
+- University
+- Medicine
+- Nursing
+- Certification
+- High school
+- Personal learning
+
+2. What subjects?
+
+3. How much time do you normally study?
+
+4. What is your preferred daily study time?
+
+5. Optional:
+"When is your next major assessment?"
+
+This information should personalize recommendations.
+
+Do not make onboarding long.
+
+AUTHENTICATION
+--------------
+
+Implement:
+
+- Signup
+- Login
+- Logout
+- Password reset
+- Protected routes
+- Session persistence
+
+Do not require unnecessary information.
+
+PRICING
+-------
+
+Use a Freemium model.
+
+FREE PLAN
+
+Allow enough usage for a student to understand the product.
+
+Example:
+
+- Limited active materials
+- Limited AI practice generations per month
+- Limited targeted retests
+- Basic knowledge map
+- Basic progress
+
+The free user MUST experience the core loop.
+
+Do not make the free plan useless.
+
+PRO PLAN
+
+Target price:
+
+$9.99/month
+
+Annual:
+
+$79.99/year
+
+Allow:
+
+- More materials
+- Much higher AI usage
+- Unlimited practice within fair-use limits
+- Unlimited targeted retests
+- Full knowledge map
+- Advanced progress
+- Personalized study recommendations
+- Mistake review
+- Advanced difficulty
+- Longer practice sessions
+- Priority AI processing
+
+Do not advertise unlimited AI generation without safeguards.
+
+Implement reasonable usage limits internally.
+
+FUTURE:
+
+Student/semester plan can be added later.
+
+STRIPE
+------
+
+Implement:
+
+- Checkout
+- Subscription creation
+- Customer portal
+- Upgrade
+- Downgrade
+- Cancel
+- Renewal
+- Failed payment handling
+
+Use Stripe webhooks.
+
+Webhook events should update local subscription status.
+
+At minimum support:
+
+checkout.session.completed
+
+customer.subscription.created
+
+customer.subscription.updated
+
+customer.subscription.deleted
+
+invoice.payment_failed
+
+invoice.paid
+
+Do not trust client-side subscription state.
+
+Create a reusable subscription middleware.
+
+FEATURE GATING
+--------------
+
+Create server-side feature gates.
+
+Example:
+
+canCreatePracticeSession()
+canUploadMaterial()
+canGenerateRetest()
+canUseAdvancedAnalysis()
+
+Do NOT rely only on hiding buttons in frontend.
+
+If the user exceeds limits:
+
+Show a friendly upgrade modal.
+
+Example:
+
+"You've used your free practice sessions for this month."
+
+"Upgrade to Recall Pro to keep studying."
+
+Do not aggressively interrupt the learning experience.
+
+PAYWALL DESIGN
+--------------
+
+The paywall should feel premium, not manipulative.
+
+Explain exactly what the student gets.
+
+Example:
+
+RECALL PRO
+
+Study smarter every day.
+
+✓ More practice
+✓ Unlimited weakness sessions
+✓ Advanced knowledge map
+✓ Personalized study recommendations
+✓ Detailed progress
+
+$9.99/month
+
+[Start Pro]
+
+Also provide:
+
+[Maybe later]
+
+LANDING PAGE
+------------
+
+Create a premium landing page.
+
+Hero:
+
+"Stop rereading.
+Find what you don't know."
+
+Subheading:
+
+"Upload your notes. Practice what actually matters. Recall finds your weak concepts and builds the next session around them."
+
+Primary CTA:
+
+"Start studying free"
+
+Secondary CTA:
+
+"See how it works"
+
+Sections:
+
+1. Problem
+2. How Recall works
+3. Interactive product preview
+4. Knowledge map
+5. Weakness diagnosis
+6. Targeted retesting
+7. Progress
+8. Daily study
+9. Pricing
+10. FAQ
+11. Final CTA
+
+Example section:
+
+YOU DON'T NEED MORE NOTES.
+
+You need to know what you actually understand.
+
+Then:
+
+UPLOAD
+Your lecture material.
+
+PRACTICE
+Answer grounded questions.
+
+DISCOVER
+See exactly what you're missing.
+
+FIX
+Practice only your weak areas.
+
+IMPROVE
+Watch your knowledge grow.
+
+DESIGN SYSTEM
+-------------
+
+The product should feel:
+
+- Premium
+- Modern
+- Calm
+- Intelligent
+- Academic
+- Trustworthy
+- Fast
+- Clean
+
+Do NOT make it look like:
+
+- A generic AI chatbot
+- A crypto dashboard
+- A corporate admin panel
+- A childish gamification app
+- A giant SaaS template
+
+Design inspiration:
+
+Modern education technology + premium productivity software.
+
+Use:
+
+- strong typography
+- generous whitespace
+- subtle borders
+- tasteful cards
+- clear hierarchy
+- smooth transitions
+- excellent mobile responsiveness
+
+Avoid excessive gradients.
+
+Avoid excessive animations.
+
+Avoid emoji overload.
+
+Use icons consistently.
+
+DARK MODE
+---------
+
+Support light and dark mode.
+
+Remember user preference.
+
+MOBILE
+------
+
+The application is web-first but must be excellent on mobile.
+
+Students will upload lecture material and study from phones.
+
+Practice mode must work especially well on mobile.
+
+The question interface should be thumb-friendly.
+
+PERFORMANCE
+-----------
+
+Optimize for:
+
+- fast page loads
+- lazy loading
+- streaming AI generation where appropriate
+- background processing for large files
+- pagination
+- database indexes
+- caching
+- efficient AI prompts
+
+Do not send huge documents to the AI repeatedly.
+
+Extract once.
+
+Chunk intelligently.
+
+Store reusable representations.
+
+AI COST CONTROL
+---------------
+
+This is extremely important.
+
+Do NOT blindly send entire documents to the AI on every request.
+
+Use:
+
+- chunking
+- retrieval
+- cached extraction
+- cached concepts
+- reusable source sections
+- appropriate model selection
+- token limits
+- usage limits
+
+Use cheaper AI models for routine operations when quality is sufficient.
+
+Use stronger models only where necessary.
+
+Create an AI service abstraction.
+
+Example:
+
+AIService.generateQuestions()
+
+AIService.extractConcepts()
+
+AIService.diagnoseWeaknesses()
+
+AIService.generateExplanation()
+
+AIService.generateStudyRecommendation()
+
+This makes providers replaceable.
+
+SECURITY
+--------
+
+Implement:
+
+- password hashing
+- secure sessions
+- authorization checks
+- input validation
+- file validation
+- file size limits
+- rate limiting
+- API request validation
+- secure headers
+- SQL injection protection
+- XSS protection
+- CSRF protection where applicable
+- user ownership checks
+
+A user must NEVER be able to access another user's:
+
+- materials
+- questions
+- practice sessions
+- progress
+- subscription information
+
+Every database query involving user-owned data must verify ownership.
+
+FILE SECURITY
+-------------
+
+Uploaded files are private.
+
+Do not expose public URLs.
+
+Use signed URLs or secure server-mediated access.
+
+Validate MIME type and extension.
+
+Set reasonable upload limits.
+
+Prevent malicious file uploads.
+
+AI SAFETY / QUALITY
+-------------------
+
+AI output must be treated as untrusted data.
+
+Validate generated JSON against schemas.
+
+If generation fails validation:
+
+Retry with a corrected prompt.
+
+If still invalid:
+
+Return a graceful error.
+
+Never let malformed AI output crash the application.
+
+Create structured schemas for:
+
+Question
+Concept
+Diagnosis
+Recommendation
+Explanation
+
+QUESTION JSON EXAMPLE
+---------------------
+
+The AI should return structured data like:
+
+{
+  "questionText": "...",
+  "type": "multiple_choice",
+  "options": ["...", "...", "...", "..."],
+  "correctAnswer": "...",
+  "explanation": "...",
+  "concept": "...",
+  "difficulty": "medium",
+  "source": {
+    "materialId": "...",
+    "sectionId": "...",
+    "page": 12,
+    "excerpt": "..."
+  }
+}
+
+Never blindly trust model output.
+
+ERROR HANDLING
+--------------
+
+Every major operation must have:
+
+- loading state
+- success state
+- error state
+- retry option
+
+Do not leave blank screens.
+
+Examples:
+
+AI generation fails:
+
+"Something went wrong while creating your practice session."
+
+[Try again]
+
+File processing fails:
+
+"We couldn't read this file."
+
+[Retry]
+
+Payment fails:
+
+"Your payment couldn't be completed."
+
+[Try again]
+
+EMPTY STATES
+------------
+
+Design polished empty states.
+
+No materials:
+
+"Your study library is empty."
+
+"Upload your first lecture or notes and Recall will turn them into practice."
+
+[Upload material]
+
+No practice history:
+
+"Your knowledge map will appear after your first practice session."
+
+No weak concepts:
+
+"You're looking strong."
+
+"Keep practicing to make it stick."
+
+LOADING EXPERIENCES
+-------------------
+
+Do not simply display:
+
+"Loading..."
+
+Use meaningful progress.
+
+For material:
+
+Reading your material...
+Finding concepts...
+Building your knowledge map...
+Preparing practice...
+
+For question generation:
+
+Reading your material...
+Choosing important concepts...
+Creating questions...
+Checking question quality...
+
+The AI generation process should feel intelligent.
+
+ANALYTICS
+---------
+
+Create privacy-conscious internal product analytics.
+
+Track events such as:
+
+- signup
+- login
+- material_uploaded
+- material_processed
+- practice_started
+- practice_completed
+- question_answered
+- weak_area_detected
+- targeted_retest_started
+- targeted_retest_completed
+- subscription_started
+- subscription_cancelled
+
+Do not collect unnecessary personal information.
+
+ADMIN / DEBUGGING
+-----------------
+
+Create a basic protected admin/debug system if practical.
+
+Admin should be able to see:
+
+- total users
+- active users
+- practice sessions
+- AI generation failures
+- subscription counts
+- processing failures
+
+Do not expose user private documents unnecessarily.
+
+TESTING
+-------
+
+Write automated tests for critical logic.
+
+At minimum:
+
+- authentication
+- authorization
+- subscription feature gating
+- mastery calculation
+- practice scoring
+- question validation
+- material ownership
+- AI output validation
+
+Also create seed/demo data for development.
+
+DEMO MODE
+---------
+
+Create a development/demo mode so the UI can be tested without spending AI credits.
+
+Include sample:
+
+Subject:
+Human Anatomy
+
+Materials:
+Cardiovascular System
+
+Concepts:
+- Heart anatomy
+- Cardiac conduction
+- Blood vessels
+- Cardiac cycle
+
+Sample questions.
+
+This allows the entire UI to be developed before AI integration is fully configured.
+
+ROUTES
+------
+
+Create clean routes such as:
+
+/
+ /login
+ /signup
+ /onboarding
+ /dashboard
+ /subjects
+ /subjects/:id
+ /materials
+ /materials/:id
+ /practice
+ /practice/:id
+ /results/:id
+ /weaknesses
+ /concepts/:id
+ /progress
+ /mistakes
+ /settings
+ /billing
+ /pricing
+
+Use protected routes where appropriate.
+
+NAVIGATION
+----------
+
+Desktop sidebar:
+
+Recall logo
+
+Dashboard
+My Study
+Subjects
+Materials
+Practice
+Weaknesses
+Progress
+
+Bottom:
+
+Settings
+Plan
+
+Mobile:
+
+Bottom navigation:
+
+Home
+Study
+Materials
+Progress
+
+Plus floating/primary action:
+
+Practice
+
+PRACTICE CREATION
+-----------------
+
+When user clicks Practice:
+
+Offer:
+
+Recommended for you
+
+Quick Practice
+
+Practice a subject
+
+Practice a material
+
+Practice weak areas
+
+Review mistakes
+
+The recommended option should be highlighted.
+
+SMART DEFAULTS
+--------------
+
+Recall should reduce decisions.
+
+If the user clicks:
+
+"Study now"
+
+the app should already know what to recommend.
+
+Example:
+
+"10 minutes available?"
+
+Recall automatically selects:
+
+2 weak concepts
+10 questions
+medium difficulty
+
+Then begins.
+
+The product should feel proactive.
+
+NOTIFICATION SYSTEM
+-------------------
+
+Architecture should support notifications.
+
+V1 can support in-app reminders.
+
+Examples:
+
+"You haven't practiced Genetics in 6 days."
+
+"Your weakest concept is Cell Division."
+
+"You're 12 minutes away from your weekly study goal."
+
+Do not spam users.
+
+Allow notification preferences.
+
+SEARCH
+------
+
+Global search should eventually search:
+
+- Materials
+- Subjects
+- Concepts
+- Questions
+
+For V1, implement simple search over user-owned data.
+
+DELETE / DATA CONTROL
+---------------------
+
+Users must be able to:
+
+- delete materials
+- delete subjects
+- delete account
+- manage subscription
+- export basic learning data
+
+Account deletion should delete or anonymize associated data appropriately.
+
+LEGAL / TRUST
+-------------
+
+Create basic pages:
+
+/privacy
+/terms
+
+Do not make unsupported legal claims such as:
+
+"SOC 2 certified"
+
+unless actually implemented.
+
+Do not claim AI answers are guaranteed correct.
+
+Add a subtle educational disclaimer:
+
+"AI-generated questions and explanations may contain mistakes. Always verify important information against your course materials and instructor guidance."
+
+SEO
+---
+
+Landing page should have:
+
+- proper title
+- meta description
+- Open Graph metadata
+- semantic HTML
+- accessible headings
+- descriptive image alt text
+
+ACCESSIBILITY
+-------------
+
+Implement:
+
+- keyboard navigation
+- proper labels
+- focus states
+- accessible buttons
+- sufficient contrast
+- screen-reader-friendly structure
+
+DO NOT BUILD
+------------
+
+Absolutely do NOT turn V1 into:
+
+- social network
+- marketplace
+- teacher platform
+- full LMS
+- AI chatbot clone
+- video platform
+- course marketplace
+- tutoring marketplace
+- school management system
+- complicated spaced repetition engine
+- giant flashcard database
+- generic productivity app
+
+Future features can be architecturally possible but should not clutter V1.
+
+FUTURE FEATURES
+---------------
+
+Design the architecture so these can be added later:
+
+- Flashcards
+- Spaced repetition
+- AI tutor
+- Voice explanations
+- Study groups
+- Shared study sets
+- Teacher accounts
+- Course imports
+- Browser extension
+- Mobile native app
+- Calendar integration
+- Exam-specific modes
+- Personalized long-term study plans
+- Case-based learning
+- More advanced question formats
+
+Do NOT build them now.
+
+AI PROMPT ARCHITECTURE
+----------------------
+
+Create dedicated prompts for:
+
+1. Material analysis
+2. Concept extraction
+3. Question generation
+4. Question validation
+5. Answer evaluation
+6. Weakness diagnosis
+7. Targeted question generation
+8. Explanation generation
+9. Study recommendation
+10. Progress summary
+
+Prompts must emphasize:
+
+- groundedness
+- accuracy
+- source attribution
+- no hallucination
+- no duplicate questions
+- appropriate difficulty
+- educational usefulness
+
+QUESTION GENERATION LOGIC
+--------------------------
+
+Given:
+
+material
+concepts
+difficulty
+question count
+previous questions
+previous mistakes
+
+Generate questions that:
+
+- test understanding
+- vary wording
+- vary scenarios
+- avoid repetition
+- target important concepts
+- target weak concepts when requested
+
+Do NOT merely copy sentences from notes into questions.
+
+DIAGNOSIS LOGIC
+---------------
+
+After a practice session:
+
+1. Calculate raw performance.
+2. Group answers by concept.
+3. Account for difficulty.
+4. Account for confidence.
+5. Identify repeated errors.
+6. Identify misconception patterns.
+7. Update mastery.
+8. Recommend next action.
+
+Example:
+
+Student answered:
+
+Concept: Active Transport
+Correct: 2/6
+Confidence: high on incorrect answers
+
+Diagnosis:
+
+"Possible misconception detected."
+
+This should be more useful than:
+
+"You got 4 wrong."
+
+AI should produce concise, actionable diagnoses.
+
+STUDY RECOMMENDATION EXAMPLE
+----------------------------
+
+Return structured recommendation:
+
+{
+  "concept": "Active Transport",
+  "reason": "You missed 4 of your last 6 questions and were highly confident in two incorrect answers.",
+  "recommendedMinutes": 10,
+  "questionCount": 8,
+  "difficulty": "easy_to_medium"
+}
+
+The frontend renders this beautifully.
+
+SUBSCRIPTION UX
+---------------
+
+Free users should always know:
+
+- what they can use
+- how much they have used
+- when limits reset
+
+Example:
+
+"3 of 5 practice sessions used this month."
+
+Do not make the interface feel like a billing dashboard.
+
+If they reach a limit:
+
+Explain the value of Pro.
+
+Do not delete their existing learning data.
+
+If subscription expires:
+
+Downgrade gracefully.
+
+Preserve their:
+
+- materials
+- history
+- knowledge map
+
+Only restrict premium capabilities.
+
+DATABASE INDEXES
+----------------
+
+Add indexes for common queries:
+
+userId
+subjectId
+materialId
+conceptId
+createdAt
+sessionId
+subscription status
+
+Avoid N+1 queries.
+
+API DESIGN
+----------
+
+Create clean REST or equivalent API endpoints.
+
+Examples:
+
+POST /api/auth/signup
+POST /api/auth/login
+POST /api/auth/logout
+
+GET /api/dashboard
+
+POST /api/materials
+GET /api/materials
+GET /api/materials/:id
+DELETE /api/materials/:id
+
+POST /api/materials/:id/process
+
+GET /api/concepts
+
+POST /api/practice
+GET /api/practice/:id
+POST /api/practice/:id/answer
+POST /api/practice/:id/complete
+
+POST /api/practice/weakness
+
+GET /api/progress
+
+GET /api/mistakes
+
+GET /api/recommendations
+
+GET /api/subscription
+POST /api/stripe/create-checkout
+POST /api/stripe/webhook
+
+Use request validation.
+
+Do not expose internal implementation details.
+
+CRITICAL BUILD RULE
+-------------------
+
+Do not create fake functionality.
+
+If an integration is not configured, clearly isolate it behind a service and provide a development fallback.
+
+Do not pretend Stripe payments work if Stripe keys are missing.
+
+Do not pretend AI generation works if the AI key is missing.
+
+Create useful demo mode.
+
+QUALITY BAR
+-----------
+
+The application should look like something a real startup could launch.
+
+Not:
+
+"AI generated website."
+
+It should have:
+
+- consistent spacing
+- consistent typography
+- responsive layouts
+- polished forms
+- useful empty states
+- useful loading states
+- useful error states
+- realistic data
+- smooth navigation
+- no broken links
+- no placeholder lorem ipsum
+- no fake buttons
+- no unfinished screens
+
+IMPORTANT:
+Do not put "Coming Soon" everywhere.
+
+Only mark genuinely deferred features as coming soon.
+
+DEVELOPMENT PROCESS
+-------------------
+
+Before coding:
+
+1. Inspect the existing Replit project.
+2. Determine whether there is already useful infrastructure.
+3. Do not unnecessarily delete working infrastructure.
+4. Establish the architecture.
+5. Create the database schema.
+6. Create migrations.
+7. Build authentication.
+8. Build application shell.
+9. Build material upload.
+10. Build processing pipeline.
+11. Build AI abstraction.
+12. Build question generation.
+13. Build practice engine.
+14. Build scoring.
+15. Build diagnosis.
+16. Build targeted retest.
+17. Build mastery.
+18. Build dashboard.
+19. Build subscriptions.
+20. Build settings.
+21. Add tests.
+22. Run the application.
+23. Fix all errors.
+24. Verify every major user flow.
+
+CRITICAL:
+Do not stop after phase 1.
+
+Continue until the application is a coherent working product.
+
+IF SOMETHING IS UNCLEAR
+-----------------------
+
+Make a reasonable engineering decision and continue.
+
+Do NOT stop the build simply because a minor implementation detail is unspecified.
+
+Prioritize:
+
+1. Working product
+2. Core learning loop
+3. Data integrity
+4. Security
+5. UX
+6. Performance
+7. Monetization
+8. Polish
+
+FEATURE PRIORITY
+----------------
+
+P0 — MUST WORK
+
+- Authentication
+- Onboarding
+- Subjects
+- Material upload
+- Text extraction
+- Material processing
+- AI concept extraction
+- Grounded question generation
+- Practice session
+- Answer evaluation
+- Results
+- Weakness diagnosis
+- Targeted retest
+- Mastery tracking
+- Dashboard
+- Daily recommendation
+- Free/Pro subscription architecture
+- Stripe
+- Responsive UI
+
+P1 — BUILD IF CORE IS STABLE
+
+- Mistake review
+- Confidence tracking
+- Bookmarks
+- Quick practice
+- Study timer
+- Dark mode
+- Notifications
+- Progress charts
+
+P2 — DO NOT LET THESE DELAY LAUNCH
+
+- Advanced question formats
+- Flashcards
+- Spaced repetition
+- Voice
+- AI tutor
+- Social features
+- Teacher features
+
+FINAL UX FLOW
+-------------
+
+A new user should be able to:
+
+1. Visit Recall.
+2. Understand the product in under 10 seconds.
+3. Sign up.
+4. Choose a subject.
+5. Upload notes.
+6. Wait while Recall processes them.
+7. Receive a practice session.
+8. Answer questions.
+9. See their knowledge map.
+10. Discover their weakest concept.
+11. Click "Practice my weak areas."
+12. Take a new targeted session.
+13. See measurable improvement.
+14. Return to the dashboard later.
+15. See Recall recommend what they should study next.
+16. Eventually upgrade to Pro because the product has become part of their normal study routine.
+
+This entire flow must work.
+
+FINAL PRODUCT FEEL
+------------------
+
+When the student opens Recall, the feeling should be:
+
+"I don't need to figure out what to study."
+
+Recall already knows.
+
+When they finish a practice session:
+
+"Now I know exactly what I don't understand."
+
+When they complete a weakness session:
+
+"I can see that I'm actually improving."
+
+That is the product.
+
+BUILD IT NOW.
+
+Do not respond with a long product proposal.
+
+Start by inspecting the existing Replit project and then implement the application.
+
+After implementation, run the project, test the critical flows, identify errors, fix them, and leave the Replit workspace in a working state.
+
+Do not sacrifice the core learning loop for unnecessary features.
+
+Do not stop because competitors exist.
+
+We are not trying to prove that nobody has built an AI study app.
+
+We are building a better, sharper, more intelligent learning experience.

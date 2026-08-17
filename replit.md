@@ -1,6 +1,6 @@
-# [Project name]
+# Recall
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Recall turns a student's own learning material into grounded practice, weakness diagnosis, targeted retesting, and measurable progress.
 
 ## Run & Operate
 
@@ -22,15 +22,22 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/recall` — the React/Vite web app and all user-facing routes
+- `artifacts/api-server` — the Express API, demo provider, practice scoring, and recommendation routes
+- `lib/api-spec/openapi.yaml` — source of truth for API contracts
+- `lib/db/src/schema/recall.ts` — relational schema for users, subjects, materials, concepts, questions, practice, mastery, and subscriptions
+- `attached_assets/` — user-provided source briefs and assets
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Recall's first build runs against grounded demo data so the complete learning loop can be explored without spending AI credits or connecting billing.
+- The API contract is OpenAPI-first; generated React Query hooks are the frontend integration boundary.
+- AI generation is behind a provider seam and the demo provider only returns questions with stored source excerpts.
+- The relational schema is ready for persisted user-owned learning data while demo routes keep the initial experience deterministic.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Recall includes a premium landing page, demo workspace, dashboard recommendation, subjects, material library, grounded practice, confidence-aware answer review, results, weakness diagnosis, targeted practice, knowledge map, progress, mistakes, settings, billing, pricing, and trust pages.
 
 ## User preferences
 
@@ -38,7 +45,9 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Run `pnpm --filter @workspace/api-spec run codegen` after changing `lib/api-spec/openapi.yaml`.
+- The API server and web app are managed workflows; restart them through their existing workflow names after runtime changes.
+- The initial experience is intentionally demo-safe. Real auth, object storage, AI provider credentials, and Stripe checkout should be connected before treating it as a production launch.
 
 ## Pointers
 
