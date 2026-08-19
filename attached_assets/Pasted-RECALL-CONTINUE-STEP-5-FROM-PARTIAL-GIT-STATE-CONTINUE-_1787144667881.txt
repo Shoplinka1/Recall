@@ -1,0 +1,118 @@
+RECALL — CONTINUE STEP 5 FROM PARTIAL GIT STATE
+
+CONTINUE FROM THE CURRENT IMPORTED GIT CODEBASE.
+
+DO NOT restart Step 5.
+DO NOT rebuild Recall.
+DO NOT undo Steps 1–4.
+DO NOT replace PostgreSQL, auth, material processing, grounded questions, or AI.
+DO NOT start Step 6.
+
+IMPORTANT: DEMO_MODE must NOT be used as the production path. Preserve development/demo fixtures only where they are explicitly needed for development, but the actual authenticated application flow being implemented in Step 5 must use PostgreSQL, real authentication, real materials, real questions, and real practice sessions.
+
+STEPS 1–4 ARE COMPLETE:
+1. PostgreSQL persistence
+2. Authentication/sessions/ownership
+3. Real material upload/extraction/storage
+4. Grounded question generation + validation
+
+STEP 5 WAS PARTIALLY IMPLEMENTED BEFORE THE PREVIOUS AGENT HIT QUOTA.
+
+Already done:
+- audited practice/session API
+- found demo practice fallback
+- added persistence changes
+- completed-result restoration work
+- short-answer input support
+- removed fake demo-session fallback
+- regenerated API contracts
+- typecheck passed
+- builds passed
+- managed API/web workflows started
+
+CONTINUE FROM THIS EXACT STATE.
+
+FIRST inspect git history and current code. Do not redo completed work.
+
+YOUR ONLY GOAL:
+Finish the REAL persisted practice engine using the existing architecture.
+
+REQUIREMENTS:
+
+1. Practice sessions must use PostgreSQL.
+2. Practice questions must reference real persisted questions from Step 4.
+3. Starting a session must create/persist its practice questions.
+4. Persist every answer/attempt.
+5. Support existing MCQ, true/false, and short-answer question types.
+6. Restore an active/completed session correctly after reload/restart.
+7. Persist session progress.
+8. Persist final score/result.
+9. Completing a session must be durable in PostgreSQL.
+10. User A must never access User B's sessions, questions, answers, or results.
+11. Never trust frontend userId.
+12. No fake/demo practice sessions in the production path.
+13. No localStorage or in-memory production state.
+14. Keep the existing Recall UI; do not redesign it.
+
+IMPORTANT:
+Do not implement mastery, weaknesses, recommendations, billing, Paystack, or Step 6.
+
+FIRST FIX THE CURRENT ENVIRONMENT ISSUE:
+The previous agent found that the configured PostgreSQL database did not have the existing Recall schema (recall_users missing).
+
+Use the EXISTING Drizzle/PostgreSQL setup and push/apply the existing schema if DATABASE_URL exists.
+
+Do NOT reset or replace the database.
+
+TEST:
+
+- signup/login
+- create/use real material
+- generate/use real grounded questions
+- start practice session
+- answer MCQ
+- answer true/false
+- answer short-answer
+- persist answers
+- resume session
+- complete session
+- verify final score/result
+- restart API
+- retrieve session/result again
+- User B cannot access User A's session/questions/results
+- unauthenticated access is rejected
+- Steps 1–4 regression tests still pass
+
+Then run:
+- typecheck
+- relevant tests
+- Drizzle schema push/validation
+- build
+- API startup
+- /api/healthz
+- frontend HTTP check
+- persistence/restart check
+
+FIX ERRORS BEFORE STOPPING.
+
+STEP 5 COMPLETION:
+Real persisted questions → persisted practice session → persisted answers → persisted completion/result, with resume/restart persistence and ownership protection.
+
+Do not claim completion unless tests actually prove it.
+
+STOP AFTER STEP 5.
+
+FINAL REPORT ONLY:
+
+IMPLEMENTED
+PRACTICE
+PERSISTENCE
+OWNERSHIP
+TESTED
+NOT VERIFIED
+DATABASE
+BUILD
+RUNTIME
+
+Do not claim production-ready.
+Do not start Step 6.
