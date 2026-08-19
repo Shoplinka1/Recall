@@ -1,0 +1,107 @@
+RECALL — CONTINUE STEP 4 FROM PARTIAL GIT STATE
+
+CONTINUE FROM THE CURRENT IMPORTED GIT CODEBASE.
+
+DO NOT restart Step 4.
+DO NOT rebuild Recall.
+DO NOT undo existing Step 1–3 work.
+DO NOT replace PostgreSQL, auth, material processing, or AI architecture.
+DO NOT start Step 5.
+
+STEP 1 ✅ PostgreSQL persistence
+STEP 2 ✅ Auth/sessions/ownership
+STEP 3 ✅ Real material upload/extraction/storage
+
+STEP 4 WAS PARTIALLY IMPLEMENTED BEFORE THE PREVIOUS AGENT HIT QUOTA.
+
+Already completed:
+- audited existing question/practice architecture
+- found hard-coded demo question bank
+- began replacing demo questions with persisted material-section generation
+- added question-generation API contract
+- added source-section provenance to question records
+- began typed-client regeneration
+
+CONTINUE FROM THIS EXACT STATE.
+
+FIRST inspect git history and current code. Do NOT redo completed work.
+
+FINISH STEP 4:
+
+material sections
+→ real grounded question generation
+→ validation
+→ source/provenance
+→ PostgreSQL
+→ existing practice UI
+
+Requirements:
+
+1. Generate questions ONLY from the authenticated user's persisted material sections/concepts.
+2. Reuse the existing DevelopmentAIService and AI abstraction.
+3. Development AI must remain offline and use real stored material.
+4. Support the existing MCQ, true/false, and short-answer models where already supported.
+5. Every question must retain materialId, sectionId/source, concept, difficulty, type, and source excerpt where the schema supports them.
+6. Validate questions BEFORE saving:
+   - text
+   - type
+   - answer
+   - options
+   - explanation
+   - concept
+   - difficulty
+   - grounding
+   - duplicates
+   - ambiguity
+7. Reject questions that cannot be supported by the source material.
+8. Remove demo question data from the actual production question/practice path. Do not delete legitimate development fixtures unless needed.
+9. Keep PostgreSQL as the source of truth. No production arrays, Maps, fake question banks, or localStorage.
+10. Enforce Step 2 ownership. User A must never access User B's questions, sources, or materials.
+11. Use the existing Recall UI. Do not redesign it.
+
+TEST:
+
+- generate questions from real stored material
+- verify questions persist in PostgreSQL
+- verify source/section provenance
+- verify grounding
+- invalid/unsupported questions rejected
+- duplicate validation
+- MCQ answer validation
+- cross-user question access rejected
+- development AI makes no external call
+- questions survive API restart
+- Step 1, Step 2, and Step 3 regression tests still pass
+
+Then run:
+- typecheck
+- tests
+- database/schema validation
+- build
+- API startup
+- /api/healthz
+- frontend HTTP check
+
+Fix errors before stopping.
+
+DO NOT IMPLEMENT STEP 5:
+practice-engine changes, scoring overhaul, confidence, mastery, weaknesses, recommendations, dashboard, Paystack, billing, or subscriptions.
+
+STEP 4 IS COMPLETE ONLY WHEN REAL QUESTIONS ARE GENERATED FROM REAL USER MATERIAL, VALIDATED, GROUNDED, STORED IN POSTGRESQL, OWNERSHIP-PROTECTED, AND TESTED.
+
+STOP AFTER STEP 4.
+
+FINAL REPORT ONLY:
+
+IMPLEMENTED
+GROUNDING
+DATABASE
+OWNERSHIP
+TESTED
+NOT VERIFIED
+AI
+BUILD
+RUNTIME
+
+DO NOT CLAIM PRODUCTION-READY.
+DO NOT START STEP 5.
