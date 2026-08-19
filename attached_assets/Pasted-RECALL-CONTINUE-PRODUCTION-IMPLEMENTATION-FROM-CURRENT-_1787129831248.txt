@@ -1,0 +1,426 @@
+RECALL — CONTINUE PRODUCTION IMPLEMENTATION FROM CURRENT STATE
+
+IMPORTANT:
+
+This is a CONTINUATION of the existing Recall production repair.
+
+You have ALREADY audited the project and performed the initial repairs.
+
+You reported that:
+	•	the application starts successfully
+	•	the landing page renders
+	•	/api/health returns {"status":"ok"}
+	•	TypeScript/typechecking is clean
+	•	the managed workflows are running
+	•	obsolete Stripe implementation references were removed
+	•	the current backend is still demo/in-memory
+	•	the larger production scope is NOT yet complete
+
+DO NOT restart the project.
+
+DO NOT rebuild Recall from scratch.
+
+DO NOT create another prototype.
+
+DO NOT undo the repairs you already made.
+
+CONTINUE FROM THE CURRENT CODEBASE AND IMPLEMENT THE REMAINING PRODUCTION FUNCTIONALITY.
+
+============================================================
+	1.	DEVELOPMENT AI MODE — COMPLETE IT NOW
+============================================================
+
+Implement the missing DevelopmentAIService functionality.
+
+Development mode:
+
+AI_MODE=development
+
+MUST NOT call Gemini, OpenAI, Anthropic, or any external AI API.
+
+Implement the same AI interface used by real providers.
+
+DevelopmentAIService must support:
+	•	analyzeMaterial()
+	•	extractConcepts()
+	•	generateQuestions()
+	•	validateQuestions()
+	•	evaluateAnswer()
+	•	diagnoseWeaknesses()
+	•	generateTargetedPractice()
+	•	generateExplanation()
+	•	generateRecommendation()
+
+Development AI must use the ACTUAL uploaded material/content where possible.
+
+It must not simply return unrelated hardcoded questions.
+
+Use deterministic logic/fixtures where necessary, but pass the output through the SAME validation and application pipeline as real AI.
+
+The workflow MUST be:
+
+material
+→ DevelopmentAIService
+→ schema validation
+→ grounding validation
+→ database persistence
+→ practice engine
+→ student answer
+→ real scoring
+→ confidence tracking
+→ mastery calculation
+→ weakness diagnosis
+→ targeted practice
+→ new questions
+→ retest
+→ dashboard update
+→ recommendation
+
+The DevelopmentAIService is only replacing the external AI call.
+
+Everything else must remain real.
+
+============================================================
+2. REAL AI PROVIDER ABSTRACTION
+
+Implement the provider abstraction if it is not already complete.
+
+Support:
+	•	Gemini
+	•	OpenAI
+	•	Anthropic
+
+Configuration:
+
+AI_MODE=development
+AI_PROVIDER=gemini
+
+GEMINI_API_KEY=
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+
+When:
+
+AI_MODE=development
+
+NO external AI request may occur.
+
+When:
+
+AI_MODE=real
+
+select the configured provider.
+
+If the required key is missing:
+
+return a clear configuration error.
+
+DO NOT fake success.
+
+Never expose provider secret keys to the frontend.
+
+Do not scatter provider API calls throughout routes.
+
+============================================================
+3. REPLACE IN-MEMORY BACKEND WITH POSTGRESQL
+
+This is currently the biggest remaining blocker.
+
+The audit reported that the current backend is still demo/in-memory.
+
+Replace in-memory primary storage with the existing PostgreSQL/Drizzle architecture.
+
+DO NOT throw away existing database code.
+
+Inspect existing schemas first.
+
+Reuse existing tables where appropriate.
+
+Add/migrate the missing structures required for:
+	•	users
+	•	sessions
+	•	subjects
+	•	materials
+	•	material sections
+	•	files
+	•	concepts
+	•	questions
+	•	question sources
+	•	practice sessions
+	•	practice questions
+	•	attempts
+	•	confidence
+	•	mastery
+	•	weaknesses
+	•	recommendations
+	•	usage
+	•	payments
+	•	transactions
+	•	subscriptions
+
+Use proper:
+	•	foreign keys
+	•	indexes
+	•	unique constraints
+	•	ownership relationships
+	•	transactions
+
+All important application state MUST survive server restart.
+
+Do not use arrays/maps/in-memory objects as the production source of truth.
+
+If DATABASE_URL is unavailable during local development, keep the schema/migrations correct and make the missing configuration explicit rather than silently falling back to fake production storage.
+
+============================================================
+4. AUTHENTICATION + OWNERSHIP
+
+Complete/fix:
+
+POST /api/auth/signup
+POST /api/auth/login
+POST /api/auth/logout
+GET /api/auth/me
+
+Implement or verify:
+	•	password hashing
+	•	secure sessions
+	•	session persistence
+	•	protected routes
+	•	authorization
+	•	ownership checks
+	•	logout
+	•	session expiry
+	•	rate limiting where appropriate
+	•	secure cookies
+
+A user MUST NEVER access another user’s:
+	•	materials
+	•	files
+	•	concepts
+	•	questions
+	•	practice sessions
+	•	attempts
+	•	progress
+	•	mistakes
+	•	subscriptions
+	•	payments
+
+Add tests explicitly proving cross-user access is rejected.
+
+============================================================
+5. REAL MATERIAL PIPELINE
+
+Complete the actual material workflow.
+
+Support:
+	•	PDF
+	•	PPTX
+	•	DOCX
+	•	TXT
+	•	images
+	•	pasted text
+
+Pipeline:
+
+upload
+→ validation
+→ secure storage
+→ text extraction
+→ sectioning/chunking
+→ headings/topics
+→ concept extraction
+→ database persistence
+→ ready
+
+Persist real statuses:
+
+uploaded
+processing
+ready
+failed
+
+The frontend must display meaningful processing states.
+
+If processing fails:
+	•	persist the error
+	•	show the error
+	•	allow retry
+
+Do not mark a material Ready before processing actually succeeds.
+
+Uploaded files MUST remain private.
+
+Every file operation MUST verify ownership.
+
+Do not expose permanent public URLs.
+
+============================================================
+6. GROUNDED QUESTIONS
+
+Implement real question generation using stored material sections/chunks.
+
+Every question should retain appropriate source information:
+	•	materialId
+	•	sectionId
+	•	sourceExcerpt
+	•	sourcePage when available
+	•	concept
+	•	difficulty
+	•	questionType
+
+Use retrieval/chunking rather than sending huge documents unnecessarily.
+
+If there is insufficient evidence:
+
+DO NOT INVENT.
+
+Reject unsupported questions.
+
+============================================================
+7. QUESTION VALIDATION
+
+Every generated question MUST pass validation before persistence.
+
+Validate:
+	•	question type
+	•	question text
+	•	options
+	•	correct answer
+	•	explanation
+	•	concept
+	•	difficulty
+	•	source
+	•	grounding
+	•	duplicate questions
+	•	ambiguity
+
+For MCQ:
+
+exactly one correct answer unless the type explicitly allows multiple.
+
+Development AI and real AI MUST use the same validation pipeline.
+
+============================================================
+8. REAL PRACTICE ENGINE
+
+Implement the full workflow:
+
+POST /api/practice
+GET /api/practice/:id
+POST /api/practice/:id/answer
+POST /api/practice/:id/complete
+POST /api/practice/weakness
+
+Support:
+	•	multiple choice
+	•	true/false
+	•	short answer
+
+Store:
+	•	answer
+	•	correctness
+	•	confidence
+	•	response time
+	•	question
+	•	concept
+	•	session
+	•	timestamp
+
+Do not calculate results only in frontend state.
+
+============================================================
+9. CONFIDENCE + MASTERY
+
+Confidence options:
+	•	Guessing
+	•	Somewhat sure
+	•	Very sure
+
+Create deterministic mastery logic.
+
+Do NOT use:
+
+correct / total
+
+as the entire mastery algorithm.
+
+Consider:
+	•	recent performance
+	•	difficulty
+	•	confidence
+	•	repeated success
+	•	repeated mistakes
+	•	recency
+	•	question diversity
+
+Examples:
+
+Correct + Guessing = smaller increase
+
+Correct + Very Sure = larger increase
+
+Wrong + Very Sure = strong misconception signal
+
+Wrong + Guessing = smaller misconception signal
+
+Mastery must be calculated from persisted attempt history.
+
+AI must NOT control the core numerical mastery calculation.
+
+============================================================
+10. WEAKNESS DIAGNOSIS
+
+After practice, use real attempt history to identify:
+	•	weak concepts
+	•	repeated mistakes
+	•	high-confidence mistakes
+	•	low-confidence correct answers
+	•	improving concepts
+	•	fading concepts
+
+Persist useful weakness information.
+
+Example:
+
+“You missed 4 of your last 7 questions on Mendelian inheritance.”
+
+Do not fabricate this information.
+
+============================================================
+11. TARGETED RETEST
+
+Implement:
+
+“Practice My Weak Areas”
+
+It MUST generate NEW questions.
+
+Do not simply replay previous questions.
+
+Use:
+	•	weak concepts
+	•	recent mistakes
+	•	confidence
+	•	high-confidence errors
+	•	recent performance
+
+After retest:
+
+compare actual previous mastery with actual new mastery.
+
+Calculate:
+
+newMastery - previousMastery
+
+Example:
+
+52% → 81%
+
+Display:
+
+“Improved by 29 points.”
+
+This must come from database values.
+
+=========================================================
+PUSH THEM TO GITHUB ONCE
