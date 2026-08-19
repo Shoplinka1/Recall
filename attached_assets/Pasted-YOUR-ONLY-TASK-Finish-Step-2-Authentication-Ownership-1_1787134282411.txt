@@ -1,0 +1,161 @@
+YOUR ONLY TASK
+
+Finish Step 2: Authentication + Ownership.
+
+1. AUDIT CURRENT STATE FIRST
+
+Inspect the current Git code and continue from what already exists.
+
+Do NOT create a second auth/database architecture.
+
+Reuse the existing:
+	•	users schema
+	•	PostgreSQL/Drizzle
+	•	API structure
+	•	frontend login/signup screens
+
+2. IMPLEMENT AUTH implement : POST /api/auth/signup
+POST /api/auth/login
+POST /api/auth/logout
+GET  /api/auth/me
+
+Requirements:
+	•	Argon2 or bcrypt password hashing
+	•	passwords never stored plaintext
+	•	persistent sessions in PostgreSQL
+	•	secure HTTP-only cookies
+	•	session expiry
+	•	logout invalidates session
+	•	duplicate email protection
+	•	safe error responses
+	•	never expose secrets
+
+Remove the hard-coded demo user from production request handling.
+
+3. PROTECT USER DATA
+
+The authenticated session must determine the current user.
+
+Protect existing user-owned routes for:
+	•	subjects
+	•	materials
+	•	concepts
+	•	questions
+	•	practice sessions
+	•	attempts/progress where applicable
+
+Never trust a userId supplied by the frontend.
+
+4. OWNERSHIP
+
+A user must never access another user’s:
+	•	subjects
+	•	materials
+	•	concepts
+	•	questions
+	•	practice sessions
+	•	attempts/progress
+
+For every resource ID, verify ownership server-side before returning, updating, deleting, or using it.
+
+5. FRONTEND
+
+Connect the existing login/signup screens to the real API.
+
+Do not redesign the application.
+
+Only make the changes necessary for real authentication/session state.
+
+6. TESTS
+
+Create executable tests proving:
+User A signup/login
+User A creates subject/material/practice
+User B signup/login
+User B attempts to access User A's records
+→ access rejected
+
+Also verify:
+signup
+→ login
+→ /api/auth/me
+→ protected request works
+→ logout
+→ protected request rejected
+Test unauthenticated access as well.
+
+7. PRESERVE STEP 1
+
+Do NOT modify or replace the PostgreSQL architecture.
+
+Do NOT use:
+	•	in-memory users
+	•	fake sessions
+	•	localStorage as the auth source of truth
+	•	hard-coded demo users
+
+Sessions must persist in PostgreSQL.
+
+DO NOT IMPLEMENT STEP 3
+
+Do NOT implement yet:
+	•	PDF/PPTX/DOCX extraction
+	•	image processing
+	•	material processing
+	•	new practice engine
+	•	mastery
+	•	weaknesses
+	•	recommendations
+	•	dashboard redesign
+	•	Paystack
+	•	billing
+	•	subscriptions
+
+Only make small compatibility fixes required for authentication/ownership.
+
+VERIFY BEFORE STOPPING
+
+Run:
+	1.	typecheck
+	2.	auth tests
+	3.	ownership/cross-user tests
+	4.	build
+	5.	start API
+	6.	/api/healthz
+	7.	frontend HTTP check
+	8.	existing PostgreSQL persistence check
+
+Fix errors instead of merely reporting them.
+
+IMPORTANT
+
+Do NOT claim Step 2 is complete unless the actual API authentication and ownership checks are working and the cross-user tests pass.
+
+Do NOT claim production-ready.
+
+Complete Step 2 only, then STOP.
+
+FINAL REPORT
+
+Report only:
+
+IMPLEMENTED
+	•	authentication/session/ownership changes
+
+TESTED
+	•	tests actually executed
+
+OWNERSHIP
+	•	protected resources
+
+NOT VERIFIED
+	•	anything not actually tested
+
+DATABASE
+	•	schema changes
+
+BUILD
+	•	typecheck/build
+
+RUNTIME
+	•	API/health/frontend

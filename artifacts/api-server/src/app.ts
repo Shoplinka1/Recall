@@ -1,5 +1,6 @@
 import express, { type Express } from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
@@ -25,10 +26,17 @@ app.use(
     },
   }),
 );
-app.use(cors());
+app.use(cors({ credentials: true, origin: true }));
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
+
+app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  logger.error({ err: error }, "Unhandled request error");
+  if (res.headersSent) return;
+  res.status(500).json({ error: "An unexpected error occurred" });
+});
 
 export default app;
