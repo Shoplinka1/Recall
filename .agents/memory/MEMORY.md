@@ -1,1 +1,2 @@
 - [Recall integrations](recall-integrations.md) — the first build keeps AI, billing, and user-file storage behind explicit seams with a grounded demo fallback.
+- [Recall runtime setup](recall-runtime-setup.md) — imported workspaces may need dependency install and an explicit Drizzle push before API persistence routes work.
