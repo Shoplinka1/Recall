@@ -875,7 +875,7 @@ export async function completePractice(
   userId: string,
   sessionId: string,
 ): Promise<PracticeResults | undefined> {
-  return db.transaction(async (tx) => {
+  const completed = await db.transaction(async (tx) => {
     const [session] = await tx
       .select()
       .from(practiceSessionsTable)
@@ -895,7 +895,7 @@ export async function completePractice(
       .where(eq(practiceSessionsTable.id, sessionId));
     return sessionId;
   });
-  return summarizePractice(userId, sessionId);
+  return completed ? summarizePractice(userId, sessionId) : undefined;
 }
 
 export async function getSubscription(userId: string): Promise<Subscription> {
