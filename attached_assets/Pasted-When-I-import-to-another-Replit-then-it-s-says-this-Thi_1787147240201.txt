@@ -1,0 +1,106 @@
+When I import to another Replit then it’s says this : This is Recall — a student learning app that converts study materials into practice questions, tracks mastery, and surfaces weaknesses. It's a pnpm monorepo with a React/Vite frontend and an Express/PostgreSQL backend.
+A few things worth knowing before you decide:
+	•	Dependencies aren't installed — both workflows are failing because node_modules is missing
+	•	Demo mode is built in — the app can run without a real database or AI keys, using deterministic demo data
+	•	Production features (real auth, AI, billing, file storage) need environment secrets: DATABASE_URL, AI keys (Gemini/OpenAI/Anthropic), and Paystack keys
+
+Demo is still there 😩should I paste this: RECALL — FINISH STEP 5 FROM CURRENT GIT STATE
+
+CONTINUE FROM THE CURRENT IMPORTED GIT CODEBASE.
+
+DO NOT restart Step 5.
+DO NOT redo Steps 1–4.
+DO NOT replace PostgreSQL, auth, material processing, grounded questions, private storage, or AI.
+DO NOT start Step 6.
+
+Steps 1–4 are complete.
+Step 5 is partially complete and the core implementation already exists.
+
+IMPORTANT:
+Do NOT use DEMO_MODE to verify Step 5.
+Use the real authenticated PostgreSQL-backed application.
+Do not replace missing functionality with fake/demo data, localStorage, in-memory storage, or fallback sessions.
+
+CURRENT VERIFIED STATE:
+- PostgreSQL schema applied
+- dependencies installed
+- typecheck passes
+- build passes
+- real Step 5 implementation exists
+- authenticated practice persistence has already been tested
+- session/answer/completion/reload/ownership behavior has been tested
+
+CURRENT REMAINING ISSUE:
+The Step 5 regression test creates a material and immediately starts practice while material processing is still asynchronous. The API correctly rejects the unready material.
+
+CONTINUE FROM HERE.
+
+YOUR ONLY TASK:
+Finish Step 5 and fix the smallest correct production-side readiness handling.
+
+Do NOT weaken the test or bypass processing.
+
+Verify:
+- material reaches READY before practice generation
+- practice uses real Step 4 questions
+- session persists in PostgreSQL
+- answers persist
+- MCQ works
+- true/false works
+- short-answer works
+- completion/result persists
+- reload/resume works
+- API restart preserves session/result
+- User B cannot access User A's session/questions/results
+- unauthenticated access is rejected
+- Steps 1–4 regression tests still pass
+
+If the existing API should wait/poll for processing, implement that safely. Do not invent fake READY states.
+
+Also verify private storage if configured. Never replace it with fake/local storage.
+
+Run:
+- typecheck
+- Step 5 tests
+- Steps 1–4 regression tests
+- Drizzle schema push if DATABASE_URL exists
+- build
+- API startup
+- /api/healthz
+- frontend HTTP check
+- restart persistence
+
+FIX ERRORS BEFORE STOPPING.
+
+STEP 5 IS COMPLETE ONLY WHEN:
+real material → real grounded questions → persisted practice session → persisted answers → persisted completion/result → restart/resume → ownership protection are actually proven by tests.
+
+STOP AFTER STEP 5.
+DO NOT START STEP 6.
+
+FINAL REPORT ONLY:
+
+IMPLEMENTED
+PRACTICE
+PERSISTENCE
+OWNERSHIP
+TESTED
+NOT VERIFIED
+DATABASE
+BUILD
+RUNTIME
+
+Do not claim production-ready.
+
+IMPORTANT DEMO AUDIT:
+For the real authenticated PostgreSQL path, inspect the code for remaining demo/fake fallbacks.
+
+Do NOT remove legitimate test fixtures, but do NOT allow demo data to silently substitute for real data in the production/user path.
+
+If a real feature still falls back to demo data when an API/database operation fails, fix that fallback where it affects Step 5.
+
+The UI must not show fake practice sessions, fake questions, fake scores, fake READY states, or fake persistence when using the real authenticated PostgreSQL path.
+
+DEMO_MODE may remain only as an explicit development/test mode and must never be used as evidence that Step 5 works.
+
+Do not replace missing functionality with fake/demo data, localStorage, in-memory storage, or fallback sessions.
