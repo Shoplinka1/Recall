@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { db } from "@workspace/db";
 import {
   conceptMasteryTable,
@@ -30,7 +30,8 @@ import {
 const DEMO_EMAIL = "alex@example.com";
 const DEMO_NAME = "Alex Morgan";
 
-type QuestionWithConcept = typeof questionsTable.$inferSelect & {
+type QuestionWithConcept = {
+  question: typeof questionsTable.$inferSelect;
   conceptName: string;
 };
 
@@ -40,16 +41,16 @@ const iso = (value: Date | null | undefined) =>
   value ? value.toISOString() : null;
 
 const questionToApi = (row: QuestionWithConcept): Question => ({
-  id: row.id,
-  questionText: row.questionText,
-  type: row.type,
-  options: row.options,
+  id: row.question.id,
+  questionText: row.question.questionText,
+  type: row.question.type,
+  options: row.question.options,
   concept: row.conceptName,
-  difficulty: row.difficulty,
-  sourceExcerpt: row.sourceExcerpt,
-  sourcePage: row.sourcePage ?? 1,
-  explanation: row.explanation,
-  correctAnswer: row.correctAnswer,
+  difficulty: row.question.difficulty,
+  sourceExcerpt: row.question.sourceExcerpt,
+  sourcePage: row.question.sourcePage ?? 1,
+  explanation: row.question.explanation,
+  correctAnswer: row.question.correctAnswer,
 });
 
 async function seedRecallData() {
@@ -455,7 +456,12 @@ async function answeredCount(sessionId: string) {
   const [row] = await db
     .select({ value: count() })
     .from(sessionQuestionsTable)
-    .where(and(eq(sessionQuestionsTable.sessionId, sessionId), eq(sessionQuestionsTable.userAnswer, "")));
+    .where(
+      and(
+        eq(sessionQuestionsTable.sessionId, sessionId),
+        isNotNull(sessionQuestionsTable.userAnswer),
+      ),
+    );
   return Number(row?.value ?? 0);
 }
 

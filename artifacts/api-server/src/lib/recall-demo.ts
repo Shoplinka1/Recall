@@ -1,27 +1,15 @@
-import { randomUUID } from "node:crypto";
 import type {
   AnswerInput,
   Concept,
   Dashboard,
   Material,
   Mistake,
-  PracticeResults,
-  PracticeSession,
   Progress,
   Question,
   Recommendation,
   Subject,
   Subscription,
 } from "@workspace/api-zod";
-
-export type DemoAnswer = AnswerInput & {
-  isCorrect: boolean;
-  question: Question;
-};
-
-export type DemoSession = PracticeSession & {
-  answers: DemoAnswer[];
-};
 
 export const demoSubjects: Subject[] = [
   {
@@ -304,9 +292,6 @@ export const demoMistakes: Mistake[] = [
   },
 ];
 
-export const practiceSessions = new Map<string, DemoSession>();
-export const resultStore = new Map<string, PracticeResults>();
-
 export const recommendation: Recommendation = {
   id: "rec-conduction",
   title: "Practice cardiac conduction",
@@ -362,23 +347,3 @@ export const buildProgress = (): Progress => ({
   ],
   concepts: demoConcepts,
 });
-
-export const createDemoSession = (
-  title: string,
-  sessionType: string,
-  subjectName: string,
-  questions: Question[],
-): DemoSession => {
-  const session: DemoSession = {
-    id: randomUUID(),
-    title,
-    sessionType,
-    subjectName,
-    questions,
-    currentIndex: 0,
-    completed: false,
-    answers: [],
-  };
-  practiceSessions.set(session.id, session);
-  return session;
-};

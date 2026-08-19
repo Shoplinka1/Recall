@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { Router, type IRouter } from "express";
 import {
   AnswerPracticeBody,
@@ -9,240 +8,269 @@ import {
   CreateWeaknessPracticeBody,
 } from "@workspace/api-zod";
 import {
-  buildDashboard,
-  buildProgress,
-  createDemoSession,
-  demoConcepts,
-  demoMaterials,
   demoMistakes,
-  demoQuestions,
-  demoSubjects,
-  practiceSessions,
   recommendation,
-  resultStore,
-  subscription,
 } from "../lib/recall-demo";
-import { generateGroundedQuestions } from "../lib/ai";
+import {
+  answerPractice,
+  completePractice,
+  createMaterial,
+  createPractice,
+  createSubject,
+  deleteMaterial,
+  ensureRecallData,
+  getDemoUser,
+  getMaterial,
+  getPractice,
+  getSubscription,
+  listConcepts,
+  listMaterials,
+  listSubjects,
+} from "../lib/recall-store";
 
 const router: IRouter = Router();
 
-router.get("/dashboard", (_req, res) => {
-  res.json(buildDashboard());
-});
-
-router.get("/subjects", (_req, res) => {
-  res.json(demoSubjects);
-});
-
-router.post("/subjects", (req, res) => {
-  const input = CreateSubjectBody.parse(req.body);
-  const subject = {
-    id: randomUUID(),
-    name: input.name,
-    description: input.description ?? "",
-    color: input.color ?? "violet",
-    materialCount: 0,
-  };
-  demoSubjects.unshift(subject);
-  res.status(201).json(subject);
-});
-
-router.get("/materials", (_req, res) => {
-  res.json(demoMaterials);
-});
-
-router.post("/materials", (req, res) => {
-  const input = CreateMaterialBody.parse(req.body);
-  const subject = demoSubjects.find((item) => item.id === input.subjectId);
-  if (!subject) {
-    res.status(404).json({ error: "Subject not found" });
-    return;
+router.use(async (_req, _res, next) => {
+  try {
+    await ensureRecallData();
+    next();
+  } catch (error) {
+    next(error);
   }
-
-  const material = {
-    id: randomUUID(),
-    title: input.title,
-    subjectId: subject.id,
-    subjectName: subject.name,
-    fileType: input.fileType,
-    processingStatus: "ready",
-    concepts: 0,
-    sessions: 0,
-    lastStudied: null,
-    createdAt: new Date().toISOString(),
-    excerpt:
-      input.extractedText?.slice(0, 180) ||
-      "Recall will identify the important ideas in this material.",
-  };
-  demoMaterials.unshift(material);
-  subject.materialCount += 1;
-  res.status(201).json(material);
 });
 
-router.get("/materials/:id", (req, res) => {
-  const material = demoMaterials.find((item) => item.id === req.params.id);
-  if (!material) {
-    res.status(404).json({ error: "Material not found" });
-    return;
-  }
-  res.json(material);
-});
-
-router.delete("/materials/:id", (req, res) => {
-  const index = demoMaterials.findIndex((item) => item.id === req.params.id);
-  if (index === -1) {
-    res.status(404).json({ error: "Material not found" });
-    return;
-  }
-  demoMaterials.splice(index, 1);
-  res.status(204).send();
-});
-
-router.get("/concepts", (_req, res) => {
-  res.json(demoConcepts);
-});
-
-router.post("/practice", (req, res) => {
-  const input = CreatePracticeBody.parse(req.body);
-  const subject = demoSubjects.find((item) => item.id === input.subjectId);
-  const material = demoMaterials.find((item) => item.id === input.materialId);
-  const filtered = demoQuestions.filter((question) => {
-    if (input.materialId === "material-cell-membranes") {
-      return ["Osmosis", "Membrane transport"].includes(question.concept);
-    }
-    if (input.subjectId === "subject-biology") {
-      return ["Osmosis", "Membrane transport"].includes(question.concept);
-    }
-    if (input.subjectId === "subject-physics") {
-      return question.concept === "Kinematics";
-    }
-    return true;
-  });
-  const questions = generateGroundedQuestions(
-    filtered.length ? filtered : demoQuestions,
-    input.questionCount,
-  );
-  const session = createDemoSession(
-    material
-      ? `${material.title} practice`
-      : subject
-        ? `${subject.name} practice`
-        : "Recommended practice",
-    "practice",
-    subject?.name ?? material?.subjectName ?? "Human Anatomy",
-    questions,
-  );
-  res.status(201).json(session);
-});
-
-router.post("/practice/weakness", (req, res) => {
-  const input = CreateWeaknessPracticeBody.parse(req.body);
-  const selectedNames = new Set(
-    demoConcepts
-      .filter((concept) => input.conceptIds.includes(concept.id))
-      .map((concept) => concept.name),
-  );
-  const filtered = demoQuestions.filter((question) =>
-    selectedNames.size
-      ? selectedNames.has(question.concept)
-      : ["Cardiac conduction", "Osmosis", "Membrane transport"].includes(
-          question.concept,
+router.get("/dashboard", async (_req, res, next) => {
+  try {
+    const user = await getDemoUser();
+    const [materials, concepts, subscription] = await Promise.all([
+      listMaterials(user.id),
+      listConcepts(user.id),
+      getSubscription(user.id),
+    ]);
+    res.json({
+      greeting: `Good morning, ${user.name.split(" ")[0]}`,
+      subtitle: "Your next best session is already waiting.",
+      recommendation,
+      stats: {
+        weeklyMinutes: 42,
+        weeklyGoal: 60,
+        streak: 6,
+        questionsAnswered: concepts.reduce(
+          (total, concept) => total + concept.questionsAttempted,
+          0,
         ),
-  );
-  const session = createDemoSession(
-    "Weakness fix",
-    "weakness",
-    "Focused practice",
-    generateGroundedQuestions(filtered.length ? filtered : demoQuestions, 6),
-  );
-  res.status(201).json(session);
+        overallMastery: concepts.length
+          ? Math.round(
+              concepts.reduce((total, concept) => total + concept.masteryScore, 0) /
+                concepts.length,
+            )
+          : 0,
+      },
+      recentMaterials: materials.slice(0, 3),
+      concepts: [...concepts].sort((a, b) => a.masteryScore - b.masteryScore),
+      subscription,
+    });
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.get("/practice/:id", (req, res) => {
-  const session = practiceSessions.get(req.params.id);
-  if (!session) {
-    res.status(404).json({ error: "Practice session not found" });
-    return;
+router.get("/subjects", async (_req, res, next) => {
+  try {
+    const user = await getDemoUser();
+    res.json(await listSubjects(user.id));
+  } catch (error) {
+    next(error);
   }
-  res.json(session);
 });
 
-router.post("/practice/:id", (req, res) => {
-  const session = practiceSessions.get(req.params.id);
-  if (!session) {
-    res.status(404).json({ error: "Practice session not found" });
-    return;
+router.post("/subjects", async (req, res, next) => {
+  try {
+    const input = CreateSubjectBody.parse(req.body);
+    const user = await getDemoUser();
+    res.status(201).json(await createSubject(user.id, input));
+  } catch (error) {
+    next(error);
   }
-  const input = AnswerPracticeBody.parse(req.body);
-  const question = session.questions.find(
-    (item) => item.id === input.questionId,
-  );
-  if (!question) {
-    res.status(404).json({ error: "Question not found" });
-    return;
-  }
-  const isCorrect =
-    question.correctAnswer.trim().toLowerCase() ===
-    input.answer.trim().toLowerCase();
-  session.answers.push({ ...input, isCorrect, question });
-  session.currentIndex = Math.min(
-    session.questions.length - 1,
-    session.currentIndex + 1,
-  );
-  res.json({
-    isCorrect,
-    correctAnswer: question.correctAnswer,
-    explanation: question.explanation,
-    concept: question.concept,
-    sourceExcerpt: question.sourceExcerpt,
-  });
 });
 
-router.post("/practice/:id/complete", (req, res) => {
-  const session = practiceSessions.get(req.params.id);
-  if (!session) {
-    res.status(404).json({ error: "Practice session not found" });
-    return;
+router.get("/materials", async (_req, res, next) => {
+  try {
+    const user = await getDemoUser();
+    res.json(await listMaterials(user.id));
+  } catch (error) {
+    next(error);
   }
-  const correct = session.answers.filter((answer) => answer.isCorrect).length;
-  const questionsAnswered = session.answers.length;
-  const score = questionsAnswered
-    ? Math.round((correct / questionsAnswered) * 100)
-    : 0;
-  const wrongConcepts = Array.from(
-    new Set(
-      session.answers
-        .filter((answer) => !answer.isCorrect)
-        .map((answer) => answer.question.concept),
-    ),
-  );
-  const result = {
-    id: session.id,
-    score,
-    questionsAnswered,
-    correct,
-    incorrect: questionsAnswered - correct,
-    averageConfidence: session.answers.some(
-      (answer) => answer.confidence === "Guessing",
-    )
-      ? "Somewhat sure"
-      : "Very sure",
-    averageResponseTime: "18 sec",
-    strongConcepts: score >= 80 ? ["Heart anatomy"] : [],
-    needsAttention: wrongConcepts.slice(0, 2),
-    weakConcepts: wrongConcepts.slice(0, 1),
-    diagnosis: wrongConcepts.length
-      ? `The pattern suggests you understand the broad idea but need a clearer distinction in ${wrongConcepts[0]}.`
-      : "You're building reliable recall. Keep mixing question types so the knowledge sticks.",
-    improvement: session.sessionType === "weakness" ? 12 : 0,
-  };
-  session.completed = true;
-  resultStore.set(session.id, result);
-  res.json(result);
 });
 
-router.get("/progress", (_req, res) => {
-  res.json(buildProgress());
+router.post("/materials", async (req, res, next) => {
+  try {
+    const input = CreateMaterialBody.parse(req.body);
+    const user = await getDemoUser();
+    const subject = (await listSubjects(user.id)).find(
+      (item) => item.id === input.subjectId,
+    );
+    if (!subject) {
+      res.status(404).json({ error: "Subject not found" });
+      return;
+    }
+    const material = await createMaterial(user.id, input);
+    res.status(201).json(material);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/materials/:id", async (req, res, next) => {
+  try {
+    const user = await getDemoUser();
+    const material = await getMaterial(user.id, req.params.id);
+    if (!material) {
+      res.status(404).json({ error: "Material not found" });
+      return;
+    }
+    res.json(material);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete("/materials/:id", async (req, res, next) => {
+  try {
+    const user = await getDemoUser();
+    if (!(await deleteMaterial(user.id, req.params.id))) {
+      res.status(404).json({ error: "Material not found" });
+      return;
+    }
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/concepts", async (_req, res, next) => {
+  try {
+    const user = await getDemoUser();
+    res.json(await listConcepts(user.id));
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/practice", async (req, res, next) => {
+  try {
+    const input = CreatePracticeBody.parse(req.body);
+    const user = await getDemoUser();
+    res.status(201).json(
+      await createPractice(user.id, {
+        subjectId: input.subjectId ?? undefined,
+        materialId: input.materialId ?? undefined,
+        questionCount: input.questionCount,
+        sessionType: "practice",
+      }),
+    );
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/practice/weakness", async (req, res, next) => {
+  try {
+    const input = CreateWeaknessPracticeBody.parse(req.body);
+    const user = await getDemoUser();
+    res.status(201).json(
+      await createPractice(
+        user.id,
+        { questionCount: 6, sessionType: "weakness" },
+        input.conceptIds,
+      ),
+    );
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/practice/:id", async (req, res, next) => {
+  try {
+    const user = await getDemoUser();
+    const session = await getPractice(user.id, req.params.id);
+    if (!session) {
+      res.status(404).json({ error: "Practice session not found" });
+      return;
+    }
+    res.json(session);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/practice/:id", async (req, res, next) => {
+  try {
+    const input = AnswerPracticeBody.parse(req.body);
+    const user = await getDemoUser();
+    const result = await answerPractice(user.id, req.params.id, input);
+    if (result === undefined) {
+      res.status(404).json({ error: "Practice session not found" });
+      return;
+    }
+    if (result === null) {
+      res.status(404).json({ error: "Question not found" });
+      return;
+    }
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/practice/:id/complete", async (req, res, next) => {
+  try {
+    const user = await getDemoUser();
+    const result = await completePractice(user.id, req.params.id);
+    if (!result) {
+      res.status(404).json({ error: "Practice session not found" });
+      return;
+    }
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/progress", async (_req, res, next) => {
+  try {
+    const user = await getDemoUser();
+    const concepts = await listConcepts(user.id);
+    res.json({
+      overallMastery: concepts.length
+        ? Math.round(
+            concepts.reduce((total, concept) => total + concept.masteryScore, 0) /
+              concepts.length,
+          )
+        : 0,
+      changeThisWeek: 8,
+      accuracy: 78,
+      confidence: 69,
+      studyMinutes: 184,
+      questionsAnswered: concepts.reduce(
+        (total, concept) => total + concept.questionsAttempted,
+        0,
+      ),
+      weekly: [
+        { day: "Mon", minutes: 24, questions: 8 },
+        { day: "Tue", minutes: 12, questions: 5 },
+        { day: "Wed", minutes: 31, questions: 11 },
+        { day: "Thu", minutes: 18, questions: 7 },
+        { day: "Fri", minutes: 38, questions: 10 },
+        { day: "Sat", minutes: 19, questions: 7 },
+        { day: "Sun", minutes: 42, questions: 12 },
+      ],
+      concepts,
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 router.get("/mistakes", (_req, res) => {
@@ -265,8 +293,13 @@ router.get("/recommendations", (_req, res) => {
   ]);
 });
 
-router.get("/subscription", (_req, res) => {
-  res.json(subscription);
+router.get("/subscription", async (_req, res, next) => {
+  try {
+    const user = await getDemoUser();
+    res.json(await getSubscription(user.id));
+  } catch (error) {
+    next(error);
+  }
 });
 
 router.post("/billing/checkout", (req, res) => {
@@ -285,15 +318,13 @@ router.post("/billing/checkout", (req, res) => {
   });
 });
 
-router.get("/auth/session", (_req, res) => {
-  res.json({
-    authenticated: true,
-    user: {
-      id: "demo-user",
-      name: "Alex Morgan",
-      email: "alex@example.com",
-    },
-  });
+router.get("/auth/session", async (_req, res, next) => {
+  try {
+    const user = await getDemoUser();
+    res.json({ authenticated: true, user });
+  } catch (error) {
+    next(error);
+  }
 });
 
 export default router;
