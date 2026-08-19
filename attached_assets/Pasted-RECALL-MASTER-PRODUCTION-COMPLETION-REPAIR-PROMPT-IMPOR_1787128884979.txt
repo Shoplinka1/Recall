@@ -1,0 +1,1977 @@
+RECALL — MASTER PRODUCTION COMPLETION + REPAIR PROMPT
+
+IMPORTANT:
+This is a CONTINUATION of the existing Recall project.
+
+DO NOT rebuild Recall from scratch.
+
+DO NOT create a second project.
+
+DO NOT create another prototype.
+
+DO NOT create another demo-only application.
+
+DO NOT throw away working infrastructure unnecessarily.
+
+DO NOT replace working code simply for the sake of rewriting it.
+
+The existing Recall codebase is the source of truth.
+
+Your job is to INSPECT, REPAIR, COMPLETE, CONNECT, TEST, and POLISH the existing application until it is a real production-oriented application.
+
+============================================================
+0. FIRST: FULL EXISTING PROJECT AUDIT
+============================================================
+
+BEFORE implementing anything:
+
+1. Inspect the ENTIRE existing Recall repository.
+2. Inspect all workspace/package configuration.
+3. Inspect the frontend.
+4. Inspect the backend.
+5. Inspect all shared libraries.
+6. Inspect the database configuration.
+7. Inspect existing schemas.
+8. Inspect migrations.
+9. Inspect authentication.
+10. Inspect payment code.
+11. Inspect AI/integration code.
+12. Inspect file-upload/processing code.
+13. Inspect practice/question code.
+14. Inspect dashboard/progress code.
+15. Inspect routing.
+16. Inspect environment configuration.
+17. Inspect tests.
+18. Inspect build configuration.
+19. Search the entire project for Stripe.
+20. Search for TODOs, placeholders, mock data, fake statistics, stub endpoints, fake API responses, and unfinished functionality.
+
+Determine exactly:
+
+- what already works
+- what partially works
+- what is only UI/demo functionality
+- what is broken
+- what is missing
+- what can be reused
+- what must be replaced
+- what must be migrated
+- what must be tested
+
+DO NOT assume something is missing merely because it wasn't obvious from one file.
+
+Actually inspect the relevant files before implementing replacements.
+
+After the audit, CONTINUE IMPLEMENTING.
+
+Do not stop merely because you found problems.
+
+============================================================
+1. PRODUCT
+============================================================
+
+Recall is an intelligent study and practice application.
+
+The core product loop is:
+
+UPLOAD MATERIAL
+→ UNDERSTAND MATERIAL
+→ IDENTIFY CONCEPTS
+→ GENERATE GROUNDED PRACTICE
+→ STUDENT ANSWERS
+→ SCORE ANSWERS
+→ TRACK CONFIDENCE
+→ DIAGNOSE WEAKNESSES
+→ TARGET WEAK CONCEPTS
+→ RETEST
+→ UPDATE MASTERY
+→ RECOMMEND WHAT TO STUDY NEXT
+
+The product should feel like:
+
+"I don't need to figure out what to study."
+
+Recall already knows.
+
+After practice:
+
+"Now I know exactly what I don't understand."
+
+After targeted practice:
+
+"I can see that I'm improving."
+
+The core learning loop is more important than adding unnecessary features.
+
+============================================================
+2. ABSOLUTE REQUIREMENT: REAL APPLICATION
+============================================================
+
+Do not stop at frontend screens.
+
+Do not stop at API scaffolding.
+
+Do not stop at database tables.
+
+Do not stop at mock data.
+
+Do not leave fake buttons.
+
+Do not leave fake charts.
+
+Do not leave fake statistics.
+
+Do not leave fake subscriptions.
+
+Do not leave fake AI success responses in production.
+
+The following must use REAL application logic:
+
+- authentication
+- database persistence
+- users
+- subjects
+- materials
+- uploads
+- material processing
+- concepts
+- questions
+- practice sessions
+- answers
+- confidence
+- scoring
+- mastery
+- weakness diagnosis
+- targeted retesting
+- recommendations
+- dashboard
+- progress
+- mistakes
+- feature gating
+- usage limits
+- authorization
+- ownership
+- subscriptions
+- Paystack architecture
+- error handling
+- loading states
+- history
+
+Only AI-generated content may use deterministic local development fixtures when AI development mode is enabled.
+
+============================================================
+3. AI COST REQUIREMENT
+============================================================
+
+I currently do NOT have a budget for paid AI API usage during development.
+
+Therefore:
+
+DO NOT make OpenAI, Anthropic, or Gemini API usage mandatory for development.
+
+DO NOT repeatedly call external AI APIs while developing or testing.
+
+The COMPLETE application workflow must be testable without paying for AI API usage.
+
+Create two clearly separated modes:
+
+AI_MODE=development
+
+and
+
+AI_MODE=real
+
+============================================================
+4. DEVELOPMENT AI MODE
+============================================================
+
+When:
+
+AI_MODE=development
+
+the application MUST NOT call external AI APIs.
+
+Create a real DevelopmentAIService implementing the same interface as the real AI providers.
+
+Architecture should resemble:
+
+AIService
+├── DevelopmentAIService
+├── GeminiAIService
+├── OpenAIService
+└── AnthropicAIService
+
+DevelopmentAIService must produce deterministic, realistic structured results based on the actual material/content being processed.
+
+It must be capable of simulating:
+
+- material analysis
+- concept extraction
+- question generation
+- question validation
+- answer evaluation
+- weakness diagnosis
+- targeted question generation
+- explanations
+- recommendations
+
+IMPORTANT:
+
+Development AI is NOT allowed to bypass application logic.
+
+The workflow must remain:
+
+Development AI generates content
+→ schema validation
+→ grounding validation
+→ database persistence
+→ practice engine
+→ user answer
+→ real scoring
+→ real confidence tracking
+→ real mastery calculation
+→ real weakness diagnosis
+→ targeted practice
+→ real retest results
+→ real dashboard update.
+
+The AI fixture is only replacing the external AI call.
+
+Everything else must be real.
+
+============================================================
+5. REAL AI MODE
+============================================================
+
+When:
+
+AI_MODE=real
+
+use the configured AI provider.
+
+Support:
+
+- Gemini
+- OpenAI
+- Anthropic
+
+Create a provider abstraction.
+
+Do not scatter provider-specific API calls throughout routes/components.
+
+The service should expose methods such as:
+
+analyzeMaterial()
+extractConcepts()
+generateQuestions()
+validateQuestions()
+evaluateAnswer()
+diagnoseWeaknesses()
+generateTargetedPractice()
+generateExplanation()
+generateRecommendation()
+
+Provider selection must come from configuration.
+
+============================================================
+6. AI ENVIRONMENT VARIABLES
+============================================================
+
+Use:
+
+AI_MODE=development
+AI_PROVIDER=gemini
+
+GEMINI_API_KEY=
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+
+During development:
+
+AI_MODE=development
+
+must not require any AI API key.
+
+When:
+
+AI_MODE=real
+
+and the selected provider does not have a valid API key:
+
+fail gracefully with a clear configuration error.
+
+DO NOT fake a successful AI response.
+
+Never expose secret AI keys to the browser.
+
+============================================================
+7. AI GROUNDING
+============================================================
+
+Questions MUST be grounded in the student's material.
+
+Use:
+
+- material sections
+- extracted text
+- retrieved chunks
+- concepts
+- previous questions
+- previous mistakes
+- relevant context
+
+Do NOT repeatedly send an entire huge document to the AI.
+
+Implement appropriate:
+
+- chunking
+- sectioning
+- retrieval
+- caching
+- context selection
+
+Every generated question should retain, where applicable:
+
+- materialId
+- sectionId
+- sourceExcerpt
+- sourcePage
+- concept
+- difficulty
+- questionType
+
+If there is insufficient evidence in the material:
+
+DO NOT INVENT.
+
+Reject the generation rather than creating unsupported facts.
+
+============================================================
+8. QUESTION VALIDATION
+============================================================
+
+Every AI-generated question must pass strict schema validation before entering the database.
+
+Validate:
+
+- question type
+- question text
+- options
+- correct answer
+- explanation
+- concept
+- difficulty
+- source
+- grounding
+- duplicates
+- ambiguity
+
+For MCQ:
+
+There must be exactly one correct answer unless the question type explicitly supports multiple answers.
+
+If AI output is invalid:
+
+retry using the provider abstraction where appropriate.
+
+If still invalid:
+
+discard it.
+
+Never save malformed AI output.
+
+Development AI output must use exactly the same validation pipeline.
+
+============================================================
+9. REMOVE STRIPE COMPLETELY
+============================================================
+
+Search the ENTIRE repository for:
+
+stripe
+Stripe
+STRIPE_
+/api/stripe
+
+Remove obsolete Stripe implementation.
+
+Remove:
+
+- Stripe imports
+- Stripe services
+- Stripe routes
+- Stripe webhooks
+- Stripe UI
+- Stripe environment variables
+- Stripe database fields
+- Stripe payment logic
+- Stripe-specific terminology
+
+Do not leave an obsolete Stripe payment flow behind.
+
+The production payment provider is PAYSTACK.
+
+============================================================
+10. PAYSTACK
+============================================================
+
+Use Paystack instead of Stripe.
+
+Environment variables:
+
+PAYSTACK_SECRET_KEY=
+PAYSTACK_PUBLIC_KEY=
+
+PAYSTACK_PRO_MONTHLY_PLAN_CODE=
+PAYSTACK_PRO_ANNUAL_PLAN_CODE=
+
+APP_URL=
+
+Never expose:
+
+PAYSTACK_SECRET_KEY
+DATABASE_URL
+SESSION_SECRET
+AI secret keys
+
+to the browser.
+
+PAYSTACK_PUBLIC_KEY may be exposed client-side where Paystack requires it.
+
+Do NOT invent a PAYSTACK_WEBHOOK_SECRET variable.
+
+Paystack webhook authenticity must be verified using Paystack's official signature mechanism and the server-side Paystack secret key.
+
+============================================================
+11. PAYSTACK PLANS
+============================================================
+
+Recall has:
+
+FREE
+PRO MONTHLY
+PRO ANNUAL
+
+Target pricing:
+
+PRO MONTHLY:
+9.99 equivalent in configured Paystack currency
+
+PRO ANNUAL:
+79.99 equivalent in configured Paystack currency
+
+IMPORTANT:
+
+Do NOT hard-code "$9.99" or "$79.99" as the actual payment amount.
+
+Paystack configuration determines the real amount and currency.
+
+Plan codes MUST come from:
+
+PAYSTACK_PRO_MONTHLY_PLAN_CODE
+PAYSTACK_PRO_ANNUAL_PLAN_CODE
+
+Never hard-code plan codes.
+
+The billing UI must display the actual configured amount/currency.
+
+If required Paystack configuration is missing:
+
+- do not pretend payment works
+- show a clear configuration error
+- allow the rest of the application to continue functioning
+
+============================================================
+12. PAYMENT ARCHITECTURE
+============================================================
+
+Create a payment abstraction:
+
+PaymentService
+
+with:
+
+initializeSubscription()
+verifyTransaction()
+getSubscription()
+cancelSubscription()
+handleWebhook()
+
+Create:
+
+PaystackPaymentService
+
+implementing PaymentService.
+
+Do NOT scatter Paystack API calls throughout frontend components or random backend files.
+
+All Paystack-specific logic belongs behind the payment service.
+
+============================================================
+13. PAYSTACK CHECKOUT FLOW
+============================================================
+
+Flow:
+
+User clicks:
+
+"Start Recall Pro"
+
+↓
+
+Frontend calls:
+
+POST /api/payments/paystack/initialize
+
+with:
+
+monthly
+
+or
+
+annual
+
+↓
+
+Server:
+
+1. Authenticates user.
+2. Determines correct plan code.
+3. Uses authenticated user's email.
+4. Initializes Paystack transaction/subscription.
+5. Stores appropriate pending transaction information.
+6. Returns Paystack authorization URL.
+
+↓
+
+Frontend redirects to Paystack.
+
+↓
+
+User completes payment.
+
+↓
+
+Paystack redirects to Recall.
+
+↓
+
+Recall verifies the transaction SERVER-SIDE.
+
+↓
+
+Recall updates local subscription state only after successful verification.
+
+NEVER activate Pro because:
+
+- frontend says payment succeeded
+- localStorage says Pro
+- query parameter says success
+- browser redirect occurred
+- client-side state says paid
+
+Only trusted server-side Paystack verification/webhook information may activate Pro.
+
+============================================================
+14. PAYSTACK WEBHOOK
+============================================================
+
+Create:
+
+POST /api/payments/paystack/webhook
+
+Verify Paystack signature.
+
+Reject unauthenticated/invalid webhook requests.
+
+Handle relevant events including:
+
+charge.success
+subscription.create
+subscription.not_renewing
+subscription.disable
+invoice.create
+invoice.update
+invoice.payment_failed
+
+Support additional relevant Paystack events where appropriate.
+
+Webhook processing must be:
+
+- authenticated
+- signature verified
+- idempotent
+- retry-safe
+- transactional where appropriate
+- logged safely
+
+Prevent duplicate records.
+
+Store relevant Paystack identifiers.
+
+Never store:
+
+- card numbers
+- CVV
+- full card details
+- payment credentials
+
+============================================================
+15. SUBSCRIPTION DATABASE
+============================================================
+
+Use provider-neutral subscription fields.
+
+subscriptions should support:
+
+id
+userId
+provider
+providerCustomerCode
+providerSubscriptionCode
+providerPlanCode
+plan
+status
+amount
+currency
+currentPeriodStart
+currentPeriodEnd
+cancelAtPeriodEnd
+createdAt
+updatedAt
+
+Appropriate indexes and uniqueness constraints must be added.
+
+============================================================
+16. BILLING PAGE
+============================================================
+
+Create or repair:
+
+/billing
+
+FREE:
+
+"You are currently using Recall Free."
+
+[Upgrade to Pro]
+
+PRO:
+
+"Recall Pro"
+
+Show actual:
+
+- amount
+- currency
+- billing interval
+- subscription status
+- next billing date
+
+Provide:
+
+- Manage subscription
+- Cancel subscription
+
+Use Paystack-supported subscription mechanisms where appropriate.
+
+Do not collect card information ourselves.
+
+============================================================
+17. SUBSCRIPTION STATES
+============================================================
+
+Support appropriate states including:
+
+FREE
+ACTIVE
+NON_RENEWING
+PAYMENT_FAILED
+CANCELLED
+EXPIRED
+
+Do NOT delete learning data when a subscription ends.
+
+Preserve:
+
+- materials
+- subjects
+- questions
+- practice history
+- knowledge map
+- progress
+- mistakes
+
+Only premium feature access should change.
+
+============================================================
+18. SERVER-SIDE FEATURE GATING
+============================================================
+
+Create reusable feature checks such as:
+
+canUploadMaterial()
+canGeneratePractice()
+canGenerateTargetedRetest()
+canUseAdvancedAnalysis()
+canUseLongSessions()
+
+Every protected API endpoint must verify:
+
+- authentication
+- authorization
+- ownership
+- subscription status
+- usage limits
+
+Frontend hiding is NOT security.
+
+A Free user must not bypass restrictions by directly calling the API.
+
+============================================================
+19. FREE PLAN
+============================================================
+
+Free must provide a meaningful experience.
+
+Do not make Free useless.
+
+Create centralized configurable limits.
+
+For example:
+
+- limited active materials
+- limited practice generations
+- limited targeted sessions
+- basic progress
+- basic knowledge map
+
+Do not scatter numeric limits throughout the codebase.
+
+============================================================
+20. PRO PLAN
+============================================================
+
+Pro should provide meaningful additional value.
+
+Possible Pro capabilities:
+
+- higher material limits
+- higher practice limits
+- more targeted practice
+- advanced knowledge analysis
+- longer sessions
+- advanced progress
+- personalized recommendations
+- mistake analysis
+- advanced difficulty
+
+Do not promise unlimited external AI generation.
+
+Use sensible fair-use limits.
+
+============================================================
+21. POSTGRESQL
+============================================================
+
+Use PostgreSQL as the real production database.
+
+Do NOT use in-memory arrays as the primary database.
+
+Inspect the existing Drizzle/database architecture and reuse it where appropriate.
+
+Create/fix:
+
+- schemas
+- migrations
+- relations
+- foreign keys
+- indexes
+- uniqueness constraints
+- cascading behavior
+- transactions
+
+Run migrations successfully.
+
+All important data must persist after server restart.
+
+============================================================
+22. CORE DATABASE DOMAIN
+============================================================
+
+Ensure the database supports the real application.
+
+At minimum, implement the necessary equivalent structures for:
+
+- users
+- sessions
+- subjects
+- materials
+- files
+- material sections
+- concepts
+- questions
+- question sources
+- practice sessions
+- practice questions
+- attempts
+- scores
+- confidence
+- mastery
+- weaknesses
+- recommendations
+- usage
+- payments
+- transactions
+- subscriptions
+
+Do not blindly duplicate tables if equivalent structures already exist.
+
+Reuse and migrate existing structures where possible.
+
+============================================================
+23. AUTHENTICATION
+============================================================
+
+Implement/fix:
+
+- signup
+- login
+- logout
+- session persistence
+- protected routes
+- password hashing
+- password reset architecture
+
+Use secure password hashing such as Argon2 or bcrypt.
+
+Use secure server-side sessions or an appropriately implemented token/session architecture.
+
+Use secure cookies where applicable.
+
+Implement:
+
+- session expiry
+- authorization
+- rate limiting
+- CSRF protection where applicable
+- secure cookie flags
+
+A user MUST NEVER access another user's records.
+
+============================================================
+24. OWNERSHIP SECURITY
+============================================================
+
+Every user-owned resource must verify ownership server-side.
+
+A user must NEVER access another user's:
+
+- materials
+- files
+- sections
+- concepts
+- questions
+- practice sessions
+- attempts
+- progress
+- mistakes
+- subscriptions
+- payments
+
+Test unauthorized access explicitly.
+
+============================================================
+25. FILE UPLOAD
+============================================================
+
+Support:
+
+- PDF
+- PPTX
+- DOCX
+- TXT
+- images
+- pasted text
+
+The pipeline must actually:
+
+1. receive input
+2. validate input
+3. validate MIME type
+4. validate extension
+5. validate size
+6. securely store file
+7. extract text
+8. divide content into sections
+9. identify headings/topics where possible
+10. identify concepts
+11. save sections
+12. update processing status
+13. make material available for practice
+
+Statuses should include meaningful states such as:
+
+Uploading
+Processing
+Understanding material
+Finding concepts
+Ready
+
+If processing fails:
+
+show a useful error and provide Retry.
+
+============================================================
+26. FILE SECURITY
+============================================================
+
+Uploaded files are private.
+
+Do not expose permanent public URLs.
+
+Use secure storage and signed access or server-mediated access.
+
+Validate:
+
+- MIME
+- extension
+- file size
+- content where appropriate
+
+Use safe storage isolation.
+
+Every file operation must verify ownership.
+
+Implement reasonable protection against malicious uploads.
+
+============================================================
+27. MATERIAL PROCESSING
+============================================================
+
+Material processing must be persisted.
+
+A material should have a real lifecycle such as:
+
+uploaded
+processing
+ready
+failed
+
+If processing fails:
+
+store a useful error state.
+
+Allow retry without corrupting existing records.
+
+Do not create fake "Ready" status before processing actually completes.
+
+============================================================
+28. PRACTICE ENGINE
+============================================================
+
+Implement a real practice flow:
+
+Create session
+→ retrieve questions
+→ display question
+→ answer
+→ confidence
+→ response time
+→ score
+→ record attempt
+→ diagnose
+→ update mastery
+→ recommend next action
+
+Support:
+
+- multiple choice
+- true/false
+- short answer
+
+Store every attempt.
+
+============================================================
+29. CONFIDENCE TRACKING
+============================================================
+
+Before submitting an answer allow:
+
+- Guessing
+- Somewhat sure
+- Very sure
+
+Use confidence in mastery logic.
+
+Examples:
+
+Correct + Guessing:
+small increase
+
+Correct + Very Sure:
+larger increase
+
+Wrong + Very Sure:
+strong misconception signal
+
+Wrong + Guessing:
+smaller misconception signal
+
+Never mark a concept mastered after one successful answer.
+
+============================================================
+30. DETERMINISTIC MASTERY ENGINE
+============================================================
+
+Mastery MUST NOT simply be:
+
+correct / total
+
+Create deterministic, testable logic considering:
+
+- recent performance
+- difficulty
+- confidence
+- repeated success
+- repeated mistakes
+- recency
+- question diversity
+
+The same input should produce predictable output.
+
+AI may interpret the results but MUST NOT be responsible for the core numerical mastery calculation.
+
+============================================================
+31. WEAKNESS DIAGNOSIS
+============================================================
+
+After practice identify:
+
+- weak concepts
+- repeated mistakes
+- high-confidence mistakes
+- low-confidence correct answers
+- improving concepts
+- fading concepts
+
+Use actual attempt history.
+
+Example:
+
+"You understand the basic definition of active transport, but your recent answers suggest confusion between primary and secondary active transport."
+
+Provide:
+
+[Fix this weakness]
+
+============================================================
+32. TARGETED RETEST
+============================================================
+
+"Practice My Weak Areas" must create NEW questions.
+
+Do NOT simply replay the previous questions.
+
+Target:
+
+- weak concepts
+- recent mistakes
+- low-confidence areas
+- high-confidence errors
+- recent performance
+
+After retest compare actual performance.
+
+Example:
+
+Before:
+Mitosis — 52%
+
+After:
+Mitosis — 81%
+
+Display:
+
+"Improved by 29 points."
+
+Calculate the difference from real stored data.
+
+============================================================
+33. QUICK PRACTICE
+============================================================
+
+Create Quick Practice.
+
+Options:
+
+5 minutes
+10 minutes
+20 minutes
+30 minutes
+45 minutes
+60 minutes
+
+Recall should automatically choose:
+
+- relevant weak concepts
+- suitable question count
+- suitable difficulty
+- appropriate material
+
+Minimize unnecessary decisions.
+
+============================================================
+34. SMART RECOMMENDATIONS
+============================================================
+
+Recommendations MUST use real database data.
+
+Consider:
+
+- mastery
+- confidence
+- recent mistakes
+- time since practice
+- difficulty
+- mistake frequency
+- study goals
+- recent performance
+- material importance
+
+Examples:
+
+"Practice Genetics — Mendelian inheritance."
+
+Reason:
+
+"You missed 4 of your last 7 questions on this concept."
+
+Or:
+
+"Review Photosynthesis."
+
+Reason:
+
+"You haven't practiced this concept in 12 days."
+
+Do NOT randomly generate recommendations.
+
+============================================================
+35. DAILY LEARNING
+============================================================
+
+Recall must not be only an exam application.
+
+It should support:
+
+- before class
+- after class
+- weekly study
+- exam preparation
+- long-term learning
+
+Dashboard must answer:
+
+"What should I study right now?"
+
+Possible recommendation types:
+
+- weakness fix
+- fading concept review
+- quick knowledge check
+- new material practice
+- previous mistake review
+
+============================================================
+36. DASHBOARD
+============================================================
+
+Dashboard must use real database data.
+
+Show:
+
+- today's recommendation
+- recent materials
+- weak concepts
+- knowledge overview
+- study time
+- questions answered
+- recent scores
+- streak
+- weekly progress
+
+NO hardcoded fake statistics.
+
+============================================================
+37. MATERIAL LIBRARY
+============================================================
+
+Users must be able to:
+
+- upload
+- search
+- sort
+- open
+- study
+- review
+- delete
+
+Show:
+
+- recent materials
+- subjects
+- processing status
+- last studied
+- practice history
+- concepts
+
+All records must belong to the authenticated user.
+
+============================================================
+38. KNOWLEDGE MAP
+============================================================
+
+Display actual mastery.
+
+Example:
+
+Cardiac Conduction — 48% — Weak
+Blood Vessels — 73% — Needs Work
+Heart Anatomy — 91% — Strong
+
+Clicking a concept should show:
+
+- mastery
+- confidence
+- attempt history
+- mistakes
+- source materials
+- last practiced
+- recommended next action
+
+============================================================
+39. PROGRESS
+============================================================
+
+Use actual historical records.
+
+Show:
+
+- overall mastery
+- subject mastery
+- concept mastery
+- accuracy
+- confidence
+- study time
+- questions answered
+- weekly progress
+- monthly progress
+
+All numbers must come from the database.
+
+============================================================
+40. MISTAKE REVIEW
+============================================================
+
+Create:
+
+/mistakes
+
+Show:
+
+- question
+- user answer
+- correct answer
+- explanation
+- source
+- concept
+
+Also identify:
+
+- high-confidence mistakes
+- low-confidence correct answers
+
+Allow:
+
+Practice similar question
+
+============================================================
+41. CONTEXTUAL AI
+============================================================
+
+Do NOT build a generic ChatGPT clone.
+
+Only contextual actions such as:
+
+- Explain this
+- Explain like a beginner
+- Give an example
+- Why did I get this wrong?
+- Give me a harder example
+
+Ground responses in the student's material whenever possible.
+
+============================================================
+42. API ROUTES
+============================================================
+
+Use clean validated routes.
+
+Authentication:
+
+POST /api/auth/signup
+POST /api/auth/login
+POST /api/auth/logout
+GET /api/auth/me
+
+Dashboard:
+
+GET /api/dashboard
+
+Materials:
+
+POST /api/materials
+GET /api/materials
+GET /api/materials/:id
+DELETE /api/materials/:id
+
+Processing:
+
+POST /api/materials/:id/process
+
+Practice:
+
+POST /api/practice
+GET /api/practice/:id
+POST /api/practice/:id/answer
+POST /api/practice/:id/complete
+POST /api/practice/weakness
+
+Progress:
+
+GET /api/progress
+GET /api/mistakes
+GET /api/recommendations
+
+Payments:
+
+POST /api/payments/paystack/initialize
+POST /api/payments/paystack/verify
+POST /api/payments/paystack/webhook
+GET /api/payments/paystack/subscription
+POST /api/payments/paystack/manage
+POST /api/payments/paystack/cancel
+
+Use request validation everywhere.
+
+Use Zod/shared schemas where the existing architecture supports it.
+
+============================================================
+43. ENVIRONMENT CONFIGURATION
+============================================================
+
+Create/update:
+
+.env.example
+
+Use:
+
+APP_ENV=development
+DEMO_MODE=true
+
+AI_MODE=development
+AI_PROVIDER=gemini
+
+DATABASE_URL=
+SESSION_SECRET=
+
+GEMINI_API_KEY=
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+
+PAYSTACK_SECRET_KEY=
+PAYSTACK_PUBLIC_KEY=
+PAYSTACK_PRO_MONTHLY_PLAN_CODE=
+PAYSTACK_PRO_ANNUAL_PLAN_CODE=
+
+EMAIL_PROVIDER_API_KEY=
+EMAIL_FROM=
+
+APP_URL=
+
+Do not commit real secrets.
+
+============================================================
+44. PRODUCTION ENVIRONMENT
+============================================================
+
+Production must use:
+
+DEMO_MODE=false
+
+and appropriate production configuration.
+
+Production MUST NOT:
+
+- generate fake AI responses
+- fake payments
+- fake subscriptions
+- fake statistics
+- fake progress
+- fake uploads
+- fake dashboard numbers
+- pretend sample users are real
+- pretend external services succeeded
+
+If an external service is unavailable:
+
+fail gracefully.
+
+============================================================
+45. DEVELOPMENT SEED
+============================================================
+
+A development-only seed may exist.
+
+Example:
+
+Human Anatomy
+Cardiovascular System
+
+Concepts:
+
+Heart Anatomy
+Cardiac Conduction
+Blood Vessels
+Cardiac Cycle
+
+Sample questions and practice history may be included.
+
+BUT:
+
+This seed must NEVER automatically appear for real production users.
+
+Use:
+
+DEMO_MODE=false
+
+or an equivalent explicit production safeguard.
+
+============================================================
+46. SECURITY HARDENING
+============================================================
+
+Audit every API route.
+
+Verify:
+
+- authentication
+- authorization
+- ownership
+- input validation
+- file validation
+- rate limiting
+- secure headers
+- webhook signature verification
+- secret handling
+- safe logging
+
+Use Helmet or equivalent security headers where appropriate.
+
+Configure CORS securely.
+
+Do not log:
+
+- passwords
+- session secrets
+- API keys
+- payment credentials
+- sensitive tokens
+
+============================================================
+47. DATABASE INTEGRITY
+============================================================
+
+Run migrations.
+
+Fix migration errors.
+
+Verify:
+
+- foreign keys
+- indexes
+- unique constraints
+- ownership relationships
+- cascade behavior
+- transactions
+- duplicate prevention
+
+Use transactions for important multi-step operations.
+
+Avoid unnecessary N+1 queries.
+
+============================================================
+48. TESTING
+============================================================
+
+Create and run tests for:
+
+Authentication
+Authorization
+Ownership
+Material processing
+Question validation
+Grounding validation
+Practice scoring
+Confidence tracking
+Mastery calculation
+Weakness detection
+Targeted retesting
+Recommendation engine
+Feature gating
+Usage limits
+Paystack initialization
+Paystack verification
+Paystack webhook
+Subscription activation
+Subscription cancellation
+Subscription expiry
+
+Explicitly test:
+
+User A cannot access User B's materials.
+
+User A cannot access User B's files.
+
+User A cannot access User B's practice sessions.
+
+User A cannot access User B's progress.
+
+User A cannot access User B's subscription.
+
+============================================================
+49. PAYSTACK TESTING WITHOUT CREDENTIALS
+============================================================
+
+If Paystack credentials are unavailable:
+
+DO NOT stop development.
+
+Implement the complete Paystack integration.
+
+Use mocked HTTP/service-level tests for:
+
+- initialization
+- verification
+- webhook signature handling
+- subscription state changes
+- cancellation
+- payment failure
+- duplicate webhook handling
+
+Do NOT claim a live Paystack transaction was tested if it was not.
+
+============================================================
+50. AI TESTING WITHOUT CREDENTIALS
+============================================================
+
+If AI credentials are unavailable:
+
+set:
+
+AI_MODE=development
+
+and test the COMPLETE learning workflow using DevelopmentAIService.
+
+Do not call external AI APIs.
+
+Do not pretend a real provider was tested.
+
+============================================================
+51. ERROR STATES
+============================================================
+
+Every important operation requires:
+
+- loading
+- success
+- error
+- retry
+- empty state where appropriate
+
+Never leave blank screens.
+
+Examples:
+
+AI error:
+
+"Recall couldn't create your practice session."
+
+[Try again]
+
+Payment error:
+
+"Your payment couldn't be completed."
+
+[Try again]
+
+File error:
+
+"We couldn't process this file."
+
+[Retry]
+
+============================================================
+52. UI / UX
+============================================================
+
+Reuse existing UI where it is good.
+
+Replace demo-looking UI where necessary.
+
+The final product should feel:
+
+- premium
+- calm
+- intelligent
+- academic
+- modern
+- fast
+
+Use:
+
+- strong typography
+- clear hierarchy
+- generous whitespace
+- subtle borders
+- tasteful cards
+- consistent icons
+- responsive layouts
+
+Avoid:
+
+- fake charts
+- fake buttons
+- placeholder text
+- unfinished screens
+- excessive gradients
+- excessive animations
+- generic AI chatbot appearance
+
+============================================================
+53. MOBILE
+============================================================
+
+The web application must work extremely well on mobile.
+
+Practice mode is especially important.
+
+Use:
+
+- large touch targets
+- clear progress
+- easy answer selection
+- easy submit/next controls
+- no cramped layouts
+- responsive navigation
+
+============================================================
+54. BUILD / RUNTIME
+============================================================
+
+Run:
+
+- type checking
+- linting if configured
+- tests
+- database migrations
+- production build
+
+Then start the application.
+
+Fix ALL errors you encounter.
+
+Do not stop at the first error.
+
+Continue until the application starts successfully.
+
+If one subsystem cannot be live-tested because credentials are missing, continue testing everything else.
+
+============================================================
+55. DO NOT ASK ME TO MANUALLY IMPLEMENT FEATURES
+============================================================
+
+Do not respond with:
+
+"Now implement..."
+
+"Now create..."
+
+"Connect this yourself..."
+
+"Finish the backend..."
+
+"Add this later..."
+
+Implement everything possible directly in the existing Replit environment.
+
+If a genuine external credential is required:
+
+1. Build the integration.
+2. Add the correct environment variable.
+3. Add configuration validation.
+4. Add graceful error handling.
+5. Clearly document the required credential.
+
+Do not block the rest of the application.
+
+============================================================
+56. DO NOT OVERBUILD
+============================================================
+
+Do NOT add:
+
+- social network
+- marketplace
+- teacher dashboard
+- LMS
+- video platform
+- course marketplace
+- tutoring marketplace
+- generic AI chatbot
+- giant flashcard library
+- full spaced-repetition engine
+- school management system
+
+The core learning loop is more important than feature count.
+
+Future architecture may support:
+
+- flashcards
+- spaced repetition
+- voice
+- AI tutor
+- study groups
+- teacher accounts
+- calendar
+- browser extension
+- mobile apps
+- case-based learning
+
+But do NOT allow future features to delay the core product.
+
+============================================================
+57. FINAL END-TO-END TEST
+============================================================
+
+After implementation, test the complete application flow using real application data.
+
+Test:
+
+1. New user visits Recall.
+2. User signs up.
+3. Session persists.
+4. User completes onboarding.
+5. User creates Biology.
+6. User uploads lecture material.
+7. File is validated.
+8. File is securely stored.
+9. Material processes.
+10. Text is extracted.
+11. Sections are created.
+12. Concepts are identified.
+13. Material becomes Ready.
+14. User starts practice.
+15. Grounded questions appear.
+16. User answers.
+17. Confidence is recorded.
+18. Response time is recorded.
+19. Answer is scored.
+20. Attempt is stored.
+21. Practice session completes.
+22. Mastery updates.
+23. Weak concepts appear.
+24. Dashboard updates.
+25. User starts targeted practice.
+26. NEW questions are generated.
+27. User completes targeted retest.
+28. Mastery changes based on actual results.
+29. Improvement is displayed.
+30. User returns later.
+31. Recommendation is generated from real database data.
+32. User reaches Free usage limit.
+33. Upgrade is displayed.
+34. Paystack initialization is attempted.
+35. If credentials exist, real Paystack flow is testable.
+36. If credentials do not exist, mocked service tests verify the integration.
+37. Server-side verification controls Pro activation.
+38. Webhooks update subscription state.
+39. User can manage/cancel subscription.
+40. Learning data remains after cancellation.
+41. Expired subscription returns gracefully to Free.
+42. Premium feature gates behave correctly.
+
+EVERY STEP MUST USE REAL APPLICATION LOGIC.
+
+============================================================
+58. FINAL QUALITY BAR
+============================================================
+
+The finished application should behave like a real startup product.
+
+There must be:
+
+- real navigation
+- real database persistence
+- real authentication
+- real authorization
+- real file processing
+- real material understanding pipeline
+- real concepts
+- real questions
+- grounded questions
+- real practice
+- real scoring
+- real confidence tracking
+- deterministic mastery
+- real weakness diagnosis
+- real targeted retesting
+- real recommendations
+- real dashboard data
+- real progress
+- real mistakes
+- real subscription architecture
+- real Paystack integration
+- real usage limits
+- real feature gating
+- real error handling
+- real loading states
+- real empty states
+- secure APIs
+- mobile responsiveness
+- no fake production data
+
+============================================================
+59. FINAL REPORT
+============================================================
+
+After completing the work, provide a concise implementation report containing:
+
+1. Existing functionality that was retained.
+2. Existing functionality that was repaired.
+3. Existing demo functionality that was replaced.
+4. Database/schema changes.
+5. Migration status.
+6. Authentication status.
+7. File-processing status.
+8. Core learning-loop status.
+9. AI architecture status.
+10. Development AI status.
+11. Whether development mode works without AI API costs.
+12. Real AI provider integrations completed.
+13. Paystack integration completed.
+14. Subscription/feature-gating status.
+15. Security improvements.
+16. Tests created and run.
+17. Build status.
+18. Runtime status.
+19. Anything that could not be live-tested.
+20. External credentials still required.
+
+IMPORTANT:
+
+Do NOT claim something is working if it was not actually tested.
+
+Clearly distinguish:
+
+IMPLEMENTED
+TESTED
+MOCK-TESTED
+NOT LIVE-TESTED
+REQUIRES CREDENTIAL
+
+============================================================
+60. FINAL INSTRUCTION
+============================================================
+
+START NOW.
+
+First inspect the existing Recall project completely.
+
+Then continue from the existing implementation.
+
+DO NOT rebuild unnecessarily.
+
+DO NOT create another prototype.
+
+DO NOT turn Recall into a fake demo.
+
+ADD missing functionality.
+
+FIX broken functionality.
+
+REMOVE obsolete functionality.
+
+CONNECT existing functionality.
+
+MIGRATE the database where necessary.
+
+IMPLEMENT the missing backend logic.
+
+IMPLEMENT the real learning loop.
+
+IMPLEMENT development AI mode.
+
+IMPLEMENT the real AI provider abstraction.
+
+REMOVE STRIPE COMPLETELY.
+
+IMPLEMENT PAYSTACK.
+
+IMPLEMENT subscription state and feature gating.
+
+IMPLEMENT secure authentication and ownership.
+
+IMPLEMENT real material processing.
+
+IMPLEMENT grounded question generation.
+
+IMPLEMENT practice, scoring, confidence, mastery, weaknesses, targeted retesting, progress, and recommendations.
+
+REPLACE fake production data with real database data.
+
+TEST everything possible.
+
+FIX errors.
+
+BUILD successfully.
+
+START successfully.
+
+Do not stop merely because the project is large.
+
+Prioritize:
+
+1. Core learning loop
+2. Data integrity
+3. Authentication/security
+4. AI architecture
+5. Paystack monetization
+6. Feature gating
+7. UX
+8. Performance
+9. Testing
+10. Polish
+
+The finished Recall application must allow a student to:
+
+upload their own material,
+have Recall understand it,
+practice it,
+discover what they don't know,
+practice their weaknesses,
+see measurable improvement,
+and return later to receive an intelligent recommendation.
+
+BUILD IT NOW.

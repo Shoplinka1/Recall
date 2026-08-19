@@ -47,7 +47,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 - Run `pnpm --filter @workspace/api-spec run codegen` after changing `lib/api-spec/openapi.yaml`.
 - The API server and web app are managed workflows; restart them through their existing workflow names after runtime changes.
-- The initial experience is intentionally demo-safe. Real auth, object storage, AI provider credentials, and Stripe checkout should be connected before treating it as a production launch.
+- The initial experience is intentionally demo-safe. Real auth, object storage, AI provider credentials, and Paystack configuration should be connected before treating it as a production launch.
 
 ## Pointers
 

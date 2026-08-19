@@ -53,10 +53,14 @@ export const subscriptionsTable = pgTable("recall_subscriptions", {
     .notNull()
     .unique()
     .references(() => usersTable.id, { onDelete: "cascade" }),
-  stripeCustomerId: text("stripe_customer_id"),
-  stripeSubscriptionId: text("stripe_subscription_id"),
+  provider: text("provider"),
+  providerCustomerCode: text("provider_customer_code"),
+  providerSubscriptionCode: text("provider_subscription_code"),
+  providerPlanCode: text("provider_plan_code"),
   plan: text("plan").notNull().default("free"),
-  status: text("status").notNull().default("active"),
+  status: text("status").notNull().default("free"),
+  amount: integer("amount"),
+  currency: text("currency"),
   currentPeriodStart: timestamp("current_period_start", { withTimezone: true }),
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
   cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),

@@ -271,13 +271,17 @@ router.get("/subscription", (_req, res) => {
 
 router.post("/billing/checkout", (req, res) => {
   const input = CreateCheckoutBody.parse(req.body);
-  const configured = Boolean(process.env.STRIPE_SECRET_KEY);
+  const planCode =
+    input.interval === "annual"
+      ? process.env.PAYSTACK_PRO_ANNUAL_PLAN_CODE
+      : process.env.PAYSTACK_PRO_MONTHLY_PLAN_CODE;
+  const configured = Boolean(process.env.PAYSTACK_SECRET_KEY && planCode);
   res.json({
     url: null,
     configured,
     message: configured
-      ? `Stripe checkout is ready for the ${input.interval} plan.`
-      : "Billing is not connected in demo mode. Your learning data is safe, and you can keep exploring Recall free.",
+      ? `Paystack checkout is ready for the ${input.interval} plan.`
+      : "Paystack billing is not configured yet. Your learning data is safe, and you can keep using Recall Free.",
   });
 });
 
