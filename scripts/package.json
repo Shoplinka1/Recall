@@ -9,6 +9,7 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "jszip": "^3.10.1",
     "tsx": "catalog:"
   }
 }

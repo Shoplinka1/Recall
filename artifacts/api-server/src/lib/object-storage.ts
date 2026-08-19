@@ -17,6 +17,10 @@ function parseObjectPath(path: string) {
   return { bucketName: parts[1], objectName: parts.slice(2).join("/") };
 }
 
+function privateObjectLocation() {
+  return parseObjectPath(privateObjectDir());
+}
+
 async function signObjectUrl(input: {
   bucketName: string;
   objectName: string;
@@ -45,10 +49,14 @@ export async function requestPrivateUpload(input: {
   size: number;
   contentType: string;
 }) {
-  const objectPath = `${privateObjectDir()}/uploads/${input.ownerId}/${randomUUID()}`;
-  const { bucketName, objectName } = parseObjectPath(objectPath);
+  const { bucketName, objectName: privatePrefix } = privateObjectLocation();
+  const objectName = `uploads/${input.ownerId}/${randomUUID()}`;
   return {
-    uploadURL: await signObjectUrl({ bucketName, objectName, method: "PUT" }),
+    uploadURL: await signObjectUrl({
+      bucketName,
+      objectName: `${privatePrefix}/${objectName}`,
+      method: "PUT",
+    }),
     objectPath: `/objects/${objectName}`,
     metadata: { name: input.name, size: input.size, contentType: input.contentType },
   };
@@ -56,10 +64,16 @@ export async function requestPrivateUpload(input: {
 
 export async function downloadPrivateObject(objectPath: string) {
   if (!objectPath.startsWith("/objects/")) throw new Error("Invalid private object path");
-  const { bucketName, objectName } = parseObjectPath(
-    `${privateObjectDir()}/${objectPath.slice("/objects/".length)}`,
-  );
-  const url = await signObjectUrl({ bucketName, objectName, method: "GET" });
+  const relativeObjectName = objectPath.slice("/objects/".length);
+  if (!relativeObjectName || relativeObjectName.includes("..")) {
+    throw new Error("Invalid private object path");
+  }
+  const { bucketName, objectName: privatePrefix } = privateObjectLocation();
+  const url = await signObjectUrl({
+    bucketName,
+    objectName: `${privatePrefix}/${relativeObjectName}`,
+    method: "GET",
+  });
   const response = await fetch(url, { signal: AbortSignal.timeout(60_000) });
   if (!response.ok) throw new Error(`Private object download failed (${response.status})`);
   return Buffer.from(await response.arrayBuffer());
