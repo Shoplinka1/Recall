@@ -1,0 +1,55 @@
+RECALL — RESTORE REAL STEP 5 ENVIRONMENT
+
+Do NOT run or use DEMO_MODE as proof of functionality.
+Do NOT rebuild or redesign Recall.
+Do NOT redo Steps 1–4.
+Do NOT start Step 6.
+
+This is an imported copy of the existing Git codebase. The previous Replit environment already implemented and tested Steps 1–5.
+
+The current environment is missing dependencies and may be missing environment configuration.
+
+FIRST:
+1. Install dependencies from the existing pnpm-lock.yaml.
+2. Inspect the existing .env/example/configuration and package scripts.
+3. Identify exactly which environment variables are required for the existing PostgreSQL-backed Steps 1–5.
+4. If DATABASE_URL is already available, use it and apply the EXISTING Drizzle schema without resetting the database.
+5. Do not invent credentials or replace PostgreSQL with demo/in-memory storage.
+6. Do not modify application architecture just because this imported environment lacks secrets.
+
+IMPORTANT:
+DEMO_MODE must NOT be used for Step 5 verification.
+Demo fixtures may remain for explicit development/testing only.
+The real authenticated user path must use PostgreSQL.
+
+After setup, verify:
+- authentication
+- real material persistence
+- real grounded questions
+- real practice sessions
+- answer persistence
+- completion/result persistence
+- restart/resume persistence
+- ownership protection
+
+Then fix ONLY the remaining Step 5 readiness issue:
+material processing is asynchronous, and the previous test started practice before the material reached READY.
+
+Do not weaken the test or create fake READY states.
+
+Run:
+- typecheck
+- Step 1–4 regression tests
+- Step 5 tests
+- Drizzle schema push if DATABASE_URL exists
+- build
+- API health
+- frontend HTTP check
+- restart persistence
+
+If a required secret such as DATABASE_URL is genuinely unavailable, STOP and report exactly which variable is missing instead of switching to demo mode.
+
+Do not claim Step 5 complete unless the real PostgreSQL-backed tests pass.
+
+STOP after Step 5.
+DO NOT START STEP 6.
