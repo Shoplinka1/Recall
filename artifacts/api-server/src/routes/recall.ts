@@ -292,6 +292,10 @@ router.post("/practice/:id", async (req, res, next) => {
       res.status(404).json({ error: "Question not found" });
       return;
     }
+    if ("sessionCompleted" in result) {
+      res.status(409).json({ error: "Practice session is already complete" });
+      return;
+    }
     res.json(result);
   } catch (error) {
     next(error);

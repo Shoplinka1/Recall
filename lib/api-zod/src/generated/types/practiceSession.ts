@@ -5,6 +5,7 @@
  * Recall learning workspace API
  * OpenAPI spec version: 0.1.0
  */
+import type { PracticeResults } from './practiceResults';
 import type { Question } from './question';
 
 export interface PracticeSession {
@@ -15,4 +16,5 @@ export interface PracticeSession {
   questions: Question[];
   currentIndex: number;
   completed: boolean;
+  results?: PracticeResults;
 }

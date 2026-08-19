@@ -106,6 +106,21 @@ export interface QuestionGenerationInput {
   count?: number;
 }
 
+export interface PracticeResults {
+  id: string;
+  score: number;
+  questionsAnswered: number;
+  correct: number;
+  incorrect: number;
+  averageConfidence: string;
+  averageResponseTime: string;
+  strongConcepts: string[];
+  needsAttention: string[];
+  weakConcepts: string[];
+  diagnosis: string;
+  improvement: number;
+}
+
 export interface PracticeSession {
   id: string;
   title: string;
@@ -114,6 +129,7 @@ export interface PracticeSession {
   questions: Question[];
   currentIndex: number;
   completed: boolean;
+  results?: PracticeResults;
 }
 
 export interface PracticeInput {
@@ -133,6 +149,7 @@ export interface WeaknessPracticeInput {
 
 export interface AnswerInput {
   questionId: string;
+  /** @minLength 1 */
   answer: string;
   confidence: string;
   responseTimeMs?: number;
@@ -144,21 +161,6 @@ export interface AnswerResult {
   explanation: string;
   concept: string;
   sourceExcerpt: string;
-}
-
-export interface PracticeResults {
-  id: string;
-  score: number;
-  questionsAnswered: number;
-  correct: number;
-  incorrect: number;
-  averageConfidence: string;
-  averageResponseTime: string;
-  strongConcepts: string[];
-  needsAttention: string[];
-  weakConcepts: string[];
-  diagnosis: string;
-  improvement: number;
 }
 
 export interface Recommendation {

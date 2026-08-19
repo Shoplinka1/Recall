@@ -546,22 +546,6 @@ export async function listConcepts(userId: string): Promise<Concept[]> {
   }));
 }
 
-async function questionRows(userId: string, questionIds?: string[]) {
-  const conditions = [
-    eq(questionsTable.userId, userId),
-    ne(questionsTable.generationVersion, "seed-v1"),
-  ];
-  if (questionIds?.length) conditions.push(inArray(questionsTable.id, questionIds));
-  return db
-    .select({
-      question: questionsTable,
-      conceptName: conceptsTable.name,
-    })
-    .from(questionsTable)
-    .innerJoin(conceptsTable, eq(questionsTable.conceptId, conceptsTable.id))
-    .where(and(...conditions));
-}
-
 async function waitForMaterialReady(userId: string, materialId: string) {
   for (let attempt = 0; attempt < 40; attempt += 1) {
     const [material] = await db
@@ -717,16 +701,23 @@ export async function getPractice(userId: string, sessionId: string) {
     .where(and(eq(practiceSessionsTable.id, sessionId), eq(practiceSessionsTable.userId, userId)))
     .limit(1);
   if (!session) return undefined;
-  const rows = await questionRows(
-    userId,
-    (
-      await db
-        .select({ questionId: sessionQuestionsTable.questionId })
-        .from(sessionQuestionsTable)
-        .where(eq(sessionQuestionsTable.sessionId, sessionId))
-        .orderBy(asc(sessionQuestionsTable.orderIndex))
-    ).map((row) => row.questionId),
-  );
+  const rows = await db
+    .select({
+      question: questionsTable,
+      conceptName: conceptsTable.name,
+    })
+    .from(sessionQuestionsTable)
+    .innerJoin(
+      questionsTable,
+      and(
+        eq(sessionQuestionsTable.questionId, questionsTable.id),
+        eq(questionsTable.userId, userId),
+        ne(questionsTable.generationVersion, "seed-v1"),
+      ),
+    )
+    .innerJoin(conceptsTable, eq(questionsTable.conceptId, conceptsTable.id))
+    .where(eq(sessionQuestionsTable.sessionId, sessionId))
+    .orderBy(asc(sessionQuestionsTable.orderIndex));
   const subject = (
     await db
       .select()
@@ -742,6 +733,9 @@ export async function getPractice(userId: string, sessionId: string) {
     questions: rows.map(questionToApi),
     currentIndex: await answeredCount(sessionId),
     completed: Boolean(session.completedAt),
+    ...(session.completedAt
+      ? { results: await summarizePractice(userId, sessionId) }
+      : {}),
   } satisfies PracticeSession;
 }
 
@@ -781,13 +775,16 @@ export async function answerPractice(
       ),
     )
     .limit(1);
-  if (!row) return null;
+  if (!row || row.question.userId !== userId) return null;
+  if (session.completedAt) return { sessionCompleted: true as const };
+  const normalizedAnswer = input.answer.trim().replace(/\s+/g, " ");
+  const normalizedCorrectAnswer = row.question.correctAnswer.trim().replace(/\s+/g, " ");
   const isCorrect =
-    row.question.correctAnswer.trim().toLowerCase() === input.answer.trim().toLowerCase();
+    normalizedCorrectAnswer.toLowerCase() === normalizedAnswer.toLowerCase();
   await db
     .update(sessionQuestionsTable)
     .set({
-      userAnswer: input.answer,
+      userAnswer: normalizedAnswer,
       isCorrect,
       confidence: input.confidence ?? null,
       responseTimeMs: input.responseTimeMs ?? null,
@@ -804,6 +801,73 @@ export async function answerPractice(
     explanation: row.question.explanation,
     concept: row.conceptName,
     sourceExcerpt: row.question.sourceExcerpt,
+  };
+}
+
+async function summarizePractice(userId: string, sessionId: string): Promise<PracticeResults> {
+  const [session] = await db
+    .select()
+    .from(practiceSessionsTable)
+    .where(and(eq(practiceSessionsTable.id, sessionId), eq(practiceSessionsTable.userId, userId)))
+    .limit(1);
+  if (!session) throw new Error("Practice session not found");
+  const answers = await db
+    .select()
+    .from(sessionQuestionsTable)
+    .where(eq(sessionQuestionsTable.sessionId, sessionId))
+    .orderBy(asc(sessionQuestionsTable.orderIndex));
+  const answered = answers.filter((answer) => answer.userAnswer !== null);
+  const correct = answered.filter((answer) => answer.isCorrect === true).length;
+  const questionRows = await db
+    .select({
+      concept: conceptsTable.name,
+      questionId: sessionQuestionsTable.questionId,
+    })
+    .from(sessionQuestionsTable)
+    .innerJoin(questionsTable, eq(sessionQuestionsTable.questionId, questionsTable.id))
+    .innerJoin(conceptsTable, eq(questionsTable.conceptId, conceptsTable.id))
+    .where(eq(sessionQuestionsTable.sessionId, sessionId));
+  const wrongConcepts = Array.from(
+    new Set(
+      questionRows
+        .filter((row) => answers.find((answer) => answer.questionId === row.questionId)?.isCorrect === false)
+        .map((row) => row.concept),
+    ),
+  );
+  const strongConcepts = Array.from(
+    new Set(
+      questionRows
+        .filter((row) => {
+          const answer = answers.find((item) => item.questionId === row.questionId);
+          return answer?.isCorrect === true;
+        })
+        .map((row) => row.concept),
+    ),
+  ).filter((concept) => !wrongConcepts.includes(concept));
+  const confidenceValues = answered.map((answer) => answer.confidence).filter(Boolean);
+  const averageResponseTimeMs = answered
+    .map((answer) => answer.responseTimeMs)
+    .filter((value): value is number => value !== null);
+  const score = answered.length ? Math.round((correct / answered.length) * 100) : 0;
+  return {
+    id: sessionId,
+    score: session.score ?? score,
+    questionsAnswered: answered.length,
+    correct,
+    incorrect: answered.length - correct,
+    averageConfidence: confidenceValues.length
+      ? confidenceValues[confidenceValues.length - 1]!
+      : "Not recorded",
+    averageResponseTime: averageResponseTimeMs.length
+      ? `${Math.round(averageResponseTimeMs.reduce((total, value) => total + value, 0) / averageResponseTimeMs.length / 1000)} sec`
+      : "Not recorded",
+    strongConcepts: strongConcepts.slice(0, 3),
+    needsAttention: wrongConcepts.slice(0, 2),
+    weakConcepts: wrongConcepts.slice(0, 1),
+    diagnosis: wrongConcepts.length
+      ? `The pattern suggests you understand the broad idea but need a clearer distinction in ${wrongConcepts[0]}.`
+      : "You're building reliable recall. Keep mixing question types so the knowledge sticks.",
+    improvement: session.sessionType === "weakness" ? 12 : 0,
   };
 }
 
@@ -825,42 +889,13 @@ export async function completePractice(
     const answered = answers.filter((answer) => answer.userAnswer !== null);
     const correct = answered.filter((answer) => answer.isCorrect).length;
     const score = answered.length ? Math.round((correct / answered.length) * 100) : 0;
-    const questionRows = await tx
-      .select({ concept: conceptsTable.name, questionId: sessionQuestionsTable.questionId })
-      .from(sessionQuestionsTable)
-      .innerJoin(questionsTable, eq(sessionQuestionsTable.questionId, questionsTable.id))
-      .innerJoin(conceptsTable, eq(questionsTable.conceptId, conceptsTable.id))
-      .where(eq(sessionQuestionsTable.sessionId, sessionId));
-    const wrongConcepts = Array.from(
-      new Set(
-        questionRows
-          .filter((row) => answers.find((answer) => answer.questionId === row.questionId)?.isCorrect === false)
-          .map((row) => row.concept),
-      ),
-    );
     await tx
       .update(practiceSessionsTable)
       .set({ completedAt: new Date(), score })
       .where(eq(practiceSessionsTable.id, sessionId));
-    return {
-      id: sessionId,
-      score,
-      questionsAnswered: answered.length,
-      correct,
-      incorrect: answered.length - correct,
-      averageConfidence: answered.some((answer) => answer.confidence === "Guessing")
-        ? "Somewhat sure"
-        : "Very sure",
-      averageResponseTime: "18 sec",
-      strongConcepts: score >= 80 ? ["Heart anatomy"] : [],
-      needsAttention: wrongConcepts.slice(0, 2),
-      weakConcepts: wrongConcepts.slice(0, 1),
-      diagnosis: wrongConcepts.length
-        ? `The pattern suggests you understand the broad idea but need a clearer distinction in ${wrongConcepts[0]}.`
-        : "You're building reliable recall. Keep mixing question types so the knowledge sticks.",
-      improvement: session.sessionType === "weakness" ? 12 : 0,
-    };
+    return sessionId;
   });
+  return summarizePractice(userId, sessionId);
 }
 
 export async function getSubscription(userId: string): Promise<Subscription> {

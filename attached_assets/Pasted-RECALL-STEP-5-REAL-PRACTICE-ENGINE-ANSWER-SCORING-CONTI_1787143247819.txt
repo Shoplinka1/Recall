@@ -1,0 +1,210 @@
+RECALL — STEP 5: REAL PRACTICE ENGINE + ANSWER SCORING
+
+CONTINUE FROM THE CURRENT IMPORTED GIT CODEBASE.
+
+STEP 1 ✅ PostgreSQL persistence
+STEP 2 ✅ Authentication/sessions/ownership
+STEP 3 ✅ Real material upload/extraction/storage
+STEP 4 ✅ Grounded question generation/validation
+
+DO NOT rebuild Recall.
+DO NOT undo Steps 1–4.
+DO NOT replace PostgreSQL/Drizzle.
+DO NOT replace authentication.
+DO NOT replace material processing.
+DO NOT replace grounded question generation.
+DO NOT start Step 6.
+
+A previous agent may have partial Step 5 work. INSPECT THE CURRENT GIT STATE FIRST and continue from what already exists. Do not redo completed work.
+
+YOUR ONLY TASK:
+
+Make the existing practice flow a REAL persisted practice engine using the real questions from Step 4.
+
+==================================================
+
+1. PRACTICE SESSIONS
+
+Use PostgreSQL as the source of truth.
+
+A practice session must:
+- belong to the authenticated user
+- use persisted questions from that user's materials
+- persist its state
+- persist selected/ submitted answers
+- track question progress
+- support completion
+
+Do not use demo question arrays, Maps, hard-coded practice data, or localStorage as the source of truth.
+
+==================================================
+
+2. QUESTION DELIVERY
+
+Use the existing Recall question model.
+
+Practice must serve real persisted:
+- multiple choice
+- true/false
+- short-answer
+
+Do not generate unrelated questions.
+
+Never allow User A to practice with User B's questions/materials.
+
+==================================================
+
+3. ANSWER SUBMISSION + SCORING
+
+Implement/repair the real answer flow.
+
+For each submitted answer:
+- identify the authenticated session/user
+- identify the practice question
+- validate ownership
+- validate the submitted answer
+- determine correctness using the persisted question data
+- persist the attempt/result
+- return the appropriate result
+
+MCQ/true-false should be scored deterministically.
+
+Short-answer should use the existing AI abstraction only if the current architecture supports it. Development mode must remain offline/deterministic.
+
+Do not scatter AI provider calls through routes.
+
+==================================================
+
+4. SESSION COMPLETION
+
+Persist:
+- started state
+- submitted answers
+- correct/incorrect results
+- score
+- completion state
+- completion timestamp where supported
+
+A completed session must remain completed after API restart.
+
+Do not recalculate everything from temporary memory.
+
+==================================================
+
+5. OWNERSHIP
+
+Reuse Step 2 authentication.
+
+Server must derive user identity from the session.
+
+Never trust frontend userId.
+
+User A must not access:
+- User B's practice sessions
+- User B's questions
+- User B's attempts
+- User B's results
+
+Test cross-user access.
+
+==================================================
+
+6. FRONTEND
+
+Use the existing Recall practice UI.
+
+Make it use the real API/practice engine.
+
+Fix demo behavior only where necessary.
+
+The UI should correctly show:
+- current question
+- answer choices/input
+- submission
+- correct/incorrect result
+- progress
+- final score/completion
+
+Do not redesign the entire application.
+
+No fake score or fake completion state.
+
+==================================================
+
+7. TESTS
+
+Create/run executable tests proving:
+
+- authenticated user starts a practice session
+- session uses real persisted questions
+- questions belong to the authenticated user
+- MCQ scoring works
+- true/false scoring works
+- short-answer behavior works if supported
+- attempts are persisted
+- correct/incorrect results persist
+- score is persisted
+- session completion persists
+- completed session survives API restart
+- User B cannot access User A's session/questions/attempts
+- unauthenticated access is rejected
+
+Also run Step 1–4 regression tests.
+
+Never claim a test passed unless it actually ran.
+
+==================================================
+
+8. VERIFY
+
+Run:
+- typecheck
+- Step 5 tests
+- Step 1–4 regression tests
+- database/schema validation
+- schema push/migration if needed
+- build
+- API startup
+- /api/healthz
+- frontend HTTP check
+- restart persistence test
+
+Fix errors before stopping.
+
+==================================================
+
+DO NOT IMPLEMENT STEP 6
+
+Do NOT implement yet:
+- mastery
+- confidence tracking
+- weakness diagnosis
+- recommendations
+- targeted retesting
+- dashboard redesign
+- Paystack
+- billing
+- subscriptions
+- major security audit
+
+STEP 5 IS COMPLETE ONLY WHEN:
+
+Real persisted questions can be practiced, answers are actually scored, attempts/results are stored in PostgreSQL, sessions can complete and survive restart, and cross-user ownership is protected.
+
+Do NOT claim production-ready.
+
+STOP AFTER STEP 5.
+
+FINAL REPORT ONLY:
+
+IMPLEMENTED
+PRACTICE
+SCORING
+DATABASE
+OWNERSHIP
+TESTED
+NOT VERIFIED
+BUILD
+RUNTIME
+
+DO NOT START STEP 6.

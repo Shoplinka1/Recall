@@ -316,7 +316,21 @@ export const CreatePracticeResponse = zod.object({
   "correctAnswer": zod.string()
 })),
   "currentIndex": zod.number(),
-  "completed": zod.boolean()
+  "completed": zod.boolean(),
+  "results": zod.object({
+  "id": zod.string(),
+  "score": zod.number(),
+  "questionsAnswered": zod.number(),
+  "correct": zod.number(),
+  "incorrect": zod.number(),
+  "averageConfidence": zod.string(),
+  "averageResponseTime": zod.string(),
+  "strongConcepts": zod.array(zod.string()),
+  "needsAttention": zod.array(zod.string()),
+  "weakConcepts": zod.array(zod.string()),
+  "diagnosis": zod.string(),
+  "improvement": zod.number()
+}).optional()
 })
 
 
@@ -347,7 +361,21 @@ export const CreateWeaknessPracticeResponse = zod.object({
   "correctAnswer": zod.string()
 })),
   "currentIndex": zod.number(),
-  "completed": zod.boolean()
+  "completed": zod.boolean(),
+  "results": zod.object({
+  "id": zod.string(),
+  "score": zod.number(),
+  "questionsAnswered": zod.number(),
+  "correct": zod.number(),
+  "incorrect": zod.number(),
+  "averageConfidence": zod.string(),
+  "averageResponseTime": zod.string(),
+  "strongConcepts": zod.array(zod.string()),
+  "needsAttention": zod.array(zod.string()),
+  "weakConcepts": zod.array(zod.string()),
+  "diagnosis": zod.string(),
+  "improvement": zod.number()
+}).optional()
 })
 
 
@@ -377,7 +405,21 @@ export const GetPracticeResponse = zod.object({
   "correctAnswer": zod.string()
 })),
   "currentIndex": zod.number(),
-  "completed": zod.boolean()
+  "completed": zod.boolean(),
+  "results": zod.object({
+  "id": zod.string(),
+  "score": zod.number(),
+  "questionsAnswered": zod.number(),
+  "correct": zod.number(),
+  "incorrect": zod.number(),
+  "averageConfidence": zod.string(),
+  "averageResponseTime": zod.string(),
+  "strongConcepts": zod.array(zod.string()),
+  "needsAttention": zod.array(zod.string()),
+  "weakConcepts": zod.array(zod.string()),
+  "diagnosis": zod.string(),
+  "improvement": zod.number()
+}).optional()
 })
 
 
@@ -388,9 +430,12 @@ export const AnswerPracticeParams = zod.object({
   "id": zod.coerce.string()
 })
 
+
+
+
 export const AnswerPracticeBody = zod.object({
   "questionId": zod.string(),
-  "answer": zod.string(),
+  "answer": zod.string().min(1),
   "confidence": zod.string(),
   "responseTimeMs": zod.number().optional()
 })

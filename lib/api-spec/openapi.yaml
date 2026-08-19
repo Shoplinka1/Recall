@@ -501,6 +501,8 @@ components:
             $ref: "#/components/schemas/Question"
         currentIndex: { type: number }
         completed: { type: boolean }
+        results:
+          $ref: "#/components/schemas/PracticeResults"
       required: [id, title, sessionType, subjectName, questions, currentIndex, completed]
     PracticeInput:
       type: object
@@ -523,7 +525,7 @@ components:
       type: object
       properties:
         questionId: { type: string }
-        answer: { type: string }
+        answer: { type: string, minLength: 1 }
         confidence: { type: string }
         responseTimeMs: { type: number }
       required: [questionId, answer, confidence]
