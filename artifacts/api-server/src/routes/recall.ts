@@ -6,6 +6,8 @@ import {
   CreatePracticeBody,
   CreateSubjectBody,
   CreateWeaknessPracticeBody,
+  GenerateMaterialQuestionsBody,
+  GenerateMaterialQuestionsResponse,
 } from "@workspace/api-zod";
 import {
   demoMistakes,
@@ -156,7 +158,8 @@ router.post("/materials/:id/retry", async (req, res, next) => {
 
 router.post("/materials/:id/questions/generate", async (req, res, next) => {
   try {
-    const count = Math.max(1, Math.min(Number(req.body?.count ?? 6), 20));
+    const input = GenerateMaterialQuestionsBody.parse(req.body ?? {});
+    const count = input.count ?? 6;
     const questions = await generateQuestionsForMaterial(
       req.auth!.id,
       req.params.id,
@@ -170,7 +173,7 @@ router.post("/materials/:id/questions/generate", async (req, res, next) => {
       res.status(422).json({ error: "No new grounded questions could be generated" });
       return;
     }
-    res.status(201).json(questions);
+    res.status(201).json(GenerateMaterialQuestionsResponse.parse(questions));
   } catch (error) {
     next(error);
   }

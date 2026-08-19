@@ -43,6 +43,7 @@ export const demoMaterials: Material[] = [
     subjectName: "Human Anatomy",
     fileType: "PDF",
     processingStatus: "ready",
+    processingError: null,
     concepts: 8,
     sessions: 4,
     lastStudied: "2026-08-15T14:30:00.000Z",
@@ -57,6 +58,7 @@ export const demoMaterials: Material[] = [
     subjectName: "Cell Biology",
     fileType: "DOCX",
     processingStatus: "ready",
+    processingError: null,
     concepts: 6,
     sessions: 2,
     lastStudied: "2026-08-12T18:05:00.000Z",
@@ -71,6 +73,7 @@ export const demoMaterials: Material[] = [
     subjectName: "Human Anatomy",
     fileType: "Pasted notes",
     processingStatus: "ready",
+    processingError: null,
     concepts: 5,
     sessions: 1,
     lastStudied: null,
@@ -165,6 +168,7 @@ export const demoQuestions: Question[] = [
     sourceExcerpt:
       "The sinoatrial node initiates the electrical impulse that coordinates contraction.",
     sourcePage: 12,
+    sourceSectionId: null,
     explanation:
       "The sinoatrial node acts as the heart's natural pacemaker. It starts the electrical signal that spreads through the atria.",
     correctAnswer: "It initiates the electrical impulse for the heartbeat",
@@ -185,6 +189,7 @@ export const demoQuestions: Question[] = [
     sourceExcerpt:
       "A brief delay at the atrioventricular node gives the ventricles time to fill before they contract.",
     sourcePage: 13,
+    sourceSectionId: null,
     explanation:
       "The delay coordinates the sequence of contraction: atria first, then ventricles.",
     correctAnswer: "It allows the ventricles time to fill after the atria contract",
@@ -205,6 +210,7 @@ export const demoQuestions: Question[] = [
     sourceExcerpt:
       "During osmosis, water moves toward the side of the membrane with the higher solute concentration.",
     sourcePage: 4,
+    sourceSectionId: null,
     explanation:
       "Water moves down its own concentration gradient, which means toward the more concentrated solution.",
     correctAnswer: "Higher solute concentration",
@@ -225,6 +231,7 @@ export const demoQuestions: Question[] = [
     sourceExcerpt:
       "Active transport uses cellular energy to move substances against their concentration gradient.",
     sourcePage: 6,
+    sourceSectionId: null,
     explanation:
       "Unlike simple diffusion, active transport can move a substance against its concentration gradient and requires energy.",
     correctAnswer: "Active transport requires cellular energy",
@@ -244,6 +251,7 @@ export const demoQuestions: Question[] = [
     sourceExcerpt:
       "Neurons communicate through the release of neurotransmitters at synapses.",
     sourcePage: 8,
+    sourceSectionId: null,
     explanation:
       "A presynaptic neuron releases neurotransmitters into the synaptic cleft, where they bind receptors on the next cell.",
     correctAnswer: "Neurotransmitters are released to carry the signal across the gap",
@@ -259,6 +267,7 @@ export const demoQuestions: Question[] = [
     sourceExcerpt:
       "Average acceleration is the change in velocity divided by the time interval.",
     sourcePage: 2,
+    sourceSectionId: null,
     explanation:
       "Average acceleration is (10 − 4) / 3 = 2 m/s².",
     correctAnswer: "2 m/s²",

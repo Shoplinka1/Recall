@@ -456,7 +456,7 @@ export async function generateQuestionsForMaterial(
   const existing = await db
     .select({ questionText: questionsTable.questionText })
     .from(questionsTable)
-    .where(and(eq(questionsTable.userId, userId), eq(questionsTable.materialId, materialId)));
+    .where(eq(questionsTable.userId, userId));
   const groundedSections: GroundedSection[] = sections.map((section) => ({
     id: section.id,
     materialId: section.materialId,
@@ -471,8 +471,8 @@ export async function generateQuestionsForMaterial(
   );
   if (!generated.length) return [];
   const conceptsByName = new Map(concepts.map((concept) => [concept.name.toLowerCase(), concept.id]));
-  await db.transaction(async (tx) => {
-    await tx.insert(questionsTable).values(
+  const inserted = await db.transaction(async (tx) => {
+    return tx.insert(questionsTable).values(
       generated.map((question) => ({
         userId,
         subjectId: material.subjectId,
@@ -489,13 +489,15 @@ export async function generateQuestionsForMaterial(
         sourcePage: question.sourcePage,
         generationVersion: "development-v1",
       })),
-    );
+    ).returning();
   });
-  return generated.map((question, index) => ({
-    ...question,
-    id: question.id,
-    sourceSectionId: generated[index].sectionId,
-  }));
+  const conceptNamesById = new Map(concepts.map((concept) => [concept.id, concept.name]));
+  return inserted.map((question) =>
+    questionToApi({
+      question,
+      conceptName: conceptNamesById.get(question.conceptId) ?? "Unknown concept",
+    }),
+  );
 }
 
 export async function deleteMaterial(userId: string, id: string) {
@@ -560,6 +562,21 @@ async function questionRows(userId: string, questionIds?: string[]) {
     .where(and(...conditions));
 }
 
+async function waitForMaterialReady(userId: string, materialId: string) {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const [material] = await db
+      .select({ processingStatus: materialsTable.processingStatus })
+      .from(materialsTable)
+      .where(and(eq(materialsTable.id, materialId), eq(materialsTable.userId, userId)))
+      .limit(1);
+    if (!material || material.processingStatus !== "PROCESSING") {
+      return material?.processingStatus === "READY";
+    }
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  return false;
+}
+
 export async function createPractice(
   userId: string,
   input: { subjectId?: string; materialId?: string; questionCount: number; sessionType: string },
@@ -572,6 +589,7 @@ export async function createPractice(
       .where(and(eq(materialsTable.id, input.materialId), eq(materialsTable.userId, userId)))
       .limit(1);
     if (!material) return undefined;
+    if (!(await waitForMaterialReady(userId, material.id))) return undefined;
     const existing = await db
       .select({ id: questionsTable.id })
       .from(questionsTable)
@@ -585,6 +603,47 @@ export async function createPractice(
       .limit(1);
     if (!existing.length) {
       await generateQuestionsForMaterial(userId, input.materialId, input.questionCount);
+    }
+  } else {
+    const userMaterials = await db
+      .select({ id: materialsTable.id, processingStatus: materialsTable.processingStatus })
+      .from(materialsTable)
+      .where(
+        and(
+          eq(materialsTable.userId, userId),
+          ...(input.subjectId ? [eq(materialsTable.subjectId, input.subjectId)] : []),
+        ),
+      );
+    for (const material of userMaterials) {
+      if (material.processingStatus === "PROCESSING") {
+        await waitForMaterialReady(userId, material.id);
+      }
+      const [readyMaterial] = await db
+        .select({ id: materialsTable.id })
+        .from(materialsTable)
+        .where(
+          and(
+            eq(materialsTable.id, material.id),
+            eq(materialsTable.userId, userId),
+            eq(materialsTable.processingStatus, "READY"),
+          ),
+        )
+        .limit(1);
+      if (!readyMaterial) continue;
+      const [existing] = await db
+        .select({ id: questionsTable.id })
+        .from(questionsTable)
+        .where(
+          and(
+            eq(questionsTable.userId, userId),
+            eq(questionsTable.materialId, readyMaterial.id),
+            ne(questionsTable.generationVersion, "seed-v1"),
+          ),
+        )
+        .limit(1);
+      if (!existing) {
+        await generateQuestionsForMaterial(userId, readyMaterial.id, input.questionCount);
+      }
     }
   }
   return db.transaction(async (tx) => {

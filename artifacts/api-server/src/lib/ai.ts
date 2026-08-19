@@ -23,7 +23,7 @@ export type GroundedSection = {
   content: string;
 };
 export type GroundedConcept = { id: string; name: string };
-export type GroundedQuestion = Question & { sectionId: string };
+export type GroundedQuestion = Question & { sectionId: string; materialId: string };
 
 export interface AIService {
   analyzeMaterial(content: string): MaterialAnalysis;
@@ -131,6 +131,7 @@ export class DevelopmentAIService implements AIService {
         difficulty: index % 3 === 0 ? "easy" : index % 3 === 1 ? "medium" : "hard",
         sourceExcerpt: excerpt,
         sourcePage: index + 1,
+        sourceSectionId: null,
         explanation: `The material states: ${excerpt}`,
         correctAnswer: answer,
       };
@@ -165,6 +166,7 @@ export class DevelopmentAIService implements AIService {
       if (shortAnswer) {
         generated.push({
           id: stableId(`${section.id}:short`, index),
+          materialId: section.materialId,
           sectionId: section.id,
           questionText: `Which key term is named in this source section about ${concept.name}?`,
           type: "short_answer",
@@ -173,12 +175,14 @@ export class DevelopmentAIService implements AIService {
           difficulty: index % 3 === 0 ? "easy" : index % 3 === 1 ? "medium" : "hard",
           sourceExcerpt: section.excerpt,
           sourcePage: section.sectionIndex + 1,
+          sourceSectionId: section.id,
           explanation: `The source section names “${shortAnswer}”: ${section.excerpt}`,
           correctAnswer: shortAnswer,
         });
       }
       generated.push({
         id: stableId(`${section.id}:true-false`, index),
+          materialId: section.materialId,
         sectionId: section.id,
         questionText: `True or false: ${section.excerpt}`,
         type: "true_false",
@@ -187,6 +191,7 @@ export class DevelopmentAIService implements AIService {
         difficulty: "medium",
         sourceExcerpt: section.excerpt,
         sourcePage: section.sectionIndex + 1,
+        sourceSectionId: section.id,
         explanation: `This statement is taken directly from the source section: ${section.excerpt}`,
         correctAnswer: "True",
       });
@@ -204,6 +209,7 @@ export class DevelopmentAIService implements AIService {
         if (!concept) continue;
         generated.push({
           id: stableId(`${section.id}:multiple-choice`, index),
+          materialId: section.materialId,
           sectionId: section.id,
           questionText: "Which statement is taken from this source section?",
           type: "multiple_choice",
@@ -212,6 +218,7 @@ export class DevelopmentAIService implements AIService {
           difficulty: "medium",
           sourceExcerpt: section.excerpt,
           sourcePage: section.sectionIndex + 1,
+          sourceSectionId: section.id,
           explanation: `The selected statement is the source excerpt for this section: ${section.excerpt}`,
           correctAnswer: section.excerpt,
         });
@@ -235,6 +242,7 @@ export class DevelopmentAIService implements AIService {
       const options = question.options.map((option) => option.trim()).filter(Boolean);
       const section = sectionMap.get(question.sectionId);
       const normalizedQuestion = question.questionText.trim().toLowerCase();
+      const difficulty = question.difficulty.toLowerCase();
       const validType = ["multiple_choice", "true_false", "short_answer"].includes(type);
       const validOptions =
         type === "multiple_choice"
@@ -250,6 +258,7 @@ export class DevelopmentAIService implements AIService {
             : options.length === 0;
       const grounded =
         Boolean(section) &&
+        question.materialId === section?.materialId &&
         Boolean(question.sourceExcerpt.trim()) &&
         section?.content.toLowerCase().includes(question.sourceExcerpt.toLowerCase()) &&
         (type === "multiple_choice"
@@ -259,31 +268,67 @@ export class DevelopmentAIService implements AIService {
             : question.sourceExcerpt.toLowerCase().includes(question.correctAnswer.toLowerCase()));
       const valid =
         validType &&
+        ["easy", "medium", "hard"].includes(difficulty) &&
         validOptions &&
         Boolean(normalizedQuestion) &&
         question.questionText.trim().length >= 12 &&
         question.correctAnswer.trim().length > 0 &&
         question.explanation.trim().length > 0 &&
+        question.explanation.toLowerCase().includes(question.sourceExcerpt.toLowerCase()) &&
         conceptNames.has(question.concept.toLowerCase()) &&
+        question.concept.trim().length >= 2 &&
         grounded &&
+        !this.isAmbiguous(question, type) &&
         !seen.has(normalizedQuestion);
       if (valid) seen.add(normalizedQuestion);
       return valid;
     });
   }
 
+  private isAmbiguous(question: GroundedQuestion, type: string) {
+    const text = question.questionText.trim().toLowerCase();
+    if (type === "multiple_choice") {
+      return !text.includes("which") || question.options.some((option) => option.trim().length < 3);
+    }
+    if (type === "true_false") {
+      return !text.startsWith("true or false:") || text.length < 30;
+    }
+    return !text.includes("key term") || text.length < 20;
+  }
+
   validateQuestions(questions: Question[]): Question[] {
     const seen = new Set<string>();
     return questions.filter((question) => {
       const key = question.questionText.trim().toLowerCase();
+      const type = question.type.trim().toLowerCase();
+      const options = question.options.map((option) => option.trim()).filter(Boolean);
+      const validType = ["multiple_choice", "true_false", "short_answer"].includes(type);
+      const validOptions =
+        type === "multiple_choice"
+          ? options.length === 4 &&
+            new Set(options.map((option) => option.toLowerCase())).size === 4 &&
+            options.filter((option) => option.toLowerCase() === question.correctAnswer.trim().toLowerCase()).length === 1
+          : type === "true_false"
+            ? options.length === 2 &&
+              options.map((option) => option.toLowerCase()).join("|") === "true|false" &&
+              ["true", "false"].includes(question.correctAnswer.trim().toLowerCase())
+            : options.length === 0;
       const valid =
+        validType &&
+        validOptions &&
+        ["easy", "medium", "hard"].includes(question.difficulty.trim().toLowerCase()) &&
         Boolean(key) &&
         !seen.has(key) &&
         question.sourceExcerpt.trim().length >= 20 &&
         question.questionText.trim().length >= 12 &&
         question.correctAnswer.trim().length > 0 &&
         question.explanation.trim().length > 0 &&
-        question.sourceExcerpt.toLowerCase().includes(question.correctAnswer.toLowerCase());
+        question.explanation.toLowerCase().includes(question.sourceExcerpt.toLowerCase()) &&
+        (type === "multiple_choice"
+          ? question.options.some((option) => option.toLowerCase() === question.correctAnswer.trim().toLowerCase())
+          : type === "true_false"
+            ? question.questionText.toLowerCase().includes(question.sourceExcerpt.toLowerCase())
+            : question.sourceExcerpt.toLowerCase().includes(question.correctAnswer.toLowerCase()));
       if (valid) seen.add(key);
       return valid;
     });
