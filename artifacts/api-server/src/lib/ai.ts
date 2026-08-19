@@ -243,6 +243,8 @@ export class DevelopmentAIService implements AIService {
       const section = sectionMap.get(question.sectionId);
       const normalizedQuestion = question.questionText.trim().toLowerCase();
       const difficulty = question.difficulty.toLowerCase();
+      const normalizedSectionContent = section ? clean(section.content).toLowerCase() : "";
+      const normalizedSourceExcerpt = question.sourceExcerpt.trim().toLowerCase();
       const validType = ["multiple_choice", "true_false", "short_answer"].includes(type);
       const validOptions =
         type === "multiple_choice"
@@ -260,7 +262,7 @@ export class DevelopmentAIService implements AIService {
         Boolean(section) &&
         question.materialId === section?.materialId &&
         Boolean(question.sourceExcerpt.trim()) &&
-        section?.content.toLowerCase().includes(question.sourceExcerpt.toLowerCase()) &&
+        normalizedSectionContent.includes(normalizedSourceExcerpt) &&
         (type === "multiple_choice"
           ? question.correctAnswer === question.sourceExcerpt
           : type === "true_false"
