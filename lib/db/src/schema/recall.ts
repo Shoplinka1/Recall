@@ -2,6 +2,7 @@ import { createInsertSchema } from "drizzle-zod";
 import {
   boolean,
   integer,
+  index,
   jsonb,
   pgTable,
   real,
@@ -28,6 +29,23 @@ export const usersTable = pgTable("recall_users", {
   avatarUrl: text("avatar_url"),
   ...timestamps,
 });
+
+export const sessionsTable = pgTable(
+  "recall_sessions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    index("recall_sessions_user_id_idx").on(table.userId),
+    index("recall_sessions_expires_at_idx").on(table.expiresAt),
+  ],
+);
 
 export const userPreferencesTable = pgTable("recall_user_preferences", {
   id: uuid("id").defaultRandom().primaryKey(),
