@@ -9,10 +9,7 @@ import {
   GenerateMaterialQuestionsBody,
   GenerateMaterialQuestionsResponse,
 } from "@workspace/api-zod";
-import {
-  demoMistakes,
-  recommendation,
-} from "../lib/recall-demo";
+import { recommendation } from "../lib/recall-demo";
 import {
   answerPractice,
   completePractice,
@@ -350,7 +347,7 @@ router.get("/progress", async (req, res, next) => {
 });
 
 router.get("/mistakes", (_req, res) => {
-  res.json(demoMistakes);
+  res.json([]);
 });
 
 router.get("/recommendations", (_req, res) => {

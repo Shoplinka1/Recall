@@ -21,11 +21,6 @@ import type {
   Subject,
   Subscription,
 } from "@workspace/api-zod";
-import {
-  demoConcepts,
-  demoMaterials,
-  demoSubjects,
-} from "./recall-demo";
 import { getAIService } from "./ai";
 import type { GroundedConcept, GroundedSection } from "./ai";
 import {
@@ -59,7 +54,7 @@ const questionToApi = (row: QuestionWithConcept): Question => ({
   correctAnswer: row.question.correctAnswer,
 });
 
-async function seedRecallData(userId: string) {
+async function ensureRecallSubscription(userId: string) {
   return db.transaction(async (tx) => {
     const [subscription] = await tx
       .select({ id: subscriptionsTable.id })
@@ -69,95 +64,6 @@ async function seedRecallData(userId: string) {
     if (!subscription) {
       await tx.insert(subscriptionsTable).values({ userId });
     }
-
-    const existingSubjects = await tx
-      .select()
-      .from(subjectsTable)
-      .where(eq(subjectsTable.userId, userId));
-    const subjectIds = new Map(existingSubjects.map((subject) => [subject.name, subject.id]));
-    if (existingSubjects.length === 0) {
-      const inserted = await tx
-        .insert(subjectsTable)
-        .values(
-          demoSubjects.map((subject) => ({
-            userId,
-            name: subject.name,
-            description: subject.description,
-            color: subject.color,
-          })),
-        )
-        .returning();
-      for (const subject of inserted) subjectIds.set(subject.name, subject.id);
-    }
-
-    const existingMaterials = await tx
-      .select()
-      .from(materialsTable)
-      .where(eq(materialsTable.userId, userId));
-    const materialIds = new Map(
-      existingMaterials.map((material) => [material.title, material.id]),
-    );
-    if (existingMaterials.length === 0) {
-      const seededMaterials = [
-        ...demoMaterials,
-        {
-          title: "Motion & Forces",
-          subjectName: "Physics",
-          fileType: "Pasted notes",
-          excerpt:
-            "Average acceleration is the change in velocity divided by the time interval.",
-        },
-      ];
-      const inserted = await tx
-        .insert(materialsTable)
-        .values(
-          seededMaterials.map((material) => ({
-            userId,
-            subjectId: subjectIds.get(material.subjectName)!,
-            title: material.title,
-            originalFileName: material.title,
-            fileType: material.fileType,
-            processingStatus: "READY",
-            extractedText: material.excerpt,
-          })),
-        )
-        .returning();
-      for (const material of inserted) materialIds.set(material.title, material.id);
-    }
-
-    const existingConcepts = await tx
-      .select({ concept: conceptsTable })
-      .from(conceptsTable)
-      .innerJoin(subjectsTable, eq(conceptsTable.subjectId, subjectsTable.id))
-      .where(eq(subjectsTable.userId, userId));
-    const conceptIds = new Map(existingConcepts.map(({ concept }) => [concept.name, concept.id]));
-    if (existingConcepts.length === 0) {
-      const inserted = await tx
-        .insert(conceptsTable)
-        .values(
-          demoConcepts.map((concept) => ({
-            userId,
-            subjectId: subjectIds.get(concept.subjectName)!,
-            name: concept.name,
-            description: concept.sourceMaterial,
-          })),
-        )
-        .returning();
-      for (const concept of inserted) conceptIds.set(concept.name, concept.id);
-      await tx.insert(conceptMasteryTable).values(
-        demoConcepts.map((concept) => ({
-            userId,
-          subjectId: subjectIds.get(concept.subjectName)!,
-          conceptId: conceptIds.get(concept.name)!,
-          masteryScore: concept.masteryScore,
-          questionsAttempted: concept.questionsAttempted,
-          lastPracticedAt: concept.lastPracticed
-            ? new Date(concept.lastPracticed)
-            : null,
-        })),
-      );
-    }
-
     return userId;
   });
 }
@@ -165,7 +71,7 @@ async function seedRecallData(userId: string) {
 export const ensureRecallData = (userId: string) => {
   const existing = seedPromises.get(userId);
   if (existing) return existing;
-  const promise = seedRecallData(userId).catch((error) => {
+  const promise = ensureRecallSubscription(userId).catch((error) => {
     seedPromises.delete(userId);
     throw error;
   });
