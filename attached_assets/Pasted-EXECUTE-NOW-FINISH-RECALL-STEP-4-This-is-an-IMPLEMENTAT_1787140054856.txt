@@ -1,0 +1,145 @@
+EXECUTE NOW — FINISH RECALL STEP 4
+
+This is an IMPLEMENTATION TASK. Do not just review, summarize, or ask for confirmation. START WORKING NOW.
+
+Continue from the CURRENT imported Git codebase and the PARTIAL STEP 4 implementation already present.
+
+DO NOT restart Step 4.
+DO NOT rebuild Recall.
+DO NOT undo Steps 1–3.
+DO NOT replace PostgreSQL, authentication, material processing, or AI architecture.
+DO NOT start Step 5.
+
+ALREADY COMPLETE:
+Step 1 = PostgreSQL persistence
+Step 2 = authentication/sessions/ownership
+Step 3 = real material upload/extraction/private storage
+
+STEP 4 WAS PARTIALLY IMPLEMENTED BEFORE THE PREVIOUS AGENT HIT QUOTA.
+
+Already done:
+- audited question/practice architecture
+- found hard-coded demo question bank
+- started replacing demo questions with persisted material sections
+- added question-generation API contract
+- added question source/section provenance
+- started typed-client regeneration
+
+FIRST inspect the current code/Git state and CONTINUE FROM THERE.
+Do not redo completed work.
+
+FINISH STEP 4:
+
+REAL MATERIAL
+→ persisted sections/concepts
+→ grounded question generation
+→ validation
+→ source/provenance
+→ PostgreSQL
+→ existing practice UI
+
+REQUIREMENTS:
+
+1. Generate questions ONLY from the authenticated user's real persisted material.
+
+2. Reuse the existing DevelopmentAIService and AI abstraction.
+Development mode stays offline and must use actual stored material.
+
+3. Use existing question models:
+- multiple choice
+- true/false
+- short answer
+
+4. Store provenance:
+- materialId
+- sectionId
+- source excerpt
+- source page when available
+- concept
+- difficulty
+- question type
+
+5. Validate BEFORE saving:
+- question text
+- type
+- options
+- correct answer
+- explanation
+- concept
+- difficulty
+- source
+- grounding
+- duplicates
+- ambiguity
+
+Reject unsupported or ungrounded questions.
+
+6. Remove demo questions from the real production/practice path.
+Do not use fake/hard-coded question banks.
+
+7. PostgreSQL remains the source of truth.
+No production arrays, Maps, fake data, or localStorage.
+
+8. Enforce Step 2 ownership.
+User A MUST NOT access User B's questions, sources, or materials.
+
+9. Connect the existing Recall UI to REAL generated questions.
+Do not redesign the application.
+
+TEST EVERYTHING:
+
+- real material → real questions
+- PostgreSQL question persistence
+- source/section provenance
+- grounding
+- invalid question rejection
+- duplicate rejection
+- MCQ validation
+- cross-user protection
+- development AI makes no external calls
+- questions survive API restart
+- Step 1 regression
+- Step 2 regression
+- Step 3 regression
+
+Then run:
+- typecheck
+- tests
+- database/schema validation
+- build
+- API startup
+- /api/healthz
+- frontend HTTP check
+
+FIX ERRORS BEFORE STOPPING.
+
+DO NOT IMPLEMENT STEP 5:
+- practice-engine changes
+- scoring overhaul
+- confidence
+- mastery
+- weaknesses
+- recommendations
+- dashboard
+- Paystack
+- billing
+- subscriptions
+
+STEP 4 IS COMPLETE ONLY WHEN REAL QUESTIONS ARE generated from REAL USER MATERIAL, validated, grounded, stored in PostgreSQL, ownership-protected, and tested.
+
+STOP AFTER STEP 4.
+
+FINAL REPORT ONLY:
+
+IMPLEMENTED
+GROUNDING
+DATABASE
+OWNERSHIP
+TESTED
+NOT VERIFIED
+AI
+BUILD
+RUNTIME
+
+DO NOT CLAIM PRODUCTION-READY.
+DO NOT START STEP 5.
