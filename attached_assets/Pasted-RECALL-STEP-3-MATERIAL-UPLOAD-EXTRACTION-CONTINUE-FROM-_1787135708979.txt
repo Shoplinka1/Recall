@@ -1,0 +1,166 @@
+RECALL — STEP 3: MATERIAL UPLOAD + EXTRACTION
+
+CONTINUE FROM THE CURRENT GIT CODEBASE.
+
+STEP 1 = COMPLETE: PostgreSQL persistence works.
+STEP 2 = COMPLETE: authentication, sessions, and ownership work.
+
+DO NOT rebuild Recall.
+DO NOT replace PostgreSQL/Drizzle.
+DO NOT replace the existing auth system.
+DO NOT start Step 4.
+
+YOUR ONLY TASK: implement the real material upload + processing pipeline.
+
+1. AUDIT FIRST
+
+Inspect the existing material schema, routes, storage code, processing code, frontend upload UI, and existing types.
+
+Reuse existing architecture. Do not create duplicate systems.
+
+2. MATERIAL INPUT
+
+Users must be able to:
+- upload files
+- paste text
+
+Support the file types the current project is designed for, especially:
+- TXT
+- PDF
+- DOCX
+- PPTX
+
+Do not claim a format works unless it is actually tested.
+
+3. REAL PROCESSING
+
+When a material is submitted:
+
+upload
+→ private file storage
+→ extract real text
+→ split into sections/chunks
+→ extract/store concepts
+→ save results in PostgreSQL
+→ mark material READY
+
+Do NOT use fake extracted text, fake concepts, fake progress, or fake READY states.
+
+Persist processing status such as:
+- PROCESSING
+- READY
+- FAILED
+
+Failures must be stored and retryable.
+
+4. DATABASE
+
+Use the existing PostgreSQL/Drizzle architecture.
+
+Persist:
+- materials
+- material sections/chunks
+- extracted text
+- concepts
+- processing status
+- processing errors where appropriate
+- file metadata/storage reference
+
+Do not use arrays, Maps, module-level variables, or localStorage as persistent storage.
+
+5. OWNERSHIP
+
+Step 2 authentication must remain in control.
+
+Every material, section, concept, and stored file must belong to the authenticated user.
+
+Never trust userId from the frontend.
+
+User A MUST NOT be able to read, modify, download, or process User B's material or extracted content.
+
+Enforce ownership server-side.
+
+6. FRONTEND
+
+Use the existing Recall UI.
+
+Make the upload flow actually work:
+- file/text input
+- processing state
+- READY state
+- FAILED state
+- retry
+- basic material information
+
+Do not redesign the application.
+
+7. TESTS
+
+Create/run executable tests proving:
+
+- authenticated user can upload TXT
+- material is stored in PostgreSQL
+- text is actually extracted
+- sections/chunks are persisted
+- concepts are persisted
+- READY occurs only after successful processing
+- invalid/empty input is rejected
+- processing failure becomes FAILED
+- FAILED material can be retried
+- pasted text uses the same pipeline
+- User A cannot access User B's material/sections/concepts/files
+- data survives API restart
+
+If possible, also test one real PDF and one real DOCX/PPTX.
+
+Never claim a test passed unless it actually ran.
+
+8. PRESERVE STEPS 1 + 2
+
+After Step 3 changes, verify that:
+- authentication still works
+- ownership still works
+- PostgreSQL persistence still works
+- existing API remains functional
+
+Run:
+- typecheck
+- relevant tests
+- database/schema validation
+- migrations/schema push if DATABASE_URL exists
+- build
+- API startup
+- /api/healthz
+- frontend HTTP check
+
+Fix errors before stopping.
+
+DO NOT IMPLEMENT:
+- question-generation overhaul
+- practice engine
+- mastery
+- weaknesses
+- recommendations
+- dashboard redesign
+- Paystack
+- billing/subscriptions
+- major security audit
+
+STEP 3 IS COMPLETE ONLY WHEN REAL MATERIALS CAN BE UPLOADED, EXTRACTED, CHUNKED, CONCEPTS STORED, STATUS PERSISTED, RETRIES WORK, AND OWNERSHIP IS PROTECTED.
+
+STOP AFTER STEP 3.
+
+FINAL REPORT ONLY:
+
+IMPLEMENTED
+SUPPORTED
+PROCESSING
+DATABASE
+OWNERSHIP
+TESTED
+NOT VERIFIED
+BUILD
+RUNTIME
+
+Do not claim production-ready.
+Do not start Step 4.

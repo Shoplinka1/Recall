@@ -109,13 +109,31 @@ export const materialsTable = pgTable("recall_materials", {
   fileType: text("file_type").notNull(),
   fileSize: integer("file_size"),
   storagePath: text("storage_path"),
-  processingStatus: text("processing_status").notNull().default("ready"),
+  processingStatus: text("processing_status").notNull().default("PROCESSING"),
+  processingError: text("processing_error"),
   extractedText: text("extracted_text"),
+  ...timestamps,
+});
+
+export const materialSectionsTable = pgTable("recall_material_sections", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  materialId: uuid("material_id")
+    .notNull()
+    .references(() => materialsTable.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  sectionIndex: integer("section_index").notNull(),
+  title: text("title").notNull().default("Section"),
+  content: text("content").notNull(),
   ...timestamps,
 });
 
 export const conceptsTable = pgTable("recall_concepts", {
   id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
   subjectId: uuid("subject_id")
     .notNull()
     .references(() => subjectsTable.id, { onDelete: "cascade" }),
