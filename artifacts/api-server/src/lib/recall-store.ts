@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNotNull, ne } from "drizzle-orm";
 import { db } from "@workspace/db";
 import {
   conceptMasteryTable,
@@ -24,9 +24,10 @@ import type {
 import {
   demoConcepts,
   demoMaterials,
-  demoQuestions,
   demoSubjects,
 } from "./recall-demo";
+import { getAIService } from "./ai";
+import type { GroundedConcept, GroundedSection } from "./ai";
 import {
   extractConceptNames,
   extractMaterialText,
@@ -53,6 +54,7 @@ const questionToApi = (row: QuestionWithConcept): Question => ({
   difficulty: row.question.difficulty,
   sourceExcerpt: row.question.sourceExcerpt,
   sourcePage: row.question.sourcePage ?? 1,
+  sourceSectionId: row.question.sectionId,
   explanation: row.question.explanation,
   correctAnswer: row.question.correctAnswer,
 });
@@ -152,45 +154,6 @@ async function seedRecallData(userId: string) {
           lastPracticedAt: concept.lastPracticed
             ? new Date(concept.lastPracticed)
             : null,
-        })),
-      );
-    }
-
-    const existingQuestions = await tx
-      .select({ id: questionsTable.id })
-      .from(questionsTable)
-      .where(eq(questionsTable.userId, userId))
-      .limit(1);
-    if (existingQuestions.length === 0) {
-      const materialForConcept = (concept: string) =>
-        concept === "Kinematics"
-          ? materialIds.get("Motion & Forces")
-          : ["Osmosis", "Membrane transport"].includes(concept)
-            ? materialIds.get("Cell Membranes & Transport")
-            : concept === "Neural signaling"
-              ? materialIds.get("Neural Signaling Notes")
-              : materialIds.get("Cardiovascular System");
-      await tx.insert(questionsTable).values(
-        demoQuestions.map((question) => ({
-           userId,
-          subjectId: subjectIds.get(
-            ["Osmosis", "Membrane transport"].includes(question.concept)
-              ? "Cell Biology"
-              : question.concept === "Kinematics"
-                ? "Physics"
-                : "Human Anatomy",
-          )!,
-          materialId: materialForConcept(question.concept)!,
-          conceptId: conceptIds.get(question.concept)!,
-          type: question.type,
-          difficulty: question.difficulty,
-          questionText: question.questionText,
-          options: question.options,
-          correctAnswer: question.correctAnswer,
-          explanation: question.explanation,
-          sourceExcerpt: question.sourceExcerpt,
-          sourcePage: question.sourcePage,
-          generationVersion: "seed-v1",
         })),
       );
     }
@@ -456,6 +419,85 @@ export async function listMaterialSections(userId: string, materialId: string) {
   return rows.map(({ section }) => section);
 }
 
+export async function generateQuestionsForMaterial(
+  userId: string,
+  materialId: string,
+  count = 6,
+) {
+  const [material] = await db
+    .select()
+    .from(materialsTable)
+    .where(and(eq(materialsTable.id, materialId), eq(materialsTable.userId, userId)))
+    .limit(1);
+  if (!material || material.processingStatus !== "READY") return undefined;
+
+  const sections = await db
+    .select()
+    .from(materialSectionsTable)
+    .where(
+      and(
+        eq(materialSectionsTable.materialId, materialId),
+        eq(materialSectionsTable.userId, userId),
+      ),
+    )
+    .orderBy(asc(materialSectionsTable.sectionIndex));
+  const concepts = await db
+    .select({ id: conceptsTable.id, name: conceptsTable.name })
+    .from(materialConceptsTable)
+    .innerJoin(conceptsTable, eq(materialConceptsTable.conceptId, conceptsTable.id))
+    .where(
+      and(
+        eq(materialConceptsTable.materialId, materialId),
+        eq(conceptsTable.userId, userId),
+      ),
+    );
+  if (!sections.length || !concepts.length) return [];
+
+  const existing = await db
+    .select({ questionText: questionsTable.questionText })
+    .from(questionsTable)
+    .where(and(eq(questionsTable.userId, userId), eq(questionsTable.materialId, materialId)));
+  const groundedSections: GroundedSection[] = sections.map((section) => ({
+    id: section.id,
+    materialId: section.materialId,
+    sectionIndex: section.sectionIndex,
+    content: section.content,
+  }));
+  const groundedConcepts: GroundedConcept[] = concepts;
+  const generated = getAIService().generateQuestionsFromSections(
+    groundedSections,
+    groundedConcepts,
+    { count, excludeQuestionTexts: existing.map((row) => row.questionText) },
+  );
+  if (!generated.length) return [];
+  const conceptsByName = new Map(concepts.map((concept) => [concept.name.toLowerCase(), concept.id]));
+  await db.transaction(async (tx) => {
+    await tx.insert(questionsTable).values(
+      generated.map((question) => ({
+        userId,
+        subjectId: material.subjectId,
+        materialId,
+        sectionId: question.sectionId,
+        conceptId: conceptsByName.get(question.concept.toLowerCase())!,
+        type: question.type,
+        difficulty: question.difficulty,
+        questionText: question.questionText,
+        options: question.options,
+        correctAnswer: question.correctAnswer,
+        explanation: question.explanation,
+        sourceExcerpt: question.sourceExcerpt,
+        sourcePage: question.sourcePage,
+        generationVersion: "development-v1",
+      })),
+    );
+  });
+  return generated.map((question, index) => ({
+    ...question,
+    id: question.id,
+    sourceSectionId: generated[index].sectionId,
+  }));
+}
+
 export async function deleteMaterial(userId: string, id: string) {
   const deleted = await db
     .delete(materialsTable)
@@ -503,7 +545,10 @@ export async function listConcepts(userId: string): Promise<Concept[]> {
 }
 
 async function questionRows(userId: string, questionIds?: string[]) {
-  const conditions = [eq(questionsTable.userId, userId)];
+  const conditions = [
+    eq(questionsTable.userId, userId),
+    ne(questionsTable.generationVersion, "seed-v1"),
+  ];
   if (questionIds?.length) conditions.push(inArray(questionsTable.id, questionIds));
   return db
     .select({
@@ -520,8 +565,33 @@ export async function createPractice(
   input: { subjectId?: string; materialId?: string; questionCount: number; sessionType: string },
   selectedConceptIds?: string[],
 ): Promise<PracticeSession | undefined> {
+  if (input.materialId) {
+    const [material] = await db
+      .select({ id: materialsTable.id })
+      .from(materialsTable)
+      .where(and(eq(materialsTable.id, input.materialId), eq(materialsTable.userId, userId)))
+      .limit(1);
+    if (!material) return undefined;
+    const existing = await db
+      .select({ id: questionsTable.id })
+      .from(questionsTable)
+      .where(
+        and(
+          eq(questionsTable.userId, userId),
+          eq(questionsTable.materialId, input.materialId),
+          ne(questionsTable.generationVersion, "seed-v1"),
+        ),
+      )
+      .limit(1);
+    if (!existing.length) {
+      await generateQuestionsForMaterial(userId, input.materialId, input.questionCount);
+    }
+  }
   return db.transaction(async (tx) => {
-    const conditions = [eq(questionsTable.userId, userId)];
+    const conditions = [
+      eq(questionsTable.userId, userId),
+      ne(questionsTable.generationVersion, "seed-v1"),
+    ];
     if (input.materialId) conditions.push(eq(questionsTable.materialId, input.materialId));
     if (input.subjectId) conditions.push(eq(questionsTable.subjectId, input.subjectId));
     if (selectedConceptIds?.length) {
@@ -533,14 +603,7 @@ export async function createPractice(
       .innerJoin(conceptsTable, eq(questionsTable.conceptId, conceptsTable.id))
       .where(and(...conditions))
       .orderBy(asc(questionsTable.createdAt));
-    if (!rows.length) {
-      rows = await tx
-        .select({ question: questionsTable, conceptName: conceptsTable.name })
-        .from(questionsTable)
-        .innerJoin(conceptsTable, eq(questionsTable.conceptId, conceptsTable.id))
-        .where(eq(questionsTable.userId, userId))
-        .orderBy(asc(questionsTable.createdAt));
-    }
+    if (!rows.length) return undefined;
     const selected = rows.slice(0, Math.max(1, Math.min(input.questionCount, 20)));
     const subject = input.subjectId
       ? (

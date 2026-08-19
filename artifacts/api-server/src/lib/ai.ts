@@ -16,6 +16,14 @@ export type Weakness = {
   reason: string;
   severity: "low" | "medium" | "high";
 };
+export type GroundedSection = {
+  id: string;
+  materialId: string;
+  sectionIndex: number;
+  content: string;
+};
+export type GroundedConcept = { id: string; name: string };
+export type GroundedQuestion = Question & { sectionId: string };
 
 export interface AIService {
   analyzeMaterial(content: string): MaterialAnalysis;
@@ -24,6 +32,11 @@ export interface AIService {
     content: string,
     options?: { count?: number; excludeQuestionTexts?: string[] },
   ): Question[];
+  generateQuestionsFromSections(
+    sections: GroundedSection[],
+    concepts: GroundedConcept[],
+    options?: { count?: number; excludeQuestionTexts?: string[] },
+  ): GroundedQuestion[];
   validateQuestions(questions: Question[]): Question[];
   evaluateAnswer(question: Question, answer: AnswerInput): AnswerEvaluation;
   diagnoseWeaknesses(
@@ -126,6 +139,139 @@ export class DevelopmentAIService implements AIService {
     return this.validateQuestions(generated).slice(0, Math.max(1, Math.min(options.count ?? 6, 20)));
   }
 
+  generateQuestionsFromSections(
+    sections: GroundedSection[],
+    concepts: GroundedConcept[],
+    options: { count?: number; excludeQuestionTexts?: string[] } = {},
+  ): GroundedQuestion[] {
+    const excluded = new Set(
+      (options.excludeQuestionTexts ?? []).map((value) => value.trim().toLowerCase()),
+    );
+    const usable = sections
+      .map((section) => ({
+        ...section,
+        excerpt: clean(section.content),
+      }))
+      .filter((section) => section.excerpt.length >= 30);
+    const generated: GroundedQuestion[] = [];
+    for (const [index, section] of usable.entries()) {
+      const concept =
+        concepts.find((candidate) =>
+          section.excerpt.toLowerCase().includes(candidate.name.toLowerCase()),
+        ) ?? concepts[index % Math.max(concepts.length, 1)];
+      if (!concept) continue;
+      const terms = termsFrom(section.excerpt);
+      const shortAnswer = terms[0];
+      if (shortAnswer) {
+        generated.push({
+          id: stableId(`${section.id}:short`, index),
+          sectionId: section.id,
+          questionText: `Which key term is named in this source section about ${concept.name}?`,
+          type: "short_answer",
+          options: [],
+          concept: concept.name,
+          difficulty: index % 3 === 0 ? "easy" : index % 3 === 1 ? "medium" : "hard",
+          sourceExcerpt: section.excerpt,
+          sourcePage: section.sectionIndex + 1,
+          explanation: `The source section names “${shortAnswer}”: ${section.excerpt}`,
+          correctAnswer: shortAnswer,
+        });
+      }
+      generated.push({
+        id: stableId(`${section.id}:true-false`, index),
+        sectionId: section.id,
+        questionText: `True or false: ${section.excerpt}`,
+        type: "true_false",
+        options: ["True", "False"],
+        concept: concept.name,
+        difficulty: "medium",
+        sourceExcerpt: section.excerpt,
+        sourcePage: section.sectionIndex + 1,
+        explanation: `This statement is taken directly from the source section: ${section.excerpt}`,
+        correctAnswer: "True",
+      });
+    }
+    if (usable.length >= 4) {
+      for (const [index, section] of usable.entries()) {
+        const options = usable
+          .slice(Math.floor(index / 4) * 4, Math.floor(index / 4) * 4 + 4)
+          .map((candidate) => candidate.excerpt);
+        if (options.length !== 4) break;
+        const concept =
+          concepts.find((candidate) =>
+            section.excerpt.toLowerCase().includes(candidate.name.toLowerCase()),
+          ) ?? concepts[index % Math.max(concepts.length, 1)];
+        if (!concept) continue;
+        generated.push({
+          id: stableId(`${section.id}:multiple-choice`, index),
+          sectionId: section.id,
+          questionText: "Which statement is taken from this source section?",
+          type: "multiple_choice",
+          options,
+          concept: concept.name,
+          difficulty: "medium",
+          sourceExcerpt: section.excerpt,
+          sourcePage: section.sectionIndex + 1,
+          explanation: `The selected statement is the source excerpt for this section: ${section.excerpt}`,
+          correctAnswer: section.excerpt,
+        });
+      }
+    }
+    return this.validateGroundedQuestions(generated, sections, concepts)
+      .filter((question) => !excluded.has(question.questionText.trim().toLowerCase()))
+      .slice(0, Math.max(1, Math.min(options.count ?? 6, 20)));
+  }
+
+  validateGroundedQuestions(
+    questions: GroundedQuestion[],
+    sections: GroundedSection[],
+    concepts: GroundedConcept[],
+  ): GroundedQuestion[] {
+    const seen = new Set<string>();
+    const sectionMap = new Map(sections.map((section) => [section.id, section]));
+    const conceptNames = new Set(concepts.map((concept) => concept.name.toLowerCase()));
+    return questions.filter((question) => {
+      const type = question.type.toLowerCase();
+      const options = question.options.map((option) => option.trim()).filter(Boolean);
+      const section = sectionMap.get(question.sectionId);
+      const normalizedQuestion = question.questionText.trim().toLowerCase();
+      const validType = ["multiple_choice", "true_false", "short_answer"].includes(type);
+      const validOptions =
+        type === "multiple_choice"
+          ? options.length === 4 &&
+            new Set(options.map((option) => option.toLowerCase())).size === 4 &&
+            options.filter(
+              (option) => option.toLowerCase() === question.correctAnswer.trim().toLowerCase(),
+            ).length === 1
+          : type === "true_false"
+            ? options.length === 2 &&
+              options.map((option) => option.toLowerCase()).join("|") === "true|false" &&
+              ["true", "false"].includes(question.correctAnswer.trim().toLowerCase())
+            : options.length === 0;
+      const grounded =
+        Boolean(section) &&
+        Boolean(question.sourceExcerpt.trim()) &&
+        section?.content.toLowerCase().includes(question.sourceExcerpt.toLowerCase()) &&
+        (type === "multiple_choice"
+          ? question.correctAnswer === question.sourceExcerpt
+          : type === "true_false"
+            ? question.questionText.toLowerCase().includes(question.sourceExcerpt.toLowerCase())
+            : question.sourceExcerpt.toLowerCase().includes(question.correctAnswer.toLowerCase()));
+      const valid =
+        validType &&
+        validOptions &&
+        Boolean(normalizedQuestion) &&
+        question.questionText.trim().length >= 12 &&
+        question.correctAnswer.trim().length > 0 &&
+        question.explanation.trim().length > 0 &&
+        conceptNames.has(question.concept.toLowerCase()) &&
+        grounded &&
+        !seen.has(normalizedQuestion);
+      if (valid) seen.add(normalizedQuestion);
+      return valid;
+    });
+  }
+
   validateQuestions(questions: Question[]): Question[] {
     const seen = new Set<string>();
     return questions.filter((question) => {
@@ -202,6 +348,7 @@ class RealAIServiceUnavailable implements AIService {
   analyzeMaterial(): never { return this.fail(); }
   extractConcepts(): never { return this.fail(); }
   generateQuestions(): never { return this.fail(); }
+  generateQuestionsFromSections(): never { return this.fail(); }
   validateQuestions(): never { return this.fail(); }
   evaluateAnswer(): never { return this.fail(); }
   diagnoseWeaknesses(): never { return this.fail(); }

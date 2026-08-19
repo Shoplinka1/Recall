@@ -1,0 +1,157 @@
+RECALL — STEP 4: REAL GROUNDED QUESTIONS
+
+CONTINUE FROM CURRENT GIT CODEBASE.
+
+STEP 1: PostgreSQL persistence ✅
+STEP 2: Auth/sessions/ownership ✅
+STEP 3: Real material upload/extraction/storage ✅
+
+IMPORTANT:
+Do NOT rebuild Recall.
+Do NOT replace PostgreSQL, auth, or material pipeline.
+Do NOT undo working features.
+Do NOT start Step 5.
+
+The app still has unfinished/demo features. We are replacing them one subsystem at a time.
+
+FIRST inspect the current code and continue from what already exists.
+
+YOUR ONLY TASK: STEP 4 — REAL QUESTION GENERATION + VALIDATION.
+
+1. GENERATION
+
+Generate questions ONLY from persisted user material sections/chunks:
+
+material → sections → concepts → questions → validation → PostgreSQL
+
+Use the existing AI abstraction and DevelopmentAIService.
+
+Development mode MUST remain offline and use the actual stored material.
+
+Support the existing question types:
+- MCQ
+- true/false
+- short answer
+
+Do NOT use hard-coded/fake question banks.
+Do NOT invent information.
+
+2. QUESTION DATA
+
+Every question must retain where it came from:
+- materialId
+- sectionId
+- source excerpt
+- source page when available
+- concept
+- difficulty
+- question type
+
+3. VALIDATION
+
+Validate BEFORE persistence:
+- question text
+- type
+- options
+- correct answer
+- explanation
+- concept
+- difficulty
+- source
+- grounding
+- duplicates
+- ambiguity
+
+MCQ must have exactly one correct answer unless the existing schema explicitly supports otherwise.
+
+Reject unsupported or ungrounded questions.
+
+4. DATABASE
+
+Use existing PostgreSQL/Drizzle.
+
+Persist questions and their source information.
+
+No production:
+- arrays/Maps
+- hard-coded questions
+- fake data
+- localStorage
+
+5. OWNERSHIP
+
+Use Step 2 authentication.
+
+Users may only generate/read/use questions from their own materials.
+
+User A MUST NOT access User B's questions, sources, or materials.
+
+Never trust frontend userId.
+
+6. FRONTEND
+
+Use the existing Recall UI.
+
+Replace demo question data in the existing question/practice flow with real generated questions.
+
+Do not redesign the app.
+
+7. TESTS
+
+Create/run executable tests proving:
+- questions generated from real stored material
+- questions persisted in PostgreSQL
+- source/grounding stored
+- invalid/unsupported questions rejected
+- duplicate questions rejected
+- MCQ correctness validation
+- User A cannot access User B's questions
+- Development AI makes no external calls
+- questions survive API restart
+- Step 1/2/3 regression tests still pass
+
+8. VERIFY
+
+Run:
+- typecheck
+- Step 4 tests
+- auth/ownership tests
+- Step 3 tests
+- database/schema check
+- build
+- API startup
+- /api/healthz
+- frontend HTTP check
+
+FIX ERRORS BEFORE STOPPING.
+
+DO NOT IMPLEMENT STEP 5:
+- practice engine changes
+- scoring overhaul
+- confidence
+- mastery
+- weaknesses
+- retesting
+- recommendations
+- dashboard
+- Paystack
+- billing/subscriptions
+
+STEP 4 IS COMPLETE ONLY WHEN real questions are generated from persisted material, validated, grounded, stored in PostgreSQL, ownership-protected, and tests prove it.
+
+STOP AFTER STEP 4.
+
+FINAL REPORT ONLY:
+
+IMPLEMENTED
+GROUNDING
+DATABASE
+OWNERSHIP
+TESTED
+NOT VERIFIED
+AI
+BUILD
+RUNTIME
+
+DO NOT CLAIM PRODUCTION-READY.
+DO NOT START STEP 5.

@@ -8,6 +8,7 @@ import {
   real,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -153,31 +154,43 @@ export const materialConceptsTable = pgTable("recall_material_concepts", {
   relevanceScore: real("relevance_score").notNull().default(1),
 });
 
-export const questionsTable = pgTable("recall_questions", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => usersTable.id, { onDelete: "cascade" }),
-  subjectId: uuid("subject_id")
-    .notNull()
-    .references(() => subjectsTable.id, { onDelete: "cascade" }),
-  materialId: uuid("material_id")
-    .notNull()
-    .references(() => materialsTable.id, { onDelete: "cascade" }),
-  conceptId: uuid("concept_id")
-    .notNull()
-    .references(() => conceptsTable.id, { onDelete: "cascade" }),
-  type: text("type").notNull(),
-  difficulty: text("difficulty").notNull(),
-  questionText: text("question_text").notNull(),
-  options: jsonb("options").$type<string[]>().notNull().default([]),
-  correctAnswer: text("correct_answer").notNull(),
-  explanation: text("explanation").notNull(),
-  sourceExcerpt: text("source_excerpt").notNull(),
-  sourcePage: integer("source_page"),
-  generationVersion: text("generation_version").notNull().default("demo-v1"),
-  ...timestamps,
-});
+export const questionsTable = pgTable(
+  "recall_questions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    subjectId: uuid("subject_id")
+      .notNull()
+      .references(() => subjectsTable.id, { onDelete: "cascade" }),
+    materialId: uuid("material_id")
+      .notNull()
+      .references(() => materialsTable.id, { onDelete: "cascade" }),
+    sectionId: uuid("section_id").references(() => materialSectionsTable.id, {
+      onDelete: "cascade",
+    }),
+    conceptId: uuid("concept_id")
+      .notNull()
+      .references(() => conceptsTable.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    difficulty: text("difficulty").notNull(),
+    questionText: text("question_text").notNull(),
+    options: jsonb("options").$type<string[]>().notNull().default([]),
+    correctAnswer: text("correct_answer").notNull(),
+    explanation: text("explanation").notNull(),
+    sourceExcerpt: text("source_excerpt").notNull(),
+    sourcePage: integer("source_page"),
+    generationVersion: text("generation_version").notNull().default("development-v1"),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("recall_questions_user_question_idx").on(
+      table.userId,
+      table.questionText,
+    ),
+  ],
+);
 
 export const practiceSessionsTable = pgTable("recall_practice_sessions", {
   id: uuid("id").defaultRandom().primaryKey(),
