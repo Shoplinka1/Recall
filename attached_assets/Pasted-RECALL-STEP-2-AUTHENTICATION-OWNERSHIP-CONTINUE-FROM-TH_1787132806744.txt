@@ -1,0 +1,252 @@
+RECALL — STEP 2: AUTHENTICATION + OWNERSHIP
+
+CONTINUE FROM THE CURRENT GIT CODEBASE.
+
+STEP 1 IS COMPLETE:
+- PostgreSQL is the persistent source of truth.
+- Drizzle/PostgreSQL is working.
+- Subject/material/practice persistence was tested.
+- Data survived an API restart.
+- Typecheck and build pass.
+- API and web workflows run.
+- DevelopmentAIService and AI abstraction already exist.
+
+DO NOT rebuild Recall.
+DO NOT replace the PostgreSQL architecture.
+DO NOT start Step 3.
+DO NOT modify the working AI system unless required for compatibility.
+
+YOUR ONLY TASK NOW:
+
+Complete authentication, sessions, authorization, and ownership protection.
+
+==================================================
+1. AUDIT FIRST
+==================================================
+
+Inspect the existing:
+- users schema
+- sessions schema
+- auth routes
+- login/signup logic
+- password handling
+- cookies/session handling
+- protected API routes
+- current ownership checks
+
+Reuse existing code where correct.
+
+Do not create a second authentication system.
+
+==================================================
+2. AUTHENTICATION
+
+Implement/repair:
+
+POST /api/auth/signup
+POST /api/auth/login
+POST /api/auth/logout
+GET /api/auth/me
+
+Requirements:
+- secure password hashing using Argon2 or bcrypt
+- persistent sessions in PostgreSQL
+- secure session cookies
+- session expiry
+- logout invalidates the session
+- duplicate email protection
+- useful safe error responses
+
+Never store plaintext passwords.
+
+Never expose passwords or session secrets.
+
+==================================================
+3. PROTECTED ROUTES
+
+Authenticated users must be required for user-owned API operations.
+
+At minimum protect existing routes involving:
+
+- subjects
+- materials
+- concepts
+- questions
+- practice sessions
+- attempts
+- progress
+- subscriptions/payments if currently exposed
+
+Do not rely on frontend authentication.
+
+The server must determine the authenticated user from the session.
+
+==================================================
+4. OWNERSHIP
+
+Every user-owned database record must be checked server-side.
+
+A user MUST NOT be able to access another user's:
+
+- subjects
+- materials
+- material sections
+- concepts
+- questions
+- practice sessions
+- attempts
+- progress/mastery
+- weaknesses
+- recommendations
+- subscriptions
+- payments
+
+Never trust a userId supplied by the browser.
+
+Use the authenticated session userId.
+
+For routes using an ID:
+
+GET /api/materials/:id
+
+for example, verify that the record belongs to the authenticated user before returning it.
+
+Do the same for update/delete/practice operations.
+
+==================================================
+5. CROSS-USER SECURITY TEST
+
+Create tests proving:
+
+User A creates a subject/material/practice session.
+
+User B attempts to access those records.
+
+User B MUST receive an appropriate unauthorized/not-found response.
+
+Test at least:
+
+- another user's subject
+- another user's material
+- another user's practice session
+- another user's attempts/progress
+
+Also test that an unauthenticated request cannot access protected data.
+
+==================================================
+6. SESSION TESTING
+
+Test:
+
+signup
+→ login
+→ receive valid session
+→ /api/auth/me returns the correct user
+→ access protected data
+→ logout
+→ protected request is rejected
+
+Also test that another user's session cannot access the first user's records.
+
+==================================================
+7. DATABASE
+
+Reuse the existing PostgreSQL/Drizzle schema.
+
+Add/fix only the database fields, indexes, or constraints actually required for authentication.
+
+Do not reset the database.
+
+Do not create a second database system.
+
+==================================================
+8. SECURITY
+
+Implement only the authentication/ownership security needed for this step.
+
+Do not perform the entire advanced security audit yet.
+
+Do not log:
+- passwords
+- session secrets
+- API keys
+- payment credentials
+
+==================================================
+9. VERIFY
+
+After implementation:
+
+- typecheck
+- run auth tests
+- run ownership tests
+- build
+- start API
+- check /api/healthz
+- verify frontend still responds
+- verify existing PostgreSQL persistence still works
+
+Fix errors before stopping.
+
+==================================================
+DO NOT IMPLEMENT YET
+
+Do NOT implement:
+
+- PDF/PPTX/DOCX processing
+- image processing
+- material extraction
+- new practice engine
+- mastery engine
+- weakness diagnosis
+- recommendations
+- dashboard redesign
+- Paystack
+- billing
+- subscription system
+
+Those are later steps.
+
+==================================================
+COMPLETION RULE
+
+Step 2 is complete only when:
+
+1. Users can signup/login/logout.
+2. Sessions persist securely.
+3. Protected routes require authentication.
+4. Server-side ownership checks prevent cross-user access.
+5. Tests prove User A cannot access User B's data.
+6. Existing PostgreSQL persistence still works.
+
+Do NOT claim production-ready.
+
+STOP after Step 2.
+
+==================================================
+FINAL REPORT
+
+Report only:
+
+IMPLEMENTED
+- authentication/session/ownership work completed
+
+TESTED
+- tests actually executed
+
+OWNERSHIP
+- resources protected
+
+NOT VERIFIED
+- anything not actually tested
+
+DATABASE
+- schema changes, if any
+
+BUILD
+- typecheck/build result
+
+RUNTIME
+- API/health/frontend result
+
+Do not start Step 3 automatically.
