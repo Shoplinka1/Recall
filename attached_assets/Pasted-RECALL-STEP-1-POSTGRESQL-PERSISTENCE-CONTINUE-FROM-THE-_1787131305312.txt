@@ -1,0 +1,179 @@
+RECALL — STEP 1: POSTGRESQL PERSISTENCE
+
+CONTINUE FROM THE CURRENT GIT CODEBASE.
+
+DO NOT rebuild Recall, create another project, create a prototype, or restart the architecture.
+
+PRESERVE the work already completed:
+- DevelopmentAIService
+- AI provider abstraction
+- development/real AI modes
+- Gemini/OpenAI/Anthropic structure
+- deterministic development AI
+- grounded AI pipeline
+- Stripe removal
+- typecheck
+- /api/health
+- working runtime
+
+CURRENT BLOCKER:
+The backend still uses demo/in-memory storage.
+
+YOUR ONLY TASK NOW:
+Replace persistent in-memory storage with real PostgreSQL/Drizzle persistence.
+
+==================================================
+1. AUDIT
+==================================================
+
+First inspect the existing:
+- Drizzle/database config
+- PostgreSQL connection
+- schemas
+- migrations
+- repositories/services
+- API routes
+- in-memory stores
+
+Find persistent data stored in arrays, Maps, module-level objects, mock repositories, or demo stores.
+
+Do NOT replace arrays used only for temporary calculations.
+
+Reuse existing database architecture. Do not create duplicate systems.
+
+==================================================
+2. POSTGRESQL SOURCE OF TRUTH
+==================================================
+
+Make PostgreSQL the real source of truth for existing application data, including equivalent structures for:
+
+users, sessions, subjects, materials, material sections, concepts, questions, question sources, practice sessions, practice questions, attempts, mastery, weaknesses, recommendations, usage, payments, transactions, subscriptions.
+
+Reuse existing schemas where possible.
+
+Replace persistent in-memory repositories with PostgreSQL/Drizzle queries.
+
+Keep existing API/service interfaces where practical.
+
+Production MUST NOT use:
+- arrays/Maps as database
+- localStorage
+- React state
+- module-level stores
+
+==================================================
+3. RELATIONSHIPS + INTEGRITY
+==================================================
+
+Ensure user-owned records have correct PostgreSQL relationships.
+
+Add/fix appropriate:
+- foreign keys
+- indexes
+- unique constraints
+- NOT NULL constraints
+
+Users must be traceable to their subjects, materials, practice data, progress, subscriptions and payments.
+
+Use transactions for important multi-record operations such as:
+- material + sections
+- practice session + questions
+- important state updates
+
+==================================================
+4. MIGRATIONS
+
+Create/update Drizzle migrations safely.
+
+DO NOT reset or destructively drop the database.
+
+If DATABASE_URL exists:
+- run migrations
+- verify connection
+- verify migration success
+
+If DATABASE_URL is missing:
+- do NOT fall back to fake storage
+- keep schema/migrations correct
+- report that live migration testing requires DATABASE_URL
+
+Reuse the existing database connection. Do not create another database system.
+
+==================================================
+5. REAL PERSISTENCE TEST
+
+Verify where possible:
+
+create user
+→ create subject
+→ create material
+→ confirm PostgreSQL records
+→ confirm ownership/foreign keys
+→ restart server
+→ confirm records still exist
+
+The key requirement:
+
+DATA MUST SURVIVE SERVER RESTART.
+
+Do not claim this passed if PostgreSQL credentials are unavailable.
+
+==================================================
+6. VERIFY APP
+
+After implementation:
+
+- typecheck
+- run relevant tests
+- validate schema
+- run migrations if possible
+- build
+- start application
+- check /api/health
+- verify frontend still renders
+
+Fix errors before stopping.
+
+==================================================
+DO NOT DO YET
+
+Do NOT implement:
+- Paystack/billing
+- file extraction/processing
+- practice engine
+- mastery
+- recommendations
+- major auth rewrite
+- advanced security audit
+
+This pass is ONLY PostgreSQL persistence.
+
+==================================================
+COMPLETION RULE
+
+Do NOT say “PostgreSQL support added” unless the actual application repositories/services are reading and writing PostgreSQL.
+
+The goal is to eliminate:
+
+“backend is still demo/in-memory.”
+
+==================================================
+FINAL REPORT
+
+Report only:
+
+IMPLEMENTED
+RETAINED
+MIGRATIONS
+PERSISTENCE
+TESTED
+NOT LIVE-TESTED
+REQUIRES CONFIGURATION
+BUILD
+RUNTIME
+
+Do NOT claim Recall is production-ready.
+
+This is STEP 1 ONLY.
+
+STOP after Step 1. Do not automatically begin Step 2.
