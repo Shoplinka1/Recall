@@ -9,7 +9,6 @@ import {
   sessionQuestionsTable,
   subjectsTable,
   subscriptionsTable,
-  usersTable,
 } from "@workspace/db/schema";
 import type {
   Concept,
@@ -27,15 +26,12 @@ import {
   demoSubjects,
 } from "./recall-demo";
 
-const DEMO_EMAIL = "alex@example.com";
-const DEMO_NAME = "Alex Morgan";
-
 type QuestionWithConcept = {
   question: typeof questionsTable.$inferSelect;
   conceptName: string;
 };
 
-let seedPromise: Promise<string> | undefined;
+const seedPromises = new Map<string, Promise<string>>();
 
 const iso = (value: Date | null | undefined) =>
   value ? value.toISOString() : null;
@@ -53,30 +49,28 @@ const questionToApi = (row: QuestionWithConcept): Question => ({
   correctAnswer: row.question.correctAnswer,
 });
 
-async function seedRecallData() {
+async function seedRecallData(userId: string) {
   return db.transaction(async (tx) => {
-    let [user] = await tx
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.email, DEMO_EMAIL))
+    const [subscription] = await tx
+      .select({ id: subscriptionsTable.id })
+      .from(subscriptionsTable)
+      .where(eq(subscriptionsTable.userId, userId))
       .limit(1);
-
-    if (!user) {
-      [user] = await tx
-        .insert(usersTable)
-        .values({ email: DEMO_EMAIL, name: DEMO_NAME })
-        .returning();
-      await tx.insert(subscriptionsTable).values({ userId: user.id });
+    if (!subscription) {
+      await tx.insert(subscriptionsTable).values({ userId });
     }
 
-    const existingSubjects = await tx.select().from(subjectsTable);
+    const existingSubjects = await tx
+      .select()
+      .from(subjectsTable)
+      .where(eq(subjectsTable.userId, userId));
     const subjectIds = new Map(existingSubjects.map((subject) => [subject.name, subject.id]));
     if (existingSubjects.length === 0) {
       const inserted = await tx
         .insert(subjectsTable)
         .values(
           demoSubjects.map((subject) => ({
-            userId: user.id,
+            userId,
             name: subject.name,
             description: subject.description,
             color: subject.color,
@@ -86,7 +80,10 @@ async function seedRecallData() {
       for (const subject of inserted) subjectIds.set(subject.name, subject.id);
     }
 
-    const existingMaterials = await tx.select().from(materialsTable);
+    const existingMaterials = await tx
+      .select()
+      .from(materialsTable)
+      .where(eq(materialsTable.userId, userId));
     const materialIds = new Map(
       existingMaterials.map((material) => [material.title, material.id]),
     );
@@ -105,7 +102,7 @@ async function seedRecallData() {
         .insert(materialsTable)
         .values(
           seededMaterials.map((material) => ({
-            userId: user.id,
+            userId,
             subjectId: subjectIds.get(material.subjectName)!,
             title: material.title,
             originalFileName: material.title,
@@ -118,8 +115,12 @@ async function seedRecallData() {
       for (const material of inserted) materialIds.set(material.title, material.id);
     }
 
-    const existingConcepts = await tx.select().from(conceptsTable);
-    const conceptIds = new Map(existingConcepts.map((concept) => [concept.name, concept.id]));
+    const existingConcepts = await tx
+      .select({ concept: conceptsTable })
+      .from(conceptsTable)
+      .innerJoin(subjectsTable, eq(conceptsTable.subjectId, subjectsTable.id))
+      .where(eq(subjectsTable.userId, userId));
+    const conceptIds = new Map(existingConcepts.map(({ concept }) => [concept.name, concept.id]));
     if (existingConcepts.length === 0) {
       const inserted = await tx
         .insert(conceptsTable)
@@ -134,7 +135,7 @@ async function seedRecallData() {
       for (const concept of inserted) conceptIds.set(concept.name, concept.id);
       await tx.insert(conceptMasteryTable).values(
         demoConcepts.map((concept) => ({
-          userId: user.id,
+            userId,
           subjectId: subjectIds.get(concept.subjectName)!,
           conceptId: conceptIds.get(concept.name)!,
           masteryScore: concept.masteryScore,
@@ -146,7 +147,11 @@ async function seedRecallData() {
       );
     }
 
-    const existingQuestions = await tx.select().from(questionsTable).limit(1);
+    const existingQuestions = await tx
+      .select({ id: questionsTable.id })
+      .from(questionsTable)
+      .where(eq(questionsTable.userId, userId))
+      .limit(1);
     if (existingQuestions.length === 0) {
       const materialForConcept = (concept: string) =>
         concept === "Kinematics"
@@ -158,7 +163,7 @@ async function seedRecallData() {
               : materialIds.get("Cardiovascular System");
       await tx.insert(questionsTable).values(
         demoQuestions.map((question) => ({
-          userId: user.id,
+           userId,
           subjectId: subjectIds.get(
             ["Osmosis", "Membrane transport"].includes(question.concept)
               ? "Cell Biology"
@@ -181,16 +186,19 @@ async function seedRecallData() {
       );
     }
 
-    return user.id;
+    return userId;
   });
 }
 
-export const ensureRecallData = () => {
-  seedPromise ??= seedRecallData().catch((error) => {
-    seedPromise = undefined;
+export const ensureRecallData = (userId: string) => {
+  const existing = seedPromises.get(userId);
+  if (existing) return existing;
+  const promise = seedRecallData(userId).catch((error) => {
+    seedPromises.delete(userId);
     throw error;
   });
-  return seedPromise;
+  seedPromises.set(userId, promise);
+  return promise;
 };
 
 export async function listSubjects(userId: string): Promise<Subject[]> {
@@ -331,6 +339,7 @@ export async function listConcepts(userId: string): Promise<Concept[]> {
         eq(conceptMasteryTable.userId, userId),
       ),
     )
+    .where(eq(subjectsTable.userId, userId))
     .orderBy(asc(conceptsTable.name));
   return rows.map((row) => ({
     id: row.concept.id,
@@ -367,7 +376,7 @@ export async function createPractice(
   userId: string,
   input: { subjectId?: string; materialId?: string; questionCount: number; sessionType: string },
   selectedConceptIds?: string[],
-): Promise<PracticeSession> {
+): Promise<PracticeSession | undefined> {
   return db.transaction(async (tx) => {
     const conditions = [eq(questionsTable.userId, userId)];
     if (input.materialId) conditions.push(eq(questionsTable.materialId, input.materialId));
@@ -391,8 +400,23 @@ export async function createPractice(
     }
     const selected = rows.slice(0, Math.max(1, Math.min(input.questionCount, 20)));
     const subject = input.subjectId
-      ? (await tx.select().from(subjectsTable).where(eq(subjectsTable.id, input.subjectId)).limit(1))[0]
+      ? (
+          await tx
+            .select()
+            .from(subjectsTable)
+            .where(and(eq(subjectsTable.id, input.subjectId), eq(subjectsTable.userId, userId)))
+            .limit(1)
+        )[0]
       : undefined;
+    if (input.subjectId && !subject) return undefined;
+    if (input.materialId) {
+      const [material] = await tx
+        .select({ id: materialsTable.id })
+        .from(materialsTable)
+        .where(and(eq(materialsTable.id, input.materialId), eq(materialsTable.userId, userId)))
+        .limit(1);
+      if (!material) return undefined;
+    }
     const [session] = await tx
       .insert(practiceSessionsTable)
       .values({
@@ -439,7 +463,11 @@ export async function getPractice(userId: string, sessionId: string) {
     ).map((row) => row.questionId),
   );
   const subject = (
-    await db.select().from(subjectsTable).where(eq(subjectsTable.id, session.subjectId)).limit(1)
+    await db
+      .select()
+      .from(subjectsTable)
+      .where(and(eq(subjectsTable.id, session.subjectId), eq(subjectsTable.userId, userId)))
+      .limit(1)
   )[0];
   return {
     id: session.id,
@@ -594,8 +622,3 @@ export async function getSubscription(userId: string): Promise<Subscription> {
     resetDate: "2026-09-01",
   };
 }
-
-export const getDemoUser = async () => {
-  const userId = await ensureRecallData();
-  return { id: userId, name: DEMO_NAME, email: DEMO_EMAIL };
-};

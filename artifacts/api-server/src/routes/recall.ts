@@ -19,7 +19,6 @@ import {
   createSubject,
   deleteMaterial,
   ensureRecallData,
-  getDemoUser,
   getMaterial,
   getPractice,
   getSubscription,
@@ -27,21 +26,23 @@ import {
   listMaterials,
   listSubjects,
 } from "../lib/recall-store";
+import { requireAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
-router.use(async (_req, _res, next) => {
+router.use(requireAuth);
+router.use(async (req, _res, next) => {
   try {
-    await ensureRecallData();
+    await ensureRecallData(req.auth!.id);
     next();
   } catch (error) {
     next(error);
   }
 });
 
-router.get("/dashboard", async (_req, res, next) => {
+router.get("/dashboard", async (req, res, next) => {
   try {
-    const user = await getDemoUser();
+    const user = req.auth!;
     const [materials, concepts, subscription] = await Promise.all([
       listMaterials(user.id),
       listConcepts(user.id),
@@ -76,10 +77,9 @@ router.get("/dashboard", async (_req, res, next) => {
   }
 });
 
-router.get("/subjects", async (_req, res, next) => {
+router.get("/subjects", async (req, res, next) => {
   try {
-    const user = await getDemoUser();
-    res.json(await listSubjects(user.id));
+    res.json(await listSubjects(req.auth!.id));
   } catch (error) {
     next(error);
   }
@@ -88,17 +88,16 @@ router.get("/subjects", async (_req, res, next) => {
 router.post("/subjects", async (req, res, next) => {
   try {
     const input = CreateSubjectBody.parse(req.body);
-    const user = await getDemoUser();
+    const user = req.auth!;
     res.status(201).json(await createSubject(user.id, input));
   } catch (error) {
     next(error);
   }
 });
 
-router.get("/materials", async (_req, res, next) => {
+router.get("/materials", async (req, res, next) => {
   try {
-    const user = await getDemoUser();
-    res.json(await listMaterials(user.id));
+    res.json(await listMaterials(req.auth!.id));
   } catch (error) {
     next(error);
   }
@@ -107,7 +106,7 @@ router.get("/materials", async (_req, res, next) => {
 router.post("/materials", async (req, res, next) => {
   try {
     const input = CreateMaterialBody.parse(req.body);
-    const user = await getDemoUser();
+    const user = req.auth!;
     const subject = (await listSubjects(user.id)).find(
       (item) => item.id === input.subjectId,
     );
@@ -124,7 +123,7 @@ router.post("/materials", async (req, res, next) => {
 
 router.get("/materials/:id", async (req, res, next) => {
   try {
-    const user = await getDemoUser();
+    const user = req.auth!;
     const material = await getMaterial(user.id, req.params.id);
     if (!material) {
       res.status(404).json({ error: "Material not found" });
@@ -138,7 +137,7 @@ router.get("/materials/:id", async (req, res, next) => {
 
 router.delete("/materials/:id", async (req, res, next) => {
   try {
-    const user = await getDemoUser();
+    const user = req.auth!;
     if (!(await deleteMaterial(user.id, req.params.id))) {
       res.status(404).json({ error: "Material not found" });
       return;
@@ -149,10 +148,9 @@ router.delete("/materials/:id", async (req, res, next) => {
   }
 });
 
-router.get("/concepts", async (_req, res, next) => {
+router.get("/concepts", async (req, res, next) => {
   try {
-    const user = await getDemoUser();
-    res.json(await listConcepts(user.id));
+    res.json(await listConcepts(req.auth!.id));
   } catch (error) {
     next(error);
   }
@@ -161,15 +159,18 @@ router.get("/concepts", async (_req, res, next) => {
 router.post("/practice", async (req, res, next) => {
   try {
     const input = CreatePracticeBody.parse(req.body);
-    const user = await getDemoUser();
-    res.status(201).json(
-      await createPractice(user.id, {
-        subjectId: input.subjectId ?? undefined,
-        materialId: input.materialId ?? undefined,
-        questionCount: input.questionCount,
-        sessionType: "practice",
-      }),
-    );
+    const user = req.auth!;
+    const session = await createPractice(user.id, {
+      subjectId: input.subjectId ?? undefined,
+      materialId: input.materialId ?? undefined,
+      questionCount: input.questionCount,
+      sessionType: "practice",
+    });
+    if (!session) {
+      res.status(404).json({ error: "Subject or material not found" });
+      return;
+    }
+    res.status(201).json(session);
   } catch (error) {
     next(error);
   }
@@ -178,14 +179,17 @@ router.post("/practice", async (req, res, next) => {
 router.post("/practice/weakness", async (req, res, next) => {
   try {
     const input = CreateWeaknessPracticeBody.parse(req.body);
-    const user = await getDemoUser();
-    res.status(201).json(
-      await createPractice(
-        user.id,
-        { questionCount: 6, sessionType: "weakness" },
-        input.conceptIds,
-      ),
+    const user = req.auth!;
+    const session = await createPractice(
+      user.id,
+      { questionCount: 6, sessionType: "weakness" },
+      input.conceptIds,
     );
+    if (!session) {
+      res.status(404).json({ error: "Practice concepts not found" });
+      return;
+    }
+    res.status(201).json(session);
   } catch (error) {
     next(error);
   }
@@ -193,7 +197,7 @@ router.post("/practice/weakness", async (req, res, next) => {
 
 router.get("/practice/:id", async (req, res, next) => {
   try {
-    const user = await getDemoUser();
+    const user = req.auth!;
     const session = await getPractice(user.id, req.params.id);
     if (!session) {
       res.status(404).json({ error: "Practice session not found" });
@@ -208,7 +212,7 @@ router.get("/practice/:id", async (req, res, next) => {
 router.post("/practice/:id", async (req, res, next) => {
   try {
     const input = AnswerPracticeBody.parse(req.body);
-    const user = await getDemoUser();
+    const user = req.auth!;
     const result = await answerPractice(user.id, req.params.id, input);
     if (result === undefined) {
       res.status(404).json({ error: "Practice session not found" });
@@ -226,8 +230,7 @@ router.post("/practice/:id", async (req, res, next) => {
 
 router.post("/practice/:id/complete", async (req, res, next) => {
   try {
-    const user = await getDemoUser();
-    const result = await completePractice(user.id, req.params.id);
+    const result = await completePractice(req.auth!.id, req.params.id);
     if (!result) {
       res.status(404).json({ error: "Practice session not found" });
       return;
@@ -238,10 +241,9 @@ router.post("/practice/:id/complete", async (req, res, next) => {
   }
 });
 
-router.get("/progress", async (_req, res, next) => {
+router.get("/progress", async (req, res, next) => {
   try {
-    const user = await getDemoUser();
-    const concepts = await listConcepts(user.id);
+    const concepts = await listConcepts(req.auth!.id);
     res.json({
       overallMastery: concepts.length
         ? Math.round(
@@ -293,10 +295,9 @@ router.get("/recommendations", (_req, res) => {
   ]);
 });
 
-router.get("/subscription", async (_req, res, next) => {
+router.get("/subscription", async (req, res, next) => {
   try {
-    const user = await getDemoUser();
-    res.json(await getSubscription(user.id));
+    res.json(await getSubscription(req.auth!.id));
   } catch (error) {
     next(error);
   }
@@ -316,15 +317,6 @@ router.post("/billing/checkout", (req, res) => {
       ? `Paystack checkout is ready for the ${input.interval} plan.`
       : "Paystack billing is not configured yet. Your learning data is safe, and you can keep using Recall Free.",
   });
-});
-
-router.get("/auth/session", async (_req, res, next) => {
-  try {
-    const user = await getDemoUser();
-    res.json({ authenticated: true, user });
-  } catch (error) {
-    next(error);
-  }
 });
 
 export default router;

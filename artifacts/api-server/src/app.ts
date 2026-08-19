@@ -36,6 +36,10 @@ app.use("/api", router);
 app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error({ err: error }, "Unhandled request error");
   if (res.headersSent) return;
+  if (error && typeof error === "object" && "issues" in error) {
+    res.status(400).json({ error: "Invalid request" });
+    return;
+  }
   res.status(500).json({ error: "An unexpected error occurred" });
 });
 

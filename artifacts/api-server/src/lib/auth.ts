@@ -55,7 +55,8 @@ export async function findUserByEmail(email: string) {
 }
 
 export async function verifyPassword(password: string, passwordHash: string | null) {
-  return Boolean(passwordHash) && bcrypt.compare(password, passwordHash);
+  if (!passwordHash) return false;
+  return bcrypt.compare(password, passwordHash);
 }
 
 export async function createSession(userId: string) {

@@ -59,7 +59,11 @@ router.post("/signup", async (req, res, next) => {
     const token = await createSession(user.id);
     res.cookie(SESSION_COOKIE, token, cookieOptions);
     res.status(201).json({ authenticated: true, user });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === "23505") {
+      res.status(409).json({ error: "An account with that email already exists" });
+      return;
+    }
     next(error);
   }
 });
