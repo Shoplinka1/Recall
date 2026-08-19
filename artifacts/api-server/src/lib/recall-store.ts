@@ -547,7 +547,7 @@ export async function listConcepts(userId: string): Promise<Concept[]> {
 }
 
 async function waitForMaterialReady(userId: string, materialId: string) {
-  for (let attempt = 0; attempt < 40; attempt += 1) {
+  for (let attempt = 0; attempt < 200; attempt += 1) {
     const [material] = await db
       .select({ processingStatus: materialsTable.processingStatus })
       .from(materialsTable)
