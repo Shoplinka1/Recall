@@ -1,0 +1,116 @@
+RECALL — STEP 1 FINALIZE AND VERIFY
+
+CONTINUE FROM THE CURRENT GIT CODEBASE.
+
+This is the existing Recall project. Do NOT rebuild it, create another project, or restart the architecture.
+
+The previous Replit agent already completed most of STEP 1: PostgreSQL persistence.
+
+The work already completed includes:
+	•	Existing Drizzle/PostgreSQL architecture reused
+	•	PostgreSQL connection working
+	•	Existing schema pushed successfully
+	•	Persistent in-memory subject/material/practice stores replaced with PostgreSQL
+	•	Database transactions added where needed
+	•	Subject/material/practice data persisted through PostgreSQL
+	•	API typecheck passes
+	•	API build passes
+	•	End-to-end persistence test passed:
+create subject → create material → create/answer/complete practice → restart API → retrieve records
+	•	API workflow/PORT issue was fixed
+	•	DevelopmentAIService and AI provider abstraction from the previous pass must remain untouched
+
+YOUR ONLY JOB NOW
+
+FINISH AND VERIFY STEP 1.
+
+Do NOT start Step 2.
+
+First inspect the current Git code and determine exactly what the previous agent completed.
+
+Then:
+	1.	Verify there are no remaining persistent Map, array, module-level store, mock repository, or demo store being used as the production source of truth for the data already migrated.
+	2.	Verify the API is actually reading/writing PostgreSQL rather than merely having PostgreSQL tables.
+	3.	Verify the existing Drizzle schema and migrations are correct.
+	4.	Verify the workflow starts correctly with the required PORT.
+	5.	Run the persistence test again if possible.
+	6.	Verify data survives an API/process restart.
+	7.	Run:
+	•	typecheck
+	•	relevant tests
+	•	build
+	•	API startup
+	•	/api/health
+	•	frontend preview check
+	8.	Fix only problems related to completing/validating Step 1.
+
+DO NOT IMPLEMENT YET
+
+Do NOT implement:
+	•	material upload/extraction
+	•	PDF/PPTX/DOCX processing
+	•	authentication rewrite
+	•	practice-engine expansion
+	•	mastery
+	•	weakness diagnosis
+	•	recommendations
+	•	dashboard
+	•	knowledge map
+	•	mistake review
+	•	Paystack
+	•	billing
+	•	subscription system
+	•	advanced security audit
+
+Those are later steps.
+
+IMPORTANT
+
+Do not redo work that already exists.
+
+Do not replace working PostgreSQL code with a new architecture.
+
+Do not use fake/in-memory fallback storage.
+
+If DATABASE_URL is missing, report that clearly instead of pretending PostgreSQL was tested.
+
+COMPLETION CONDITION
+
+Step 1 is complete only when the actual application repositories/services are using PostgreSQL as the persistent source of truth and the persistence test proves data survives a server restart.
+
+Then STOP.
+
+Do not automatically begin Step 2.
+
+FINAL REPORT
+
+Report only:
+
+IMPLEMENTED
+	•	What was actually completed.
+
+VERIFIED
+	•	What was actually tested successfully.
+
+DATABASE
+	•	PostgreSQL/Drizzle status.
+	•	Migration/schema status.
+
+PERSISTENCE
+	•	Which entities are confirmed persistent.
+
+NOT VERIFIED
+	•	Anything that could not actually be tested.
+
+REQUIRES CONFIGURATION
+	•	Missing environment variables, if any.
+
+BUILD
+	•	Build/typecheck result.
+
+RUNTIME
+	•	API/workflow/health/frontend result.
+
+Do not claim Recall is production-ready.
+
+This is Step 1 only.
