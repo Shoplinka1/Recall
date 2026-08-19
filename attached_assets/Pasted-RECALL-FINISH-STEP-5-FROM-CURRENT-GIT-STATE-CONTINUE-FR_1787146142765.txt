@@ -1,0 +1,106 @@
+RECALL — FINISH STEP 5 FROM CURRENT GIT STATE
+
+CONTINUE FROM THIS IMPORTED GIT CODEBASE.
+
+DO NOT restart Step 5.
+DO NOT redo Steps 1–4.
+DO NOT replace PostgreSQL, auth, material processing, grounded questions, or AI.
+DO NOT start Step 6.
+
+STEPS 1–4 ARE COMPLETE.
+
+STEP 5 IS PARTIALLY COMPLETE.
+
+Already verified:
+- real authenticated practice flow
+- session persistence
+- answer persistence
+- completion persistence
+- reload restoration
+- User B isolation
+- unauthenticated rejection
+- PostgreSQL schema applied
+- typecheck/build pass
+- API health/frontend HTTP pass
+
+The previous agent found two remaining issues:
+1. Practice tests started too soon after material upload; readiness wait was being increased.
+2. Uploaded-file tests require private object storage configuration, which was missing in that environment.
+
+CONTINUE FROM THE CURRENT CODE. INSPECT GIT/CODE FIRST. DO NOT REDO COMPLETED WORK.
+
+YOUR ONLY GOAL:
+FINISH AND VERIFY STEP 5.
+
+Requirements:
+- PostgreSQL is the source of truth.
+- Practice uses real Step 4 persisted questions.
+- Persist sessions, questions, answers, progress, completion and results.
+- MCQ, true/false and short-answer must work.
+- Resume/reload/restart must restore the same session/result.
+- User ownership must be enforced server-side.
+- No demo/fake sessions.
+- No localStorage/in-memory production state.
+- Keep existing UI; no redesign.
+- Do not implement mastery, weaknesses, recommendations, billing or Step 6.
+
+FIRST:
+Apply the existing Drizzle schema if DATABASE_URL exists. NEVER reset the database.
+
+Then finish the readiness/test issue and run real tests for:
+- signup/login
+- real material
+- real grounded questions
+- start practice
+- MCQ answer
+- true/false answer
+- short-answer answer
+- persisted answers
+- resume/reload
+- completion + final score
+- API restart then retrieve same session/result
+- User B cannot access User A session/questions/results
+- unauthenticated access rejected
+- Steps 1–4 regression tests
+
+If private object storage is required and unavailable, configure the existing project storage correctly if possible. Do NOT replace it with fake/local storage. If genuinely impossible, test the available persisted practice path and clearly report the storage limitation.
+
+Run:
+- typecheck
+- relevant tests
+- Step 1–4 regression tests
+- Drizzle schema validation/push
+- build
+- API startup
+- /api/healthz
+- frontend HTTP check
+- restart persistence test
+
+FIX ERRORS BEFORE STOPPING.
+
+STEP 5 IS COMPLETE ONLY WHEN:
+real persisted questions → persisted practice session → persisted answers → durable completion/result → restart/resume → ownership protection are actually tested.
+
+DO NOT CLAIM COMPLETION WITHOUT TEST EVIDENCE.
+
+STOP AFTER STEP 5.
+
+FINAL REPORT ONLY:
+IMPLEMENTED
+PRACTICE
+PERSISTENCE
+OWNERSHIP
+TESTED
+NOT VERIFIED
+DATABASE
+BUILD
+RUNTIME
+
+DO NOT CLAIM PRODUCTION-READY.
+DO NOT START STEP 6.
+
+IMPORTANT:
+DEMO_MODE must NOT be used to claim Step 5 works.
+For verification, use the real authenticated PostgreSQL-backed application path.
+Do not replace missing production functionality with demo data, fake sessions, or fallback storage.
+Demo fixtures may remain only for development/testing.
