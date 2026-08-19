@@ -121,6 +121,32 @@ paths:
                 $ref: "#/components/schemas/Material"
         "404":
           $ref: "#/components/responses/NotFound"
+  /materials/{id}/questions/generate:
+    post:
+      operationId: generateMaterialQuestions
+      tags: [materials]
+      summary: Generate grounded questions from a ready material
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                count: { type: number, format: int32, minimum: 1, maximum: 20 }
+      responses:
+        "201":
+          description: Grounded questions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Question"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /storage/uploads/request-url:
     post:
       operationId: requestMaterialUploadUrl
@@ -456,9 +482,10 @@ components:
         difficulty: { type: string }
         sourceExcerpt: { type: string }
         sourcePage: { type: number }
+        sourceSectionId: { type: ["string", "null"] }
         explanation: { type: string }
         correctAnswer: { type: string }
-      required: [id, questionText, type, options, concept, difficulty, sourceExcerpt, sourcePage, explanation, correctAnswer]
+      required: [id, questionText, type, options, concept, difficulty, sourceExcerpt, sourcePage, sourceSectionId, explanation, correctAnswer]
     PracticeSession:
       type: object
       properties:

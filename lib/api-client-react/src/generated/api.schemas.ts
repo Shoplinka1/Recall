@@ -35,6 +35,8 @@ export interface Material {
   subjectName: string;
   fileType: string;
   processingStatus: string;
+  /** @nullable */
+  processingError: string | null;
   concepts: number;
   sessions: number;
   /** @nullable */
@@ -90,6 +92,8 @@ export interface Question {
   difficulty: string;
   sourceExcerpt: string;
   sourcePage: number;
+  /** @nullable */
+  sourceSectionId: string | null;
   explanation: string;
   correctAnswer: string;
 }
@@ -245,4 +249,12 @@ export interface Session {
  * Not found
  */
 export type NotFoundResponse = Error;
+
+export type GenerateMaterialQuestionsBody = {
+  /**
+     * @minimum 1
+     * @maximum 20
+     */
+  count?: number;
+};
 

@@ -13,6 +13,8 @@ export interface Material {
   subjectName: string;
   fileType: string;
   processingStatus: string;
+  /** @nullable */
+  processingError: string | null;
   concepts: number;
   sessions: number;
   /** @nullable */

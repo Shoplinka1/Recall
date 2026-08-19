@@ -47,6 +47,7 @@ export const GetDashboardResponse = zod.object({
   "subjectName": zod.string(),
   "fileType": zod.string(),
   "processingStatus": zod.string(),
+  "processingError": zod.string().nullable(),
   "concepts": zod.number(),
   "sessions": zod.number(),
   "lastStudied": zod.string().nullable(),
@@ -111,6 +112,7 @@ export const ListMaterialsResponseItem = zod.object({
   "subjectName": zod.string(),
   "fileType": zod.string(),
   "processingStatus": zod.string(),
+  "processingError": zod.string().nullable(),
   "concepts": zod.number(),
   "sessions": zod.number(),
   "lastStudied": zod.string().nullable(),
@@ -143,6 +145,7 @@ export const CreateMaterialResponse = zod.object({
   "subjectName": zod.string(),
   "fileType": zod.string(),
   "processingStatus": zod.string(),
+  "processingError": zod.string().nullable(),
   "concepts": zod.number(),
   "sessions": zod.number(),
   "lastStudied": zod.string().nullable(),
@@ -165,12 +168,44 @@ export const RetryMaterialResponse = zod.object({
   "subjectName": zod.string(),
   "fileType": zod.string(),
   "processingStatus": zod.string(),
+  "processingError": zod.string().nullable(),
   "concepts": zod.number(),
   "sessions": zod.number(),
   "lastStudied": zod.string().nullable(),
   "createdAt": zod.string(),
   "excerpt": zod.string()
 })
+
+
+/**
+ * @summary Generate grounded questions from a ready material
+ */
+export const GenerateMaterialQuestionsParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const generateMaterialQuestionsBodyCountMax = 20;
+
+
+
+export const GenerateMaterialQuestionsBody = zod.object({
+  "count": zod.number().min(1).max(generateMaterialQuestionsBodyCountMax).optional()
+})
+
+export const GenerateMaterialQuestionsResponseItem = zod.object({
+  "id": zod.string(),
+  "questionText": zod.string(),
+  "type": zod.string(),
+  "options": zod.array(zod.string()),
+  "concept": zod.string(),
+  "difficulty": zod.string(),
+  "sourceExcerpt": zod.string(),
+  "sourcePage": zod.number(),
+  "sourceSectionId": zod.string().nullable(),
+  "explanation": zod.string(),
+  "correctAnswer": zod.string()
+})
+export const GenerateMaterialQuestionsResponse = zod.array(GenerateMaterialQuestionsResponseItem)
 
 
 /**
@@ -215,6 +250,7 @@ export const GetMaterialResponse = zod.object({
   "subjectName": zod.string(),
   "fileType": zod.string(),
   "processingStatus": zod.string(),
+  "processingError": zod.string().nullable(),
   "concepts": zod.number(),
   "sessions": zod.number(),
   "lastStudied": zod.string().nullable(),
@@ -275,6 +311,7 @@ export const CreatePracticeResponse = zod.object({
   "difficulty": zod.string(),
   "sourceExcerpt": zod.string(),
   "sourcePage": zod.number(),
+  "sourceSectionId": zod.string().nullable(),
   "explanation": zod.string(),
   "correctAnswer": zod.string()
 })),
@@ -305,6 +342,7 @@ export const CreateWeaknessPracticeResponse = zod.object({
   "difficulty": zod.string(),
   "sourceExcerpt": zod.string(),
   "sourcePage": zod.number(),
+  "sourceSectionId": zod.string().nullable(),
   "explanation": zod.string(),
   "correctAnswer": zod.string()
 })),
@@ -334,6 +372,7 @@ export const GetPracticeResponse = zod.object({
   "difficulty": zod.string(),
   "sourceExcerpt": zod.string(),
   "sourcePage": zod.number(),
+  "sourceSectionId": zod.string().nullable(),
   "explanation": zod.string(),
   "correctAnswer": zod.string()
 })),

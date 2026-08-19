@@ -19,6 +19,7 @@ import {
   createSubject,
   deleteMaterial,
   ensureRecallData,
+  generateQuestionsForMaterial,
   getMaterial,
   getPractice,
   getSubscription,
@@ -148,6 +149,28 @@ router.post("/materials/:id/retry", async (req, res, next) => {
       return;
     }
     res.json(await getMaterial(req.auth!.id, req.params.id));
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/materials/:id/questions/generate", async (req, res, next) => {
+  try {
+    const count = Math.max(1, Math.min(Number(req.body?.count ?? 6), 20));
+    const questions = await generateQuestionsForMaterial(
+      req.auth!.id,
+      req.params.id,
+      Number.isFinite(count) ? count : 6,
+    );
+    if (questions === undefined) {
+      res.status(404).json({ error: "Ready material not found" });
+      return;
+    }
+    if (!questions.length) {
+      res.status(422).json({ error: "No new grounded questions could be generated" });
+      return;
+    }
+    res.status(201).json(questions);
   } catch (error) {
     next(error);
   }

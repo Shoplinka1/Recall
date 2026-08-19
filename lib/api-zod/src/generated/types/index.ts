@@ -14,6 +14,7 @@ export * from './concept';
 export * from './dashboard';
 export * from './dashboardStats';
 export * from './error';
+export * from './generateMaterialQuestionsBody';
 export * from './healthStatus';
 export * from './material';
 export * from './materialInput';
