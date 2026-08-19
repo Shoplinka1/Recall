@@ -1,0 +1,150 @@
+RECALL — FINISH STEP 3 FROM CURRENT GIT STATE
+
+CONTINUE FROM THE CURRENT IMPORTED GIT CODEBASE.
+
+IMPORTANT:
+A previous agent already started Step 3 and stopped at the daily quota.
+
+DO NOT restart/rebuild Step 3.
+DO NOT undo existing work.
+DO NOT replace PostgreSQL, authentication, or ownership.
+DO NOT start Step 4.
+
+STEP 1 COMPLETE:
+- PostgreSQL/Drizzle persistence
+- data survives restart
+
+STEP 2 COMPLETE:
+- signup/login/logout/me
+- PostgreSQL sessions
+- HTTP-only cookies
+- authentication + ownership
+- cross-user tests
+
+The previous Step 3 agent already implemented/started:
+- private file storage
+- upload URLs/metadata
+- processing fields/status
+- retry processing
+- material sections
+- ownership
+- parser dependencies
+- upload/paste API
+- Materials UI
+- Drizzle schema changes
+- typechecks
+- schema push
+- API/web runtime
+
+FIRST inspect the current Git state/code and continue from exactly where it stopped. DO NOT redo completed work.
+
+YOUR ONLY GOAL: FINISH STEP 3.
+
+REAL PIPELINE:
+
+upload/paste
+→ private storage
+→ real text extraction
+→ sections/chunks
+→ concepts from actual material
+→ PostgreSQL
+→ PROCESSING
+→ READY or FAILED
+→ retry FAILED
+
+Support/test:
+- TXT
+- PDF
+- DOCX
+- PPTX
+
+Never claim a format works unless actually tested.
+
+NO:
+- fake extracted text
+- fake concepts
+- fake READY status
+- decorative upload
+- in-memory production storage
+- public file URLs
+
+OWNERSHIP:
+Authenticated user must own every material, section, concept, and file.
+
+User A MUST NOT access User B's:
+- material
+- extracted text
+- sections
+- concepts
+- files
+
+FINISH:
+1. Material store/database integration
+2. Private file storage
+3. Real extraction
+4. Section/chunk persistence
+5. Concept persistence
+6. PROCESSING/READY/FAILED
+7. FAILED retry
+8. Existing upload/paste UI
+9. Sections endpoint if already started
+10. Executable Step 3 tests
+
+TEST:
+- authenticated TXT upload
+- pasted text
+- real extraction
+- sections persisted
+- concepts persisted
+- READY only after success
+- invalid/empty input rejected
+- failure → FAILED
+- FAILED → retry
+- cross-user material/section/concept/file rejection
+- restart persistence
+- PDF if supported
+- DOCX/PPTX if supported
+
+VERIFY:
+- typecheck
+- tests
+- Drizzle/schema
+- schema push if DATABASE_URL exists
+- build
+- API startup
+- /api/healthz
+- frontend HTTP
+- authentication
+- ownership
+- PostgreSQL persistence
+
+FIX ERRORS BEFORE STOPPING.
+
+DO NOT IMPLEMENT STEP 4:
+- question generation
+- question validation overhaul
+- practice engine
+- mastery
+- weaknesses
+- recommendations
+- dashboard redesign
+- Paystack
+- billing
+- subscriptions
+
+STEP 3 IS COMPLETE ONLY WHEN real uploaded/pasted material produces persisted sections/chunks + concepts in PostgreSQL, with private storage, persistent status, retryable failures, and ownership protection.
+
+Do not claim completion unless tests prove it.
+
+STOP AFTER STEP 3.
+
+FINAL REPORT ONLY:
+IMPLEMENTED
+SUPPORTED
+PROCESSING
+DATABASE
+OWNERSHIP
+TESTED
+NOT VERIFIED
+BUILD
+RUNTIME

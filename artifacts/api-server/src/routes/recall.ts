@@ -118,7 +118,7 @@ router.post("/materials", async (req, res, next) => {
     }
     if (
       input.storagePath &&
-      !input.storagePath.startsWith(`/objects/uploads/${user.id}/`)
+      !input.storagePath.startsWith(`/objects/.private/uploads/${user.id}/`)
     ) {
       res.status(403).json({ error: "Material file ownership mismatch" });
       return;
