@@ -6,6 +6,8 @@
   "scripts": {
     "hello": "tsx ./src/hello.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:auth": "node ./auth-ownership-test.mjs",
+    "test:materials": "tsx ./material-pipeline-test.mjs",
     "test:step4": "tsx ./step4-question-generation-test.mjs",
     "test:step5": "tsx ./practice-engine-test.mjs"
   },

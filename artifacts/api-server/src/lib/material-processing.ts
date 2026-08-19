@@ -61,15 +61,17 @@ export async function extractMaterialText(
 export function splitMaterialText(text: string) {
   const paragraphs = text.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
   const chunks: string[] = [];
-  let current = "";
-  for (const paragraph of paragraphs.length ? paragraphs : [text]) {
-    if (current && current.length + paragraph.length + 2 > 1200) {
-      chunks.push(current);
-      current = "";
+  for (const paragraph of paragraphs.length ? paragraphs : [text.trim()]) {
+    if (paragraph.length <= 1200) {
+      chunks.push(paragraph);
+      continue;
     }
-    current = current ? `${current}\n\n${paragraph}` : paragraph;
+
+    for (let start = 0; start < paragraph.length; start += 1200) {
+      chunks.push(paragraph.slice(start, start + 1200).trim());
+    }
   }
-  if (current) chunks.push(current);
+
   return chunks.length ? chunks : [text];
 }
 

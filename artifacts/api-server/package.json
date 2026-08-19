@@ -9,7 +9,7 @@
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:auth": "node ../../scripts/auth-ownership-test.mjs",
-    "test:materials": "pnpm --filter @workspace/scripts exec tsx ./material-pipeline-test.mjs"
+    "test:materials": "pnpm --filter @workspace/scripts run test:materials"
   },
   "dependencies": {
     "@google-cloud/storage": "^8.0.0",
