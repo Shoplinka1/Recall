@@ -67,7 +67,7 @@ const materialA = await userA.json("/api/materials", "POST", {
   title: "Private material A",
   subjectId: subjectIdA,
   fileType: "notes",
-  extractedText: "Private material owned by User A.",
+  pastedText: "Private material owned by User A.",
 });
 expectStatus(materialA, 201, "User A material creation");
 const materialIdA = materialA.body.id;

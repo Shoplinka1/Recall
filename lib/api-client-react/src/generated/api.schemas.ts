@@ -48,7 +48,24 @@ export interface MaterialInput {
   title: string;
   subjectId: string;
   fileType: string;
-  extractedText?: string;
+  originalFileName?: string;
+  fileSize?: number;
+  storagePath?: string;
+  pastedText?: string;
+}
+
+export interface UploadMetadata {
+  /** @minLength 1 */
+  name: string;
+  /** @minimum 1 */
+  size: number;
+  contentType: string;
+}
+
+export interface UploadResponse {
+  uploadURL: string;
+  objectPath: string;
+  metadata: UploadMetadata;
 }
 
 export interface Concept {

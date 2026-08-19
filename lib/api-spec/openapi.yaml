@@ -105,6 +105,40 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Material"
+  /materials/{id}/retry:
+    post:
+      operationId: retryMaterial
+      tags: [materials]
+      summary: Retry failed material processing
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Material
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Material"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /storage/uploads/request-url:
+    post:
+      operationId: requestMaterialUploadUrl
+      tags: [materials]
+      summary: Request a private upload URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadMetadata"
+      responses:
+        "200":
+          description: Private upload URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResponse"
   /materials/{id}:
     get:
       operationId: getMaterial
@@ -363,20 +397,39 @@ components:
         subjectName: { type: string }
         fileType: { type: string }
         processingStatus: { type: string }
+        processingError: { type: ["string", "null"] }
         concepts: { type: number }
         sessions: { type: number }
         lastStudied: { type: ["string", "null"] }
         createdAt: { type: string }
         excerpt: { type: string }
-      required: [id, title, subjectId, subjectName, fileType, processingStatus, concepts, sessions, lastStudied, createdAt, excerpt]
+      required: [id, title, subjectId, subjectName, fileType, processingStatus, processingError, concepts, sessions, lastStudied, createdAt, excerpt]
     MaterialInput:
       type: object
       properties:
         title: { type: string, minLength: 1 }
         subjectId: { type: string }
         fileType: { type: string }
-        extractedText: { type: string }
+        originalFileName: { type: string }
+        fileSize: { type: number, format: int32 }
+        storagePath: { type: string }
+        pastedText: { type: string }
       required: [title, subjectId, fileType]
+    UploadMetadata:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        size: { type: number, format: int32, minimum: 1 }
+        contentType: { type: string }
+      required: [name, size, contentType]
+    UploadResponse:
+      type: object
+      properties:
+        uploadURL: { type: string }
+        objectPath: { type: string }
+        metadata:
+          $ref: "#/components/schemas/UploadMetadata"
+      required: [uploadURL, objectPath, metadata]
     Concept:
       type: object
       properties:

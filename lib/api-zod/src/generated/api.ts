@@ -130,7 +130,10 @@ export const CreateMaterialBody = zod.object({
   "title": zod.string().min(1),
   "subjectId": zod.string(),
   "fileType": zod.string(),
-  "extractedText": zod.string().optional()
+  "originalFileName": zod.string().optional(),
+  "fileSize": zod.number().optional(),
+  "storagePath": zod.string().optional(),
+  "pastedText": zod.string().optional()
 })
 
 export const CreateMaterialResponse = zod.object({
@@ -145,6 +148,56 @@ export const CreateMaterialResponse = zod.object({
   "lastStudied": zod.string().nullable(),
   "createdAt": zod.string(),
   "excerpt": zod.string()
+})
+
+
+/**
+ * @summary Retry failed material processing
+ */
+export const RetryMaterialParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const RetryMaterialResponse = zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "subjectId": zod.string(),
+  "subjectName": zod.string(),
+  "fileType": zod.string(),
+  "processingStatus": zod.string(),
+  "concepts": zod.number(),
+  "sessions": zod.number(),
+  "lastStudied": zod.string().nullable(),
+  "createdAt": zod.string(),
+  "excerpt": zod.string()
+})
+
+
+/**
+ * @summary Request a private upload URL
+ */
+
+
+
+
+export const RequestMaterialUploadUrlBody = zod.object({
+  "name": zod.string().min(1),
+  "size": zod.number().min(1),
+  "contentType": zod.string()
+})
+
+
+
+
+
+export const RequestMaterialUploadUrlResponse = zod.object({
+  "uploadURL": zod.string(),
+  "objectPath": zod.string(),
+  "metadata": zod.object({
+  "name": zod.string().min(1),
+  "size": zod.number().min(1),
+  "contentType": zod.string()
+})
 })
 
 

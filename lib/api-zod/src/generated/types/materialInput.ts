@@ -11,5 +11,8 @@ export interface MaterialInput {
   title: string;
   subjectId: string;
   fileType: string;
-  extractedText?: string;
+  originalFileName?: string;
+  fileSize?: number;
+  storagePath?: string;
+  pastedText?: string;
 }

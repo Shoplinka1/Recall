@@ -25,6 +25,8 @@ import {
   listConcepts,
   listMaterials,
   listSubjects,
+  listMaterialSections,
+  processMaterial,
 } from "../lib/recall-store";
 import { requireAuth } from "../middlewares/auth";
 
@@ -114,8 +116,38 @@ router.post("/materials", async (req, res, next) => {
       res.status(404).json({ error: "Subject not found" });
       return;
     }
+    if (
+      input.storagePath &&
+      !input.storagePath.startsWith(`/objects/uploads/${user.id}/`)
+    ) {
+      res.status(403).json({ error: "Material file ownership mismatch" });
+      return;
+    }
+    if (!input.storagePath && !input.pastedText?.trim()) {
+      res.status(400).json({ error: "Upload a file or paste non-empty text" });
+      return;
+    }
     const material = await createMaterial(user.id, input);
     res.status(201).json(material);
+    void processMaterial(user.id, material!.id);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/materials/:id/retry", async (req, res, next) => {
+  try {
+    const material = await getMaterial(req.auth!.id, req.params.id);
+    if (!material) {
+      res.status(404).json({ error: "Material not found" });
+      return;
+    }
+    const started = await processMaterial(req.auth!.id, req.params.id);
+    if (!started) {
+      res.status(422).json(await getMaterial(req.auth!.id, req.params.id));
+      return;
+    }
+    res.json(await getMaterial(req.auth!.id, req.params.id));
   } catch (error) {
     next(error);
   }
@@ -130,6 +162,18 @@ router.get("/materials/:id", async (req, res, next) => {
       return;
     }
     res.json(material);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/materials/:id/sections", async (req, res, next) => {
+  try {
+    if (!(await getMaterial(req.auth!.id, req.params.id))) {
+      res.status(404).json({ error: "Material not found" });
+      return;
+    }
+    res.json(await listMaterialSections(req.auth!.id, req.params.id));
   } catch (error) {
     next(error);
   }

@@ -3,6 +3,8 @@ import { db } from "@workspace/db";
 import {
   conceptMasteryTable,
   conceptsTable,
+  materialConceptsTable,
+  materialSectionsTable,
   materialsTable,
   questionsTable,
   practiceSessionsTable,
@@ -25,6 +27,12 @@ import {
   demoQuestions,
   demoSubjects,
 } from "./recall-demo";
+import {
+  extractConceptNames,
+  extractMaterialText,
+  splitMaterialText,
+} from "./material-processing";
+import { downloadPrivateObject } from "./object-storage";
 
 type QuestionWithConcept = {
   question: typeof questionsTable.$inferSelect;
@@ -107,7 +115,7 @@ async function seedRecallData(userId: string) {
             title: material.title,
             originalFileName: material.title,
             fileType: material.fileType,
-            processingStatus: "ready",
+            processingStatus: "READY",
             extractedText: material.excerpt,
           })),
         )
@@ -126,6 +134,7 @@ async function seedRecallData(userId: string) {
         .insert(conceptsTable)
         .values(
           demoConcepts.map((concept) => ({
+            userId,
             subjectId: subjectIds.get(concept.subjectName)!,
             name: concept.name,
             description: concept.sourceMaterial,
@@ -267,6 +276,15 @@ export async function listMaterials(userId: string): Promise<Material[]> {
     ids.add(row.sessionId);
     sessionCounts.set(row.materialId, ids);
   }
+  const conceptCounts = await db
+    .select({ materialId: materialConceptsTable.materialId, total: count() })
+    .from(materialConceptsTable)
+    .innerJoin(materialsTable, eq(materialConceptsTable.materialId, materialsTable.id))
+    .where(eq(materialsTable.userId, userId))
+    .groupBy(materialConceptsTable.materialId);
+  const conceptsByMaterial = new Map(
+    conceptCounts.map((row) => [row.materialId, Number(row.total)]),
+  );
   return rows.map(({ material, subjectName }) => ({
     id: material.id,
     title: material.title,
@@ -274,13 +292,14 @@ export async function listMaterials(userId: string): Promise<Material[]> {
     subjectName,
     fileType: material.fileType,
     processingStatus: material.processingStatus,
-    concepts: 0,
+    processingError: material.processingError,
+    concepts: conceptsByMaterial.get(material.id) ?? 0,
     sessions: sessionCounts.get(material.id)?.size ?? 0,
     lastStudied: null,
     createdAt: material.createdAt.toISOString(),
     excerpt:
       material.extractedText?.slice(0, 180) ??
-      "Recall will identify the important ideas in this material.",
+      "Processing material…",
   }));
 }
 
@@ -295,7 +314,10 @@ export async function createMaterial(
     title: string;
     subjectId: string;
     fileType: string;
-    extractedText?: string;
+    originalFileName?: string;
+    fileSize?: number;
+    storagePath?: string;
+    pastedText?: string;
   },
 ) {
   const [row] = await db
@@ -304,13 +326,134 @@ export async function createMaterial(
       userId,
       subjectId: input.subjectId,
       title: input.title,
-      originalFileName: input.title,
+      originalFileName: input.originalFileName ?? input.title,
       fileType: input.fileType,
-      processingStatus: "ready",
-      extractedText: input.extractedText ?? null,
+      fileSize: input.fileSize ?? null,
+      storagePath: input.storagePath ?? null,
+      processingStatus: "PROCESSING",
+      extractedText: input.pastedText ?? null,
     })
     .returning();
   return getMaterial(userId, row.id);
+}
+
+export async function processMaterial(userId: string, materialId: string) {
+  const [material] = await db
+    .select()
+    .from(materialsTable)
+    .where(and(eq(materialsTable.id, materialId), eq(materialsTable.userId, userId)))
+    .limit(1);
+  if (!material) return false;
+  try {
+    const bytes = material.storagePath
+      ? await downloadPrivateObject(material.storagePath)
+      : Buffer.from(material.extractedText ?? "", "utf8");
+    const text = await extractMaterialText(
+      bytes,
+      material.fileType,
+      material.originalFileName ?? material.title,
+    );
+    if (!text.trim()) throw new Error("The material did not contain any readable text.");
+    const sections = splitMaterialText(text);
+    const conceptNames = extractConceptNames(text);
+    await db.transaction(async (tx) => {
+      await tx.delete(materialSectionsTable).where(
+        and(
+          eq(materialSectionsTable.materialId, materialId),
+          eq(materialSectionsTable.userId, userId),
+        ),
+      );
+      await tx.delete(materialConceptsTable).where(
+        eq(materialConceptsTable.materialId, materialId),
+      );
+      await tx.insert(materialSectionsTable).values(
+        sections.map((content, sectionIndex) => ({
+          materialId,
+          userId,
+          sectionIndex,
+          title: `Section ${sectionIndex + 1}`,
+          content,
+        })),
+      );
+      const concepts = [];
+      for (const name of conceptNames) {
+        const [existing] = await tx
+          .select()
+          .from(conceptsTable)
+          .where(
+            and(
+              eq(conceptsTable.userId, userId),
+              eq(conceptsTable.subjectId, material.subjectId),
+              eq(conceptsTable.name, name),
+            ),
+          )
+          .limit(1);
+        const [concept] = existing
+          ? [existing]
+          : await tx
+              .insert(conceptsTable)
+              .values({
+                userId,
+                subjectId: material.subjectId,
+                name,
+                description: `Extracted from ${material.title}`,
+              })
+              .returning();
+        concepts.push(concept);
+      }
+      if (concepts.length) {
+        await tx.insert(materialConceptsTable).values(
+          concepts.map((concept) => ({
+            materialId,
+            conceptId: concept.id,
+            relevanceScore: 1,
+          })),
+        );
+      }
+      await tx
+        .update(materialsTable)
+        .set({
+          extractedText: text,
+          processingStatus: "READY",
+          processingError: null,
+        })
+        .where(
+          and(eq(materialsTable.id, materialId), eq(materialsTable.userId, userId)),
+        );
+    });
+    return true;
+  } catch (error) {
+    await db
+      .update(materialsTable)
+      .set({
+        processingStatus: "FAILED",
+        processingError:
+          error instanceof Error ? error.message : "Material processing failed",
+      })
+      .where(and(eq(materialsTable.id, materialId), eq(materialsTable.userId, userId)));
+    return false;
+  }
+}
+
+export async function listMaterialSections(userId: string, materialId: string) {
+  const rows = await db
+    .select({ section: materialSectionsTable })
+    .from(materialSectionsTable)
+    .innerJoin(
+      materialsTable,
+      and(
+        eq(materialSectionsTable.materialId, materialsTable.id),
+        eq(materialsTable.userId, userId),
+      ),
+    )
+    .where(
+      and(
+        eq(materialSectionsTable.materialId, materialId),
+        eq(materialSectionsTable.userId, userId),
+      ),
+    )
+    .orderBy(asc(materialSectionsTable.sectionIndex));
+  return rows.map(({ section }) => section);
 }
 
 export async function deleteMaterial(userId: string, id: string) {

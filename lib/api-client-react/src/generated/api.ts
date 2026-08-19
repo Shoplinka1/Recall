@@ -40,6 +40,8 @@ import type {
   Subject,
   SubjectInput,
   Subscription,
+  UploadMetadata,
+  UploadResponse,
   WeaknessPracticeInput
 } from './api.schemas';
 
@@ -519,6 +521,148 @@ export const useCreateMaterial = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getCreateMaterialMutationOptions(options));
+    }
+
+export const getRetryMaterialUrl = (id: string,) => {
+
+
+
+
+  return `/api/materials/${id}/retry`
+}
+
+/**
+ * @summary Retry failed material processing
+ */
+export const retryMaterial = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<Material> => {
+
+  return customFetch<Material>(getRetryMaterialUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRetryMaterialMutationOptions = <TError = ErrorType<NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof retryMaterial>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof retryMaterial>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['retryMaterial'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof retryMaterial>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  retryMaterial(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RetryMaterialMutationResult = NonNullable<Awaited<ReturnType<typeof retryMaterial>>>
+
+    export type RetryMaterialMutationError = ErrorType<NotFoundResponse>
+
+    /**
+ * @summary Retry failed material processing
+ */
+export const useRetryMaterial = <TError = ErrorType<NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof retryMaterial>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof retryMaterial>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getRetryMaterialMutationOptions(options));
+    }
+
+export const getRequestMaterialUploadUrlUrl = () => {
+
+
+
+
+  return `/api/storage/uploads/request-url`
+}
+
+/**
+ * @summary Request a private upload URL
+ */
+export const requestMaterialUploadUrl = async (uploadMetadata: UploadMetadata, options?: Parameters<typeof customFetch>[1]): Promise<UploadResponse> => {
+
+  return customFetch<UploadResponse>(getRequestMaterialUploadUrlUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(uploadMetadata)
+  }
+);}
+
+
+
+
+
+export const getRequestMaterialUploadUrlMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestMaterialUploadUrl>>, TError,{data: BodyType<UploadMetadata>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestMaterialUploadUrl>>, TError,{data: BodyType<UploadMetadata>}, TContext> => {
+
+const mutationKey = ['requestMaterialUploadUrl'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestMaterialUploadUrl>>, {data: BodyType<UploadMetadata>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  requestMaterialUploadUrl(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestMaterialUploadUrlMutationResult = NonNullable<Awaited<ReturnType<typeof requestMaterialUploadUrl>>>
+    export type RequestMaterialUploadUrlMutationBody = BodyType<UploadMetadata>
+    export type RequestMaterialUploadUrlMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Request a private upload URL
+ */
+export const useRequestMaterialUploadUrl = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestMaterialUploadUrl>>, TError,{data: BodyType<UploadMetadata>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof requestMaterialUploadUrl>>,
+        TError,
+        {data: BodyType<UploadMetadata>},
+        TContext
+      > => {
+      return useMutation(getRequestMaterialUploadUrlMutationOptions(options));
     }
 
 export const getGetMaterialUrl = (id: string,) => {

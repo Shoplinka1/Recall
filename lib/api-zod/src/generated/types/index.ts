@@ -31,4 +31,6 @@ export * from './sessionUser';
 export * from './subject';
 export * from './subjectInput';
 export * from './subscription';
+export * from './uploadMetadata';
+export * from './uploadResponse';
 export * from './weaknessPracticeInput';
