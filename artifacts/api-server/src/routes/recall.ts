@@ -6,6 +6,8 @@ import {
   CreatePracticeBody,
   CreateSubjectBody,
   CreateWeaknessPracticeBody,
+  GenerateMaterialQuestionsBody,
+  GenerateMaterialQuestionsResponse,
 } from "@workspace/api-zod";
 import {
   answerPractice,
@@ -18,9 +20,12 @@ import {
   generateQuestionsForMaterial,
   getMaterial,
   getPractice,
+  getProgress,
   getSubscription,
   listConcepts,
   listMaterials,
+  listMistakes,
+  listRecommendations,
   listSubjects,
   listMaterialSections,
   processMaterial,
@@ -42,33 +47,37 @@ router.use(async (req, _res, next) => {
 router.get("/dashboard", async (req, res, next) => {
   try {
     const user = req.auth!;
-    const [materials, concepts, subscription] = await Promise.all([
+    const [materials, concepts, progress, recommendations] = await Promise.all([
       listMaterials(user.id),
       listConcepts(user.id),
-      getSubscription(user.id),
+      getProgress(user.id),
+      listRecommendations(user.id),
     ]);
+    const recommendation = recommendations[0] ?? {
+      id: "none",
+      title: "Add material to begin",
+      reason: "Upload or paste your first study material and Recall will build grounded practice from it.",
+      concept: "Your next concept",
+      recommendedMinutes: 10,
+      questionCount: 0,
+      difficulty: "ready",
+      action: "materials",
+    };
     res.json({
       greeting: `Good morning, ${user.name.split(" ")[0]}`,
-      subtitle: "Your next best session is already waiting.",
-      recommendation: null,
+      subtitle: recommendations.length
+        ? "Your next best session is already waiting."
+        : "Add your first material to start a grounded study loop.",
+      recommendation,
       stats: {
-        weeklyMinutes: 0,
-        weeklyGoal: 60,
-        streak: 0,
-        questionsAnswered: concepts.reduce(
-          (total, concept) => total + concept.questionsAttempted,
-          0,
-        ),
-        overallMastery: concepts.length
-          ? Math.round(
-              concepts.reduce((total, concept) => total + concept.masteryScore, 0) /
-                concepts.length,
-            )
-          : 0,
+        weeklyMinutes: progress.weekly.reduce((total, day) => total + day.minutes, 0),
+        weeklyGoal: 20,
+        streak: progress.streak,
+        questionsAnswered: progress.questionsAnswered,
+        overallMastery: progress.overallMastery,
       },
       recentMaterials: materials.slice(0, 3),
       concepts: [...concepts].sort((a, b) => a.masteryScore - b.masteryScore),
-      subscription,
     });
     next();
   } catch (error) {
@@ -152,7 +161,8 @@ router.post("/materials/:id/retry", async (req, res, next) => {
 
 router.post("/materials/:id/questions/generate", async (req, res, next) => {
   try {
-    const count = Math.max(1, Math.min(Number(req.body?.count ?? 6), 20));
+    const input = GenerateMaterialQuestionsBody.parse(req.body ?? {});
+    const count = input.count ?? 6;
     const questions = await generateQuestionsForMaterial(
       req.auth!.id,
       req.params.id,
@@ -166,7 +176,7 @@ router.post("/materials/:id/questions/generate", async (req, res, next) => {
       res.status(422).json({ error: "No new grounded questions could be generated" });
       return;
     }
-    res.status(201).json(questions);
+    res.status(201).json(GenerateMaterialQuestionsResponse.parse(questions));
   } catch (error) {
     next(error);
   }
@@ -285,6 +295,10 @@ router.post("/practice/:id", async (req, res, next) => {
       res.status(404).json({ error: "Question not found" });
       return;
     }
+    if ("sessionCompleted" in result) {
+      res.status(409).json({ error: "Practice session is already complete" });
+      return;
+    }
     res.json(result);
   } catch (error) {
     next(error);
@@ -306,44 +320,26 @@ router.post("/practice/:id/complete", async (req, res, next) => {
 
 router.get("/progress", async (req, res, next) => {
   try {
-    const concepts = await listConcepts(req.auth!.id);
-    res.json({
-      overallMastery: concepts.length
-        ? Math.round(
-            concepts.reduce((total, concept) => total + concept.masteryScore, 0) /
-              concepts.length,
-          )
-        : 0,
-      changeThisWeek: 0,
-      accuracy: 0,
-      confidence: 0,
-      studyMinutes: 0,
-      questionsAnswered: concepts.reduce(
-        (total, concept) => total + concept.questionsAttempted,
-        0,
-      ),
-      weekly: [
-        { day: "Mon", minutes: 0, questions: 0 },
-        { day: "Tue", minutes: 0, questions: 0 },
-        { day: "Wed", minutes: 0, questions: 0 },
-        { day: "Thu", minutes: 0, questions: 0 },
-        { day: "Fri", minutes: 0, questions: 0 },
-        { day: "Sat", minutes: 0, questions: 0 },
-        { day: "Sun", minutes: 0, questions: 0 },
-      ],
-      concepts,
-    });
+    res.json(await getProgress(req.auth!.id));
   } catch (error) {
     next(error);
   }
 });
 
-router.get("/mistakes", (_req, res) => {
-  res.json([]);
+router.get("/mistakes", async (req, res, next) => {
+  try {
+    res.json(await listMistakes(req.auth!.id));
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.get("/recommendations", (_req, res) => {
-  res.json([]);
+router.get("/recommendations", async (req, res, next) => {
+  try {
+    res.json(await listRecommendations(req.auth!.id));
+  } catch (error) {
+    next(error);
+  }
 });
 
 router.get("/subscription", async (req, res, next) => {

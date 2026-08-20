@@ -1,0 +1,79 @@
+RECALL — FINAL STEP 1–5 CLEANUP + VERIFICATION
+
+CONTINUE FROM CURRENT GIT STATE. DO NOT START STEP 6.
+
+Steps 1–5 already exist and have been verified:
+- PostgreSQL/Drizzle persistence
+- real auth + server-side ownership
+- real material upload/extraction/private storage
+- grounded Step 4 questions
+- persisted Step 5 sessions, answers, scoring and results
+- reload/API-restart persistence
+- MCQ, true/false, short-answer
+
+GOAL: finish the REAL authenticated app. Do NOT rebuild or redo Steps 1–5.
+
+IMPORTANT:
+- NEVER enable DEMO_MODE.
+- NEVER use demo/fake data in authenticated production paths.
+- NEVER use localStorage/in-memory production state.
+- Preserve legitimate test fixtures.
+- Keep the existing UI/architecture.
+- Do NOT implement Step 6, mastery, weaknesses, recommendations, billing or Paystack.
+
+AUDIT ALL AUTHENTICATED PAGES:
+dashboard, subjects, materials, library, progress, mistakes, recommendations, practice, results, profile and billing.
+
+Remove/fix any active demo fallbacks, fake records, hard-coded user data, fake progress/recommendations, fake practice sessions/results, or redirects to demo sessions.
+
+Authenticated empty/loading/error states must show real empty/error states, never fake content. Server ownership must remain enforced.
+
+PRACTICE:
+Use a real authenticated user and verify:
+real material → READY → real persisted Step 4 questions → actual practice UI → MCQ → true/false → short-answer → persisted answers → completion → persisted score/result → reload → API restart → same result → second user denied access.
+
+Confirm the UI calls the real APIs and displays PostgreSQL-backed questions/results.
+
+If browser automation exists, click through the real UI. If unavailable, do NOT claim browser interaction was verified; use real API tests and inspect the React/API integration.
+
+DATABASE/STORAGE:
+Use existing Replit PostgreSQL, Drizzle schema and private App Storage. Never replace them with fake/local storage. Apply existing schema if needed; never reset the database.
+
+RUNTIME:
+Fix obsolete duplicate API/web workflow processes or port collisions without creating a new architecture.
+
+RUN:
+- Step 1–5 regression tests
+- ownership tests
+- material/storage tests
+- question/grounding tests
+- answer/completion tests
+- restart-persistence test
+- typecheck
+- build
+- schema validation/push
+- /api/healthz
+- frontend HTTP check
+
+If anything fails, diagnose and FIX the real cause, then rerun the failed and affected tests. Do not weaken/delete tests or switch to demo mode.
+
+SUCCESS:
+REAL MATERIAL → REAL QUESTIONS → REAL PRACTICE → REAL ANSWERS → PERSISTED RESULT → RELOAD/RESTART → OWNERSHIP → NO DEMO DATA.
+
+STOP AFTER STEP 1–5.
+
+FINAL REPORT ONLY:
+DEMO_REMOVAL
+AUTHENTICATED_UI
+MATERIALS
+QUESTIONS
+PRACTICE
+PERSISTENCE
+OWNERSHIP
+TESTED
+NOT_VERIFIED
+DATABASE
+BUILD
+RUNTIME
+
+Report only what was actually verified. DO NOT claim production-ready. DO NOT START STEP 6.
