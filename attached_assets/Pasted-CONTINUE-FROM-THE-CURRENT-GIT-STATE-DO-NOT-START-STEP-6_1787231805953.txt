@@ -1,0 +1,87 @@
+CONTINUE FROM THE CURRENT GIT STATE. DO NOT START STEP 6.
+
+The previous agent already diagnosed the current frontend crash:
+
+null is not an object (evaluating 'd.recommend...')
+
+It confirmed:
+	•	the API correctly returns recommendation: null when the authenticated user has no concepts
+	•	the frontend incorrectly assumes recommendation is always present
+	•	authenticated pages still contain useFallback(..., demo...) patterns
+	•	some error paths redirect to fake /practice/demosession
+
+CONTINUE FROM EXACTLY THIS STATE.
+
+DO NOT redo Steps 1–5.
+DO NOT rebuild Recall.
+DO NOT enable DEMO_MODE.
+DO NOT add fake data.
+DO NOT replace PostgreSQL or the existing APIs.
+
+YOUR TASK:
+	1.	Fix the recommendation null/API-contract mismatch correctly.
+	2.	Remove active demo/fake fallbacks from authenticated production paths.
+	3.	Remove fake /practice/demosession redirects from real user flows.
+	4.	Audit the authenticated:
+	•	dashboard
+	•	materials
+	•	material detail
+	•	concepts
+	•	progress
+	•	weaknesses
+	•	practice
+	•	recommendations
+	•	billing
+pages for the same unsafe null/undefined/demo assumptions.
+	5.	Empty states must show a real empty state, never demo data.
+	6.	Real PostgreSQL data must render when it exists.
+	7.	Do not change legitimate test fixtures.
+
+MOST IMPORTANT:
+Do not simply hide the crash. Trace each affected API response and make the frontend match the existing API contract.
+
+Then verify with a REAL authenticated user:
+	•	signup/login
+	•	empty new-user dashboard loads without crashing
+	•	no recommendations shows a proper empty state
+	•	upload real material
+	•	material reaches READY
+	•	generate real Step 4 questions
+	•	open real practice
+	•	real MCQ works
+	•	real true/false works
+	•	real short answer works
+	•	answers persist
+	•	completion/result persists
+	•	reload restores the persisted result
+	•	no demo questions or demo sessions appear
+
+Run:
+	•	Step 1–5 regression tests
+	•	ownership tests
+	•	typecheck
+	•	build
+	•	API /api/healthz
+	•	frontend HTTP check
+	•	restart persistence check
+
+FIX EVERY REAL ERROR FOUND AND RERUN THE FAILED CHECKS.
+
+Do not stop after identifying problems.
+Do not merely report problems.
+Actually fix them and verify the fixes.
+
+DO NOT START STEP 6.
+
+FINAL REPORT ONLY:
+
+BUGS_FOUND
+FIXED
+DEMO_REMOVAL
+BROWSER_FLOW
+TESTED
+NOT_VERIFIED
+DATABASE
+BUILD
+RUNTIME
+:::
