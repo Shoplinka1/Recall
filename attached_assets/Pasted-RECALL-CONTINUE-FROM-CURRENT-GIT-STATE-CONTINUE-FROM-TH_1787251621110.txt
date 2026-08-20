@@ -1,0 +1,90 @@
+RECALL — CONTINUE FROM CURRENT GIT STATE
+
+CONTINUE FROM THE IMPORTED GITHUB CODEBASE.
+DO NOT START STEP 6.
+
+Steps 1–5 are already implemented and have been verified against the real PostgreSQL-backed application.
+
+DO NOT rebuild Recall.
+DO NOT redo Steps 1–5.
+DO NOT replace PostgreSQL, authentication, material processing, private storage, grounded questions, or the persisted practice engine.
+DO NOT enable DEMO_MODE.
+DO NOT use fake/demo data to make tests pass.
+
+CURRENT STATE:
+- PostgreSQL persistence works
+- authentication/session ownership works
+- real material upload/extraction/storage works
+- Step 4 grounded questions work
+- Step 5 persisted practice works
+- MCQ, true/false and short-answer answers persist
+- completion/results persist
+- API restart persistence works
+- cross-user ownership tests pass
+- typecheck/build/health checks have passed
+- authenticated practice/results no longer use demo questions/sessions/results
+
+REMAINING TASK:
+Finish cleaning the REAL authenticated application so it no longer shows demo/fake data anywhere in authenticated user-facing paths.
+
+AUDIT AND FIX:
+- dashboard
+- subjects/materials
+- progress
+- mistakes/weaknesses
+- recommendations
+- library/material detail
+- practice
+- results
+- billing pages if they contain fake authenticated data
+
+For every authenticated page:
+- use the signed-in user's PostgreSQL data
+- show a real empty state when there is no data
+- never substitute demo data
+- never use fake practice sessions
+- never use localStorage or in-memory production state
+- never trust frontend userId
+- preserve server-side ownership checks
+
+IMPORTANT:
+Do NOT delete legitimate test fixtures.
+Do NOT redesign the UI.
+Do NOT implement mastery, weakness diagnosis, recommendations, billing, Paystack, subscriptions, or any Step 6 functionality.
+Only remove/fix active demo fallbacks and real-data integration problems.
+
+FIRST inspect the current Git history and code. Do not assume previous work is missing.
+
+Then run:
+1. typecheck
+2. full build
+3. Step 1–5 regression tests
+4. ownership tests
+5. material/storage tests
+6. question/grounding tests
+7. practice persistence/restart tests
+8. /api/healthz
+9. frontend HTTP check
+
+If a test fails, diagnose and fix the underlying issue. Do not weaken the test and do not switch to demo mode.
+
+If browser automation is unavailable, inspect the actual authenticated UI/API integration and clearly state what was not browser-verified.
+
+STOP AFTER THIS CLEANUP AND VERIFICATION.
+
+FINAL REPORT ONLY:
+
+DEMO_REMOVAL
+AUTHENTICATED_UI
+MATERIALS
+QUESTIONS
+PRACTICE
+PERSISTENCE
+OWNERSHIP
+TESTED
+NOT_VERIFIED
+BUILD
+RUNTIME
+
+DO NOT CLAIM PRODUCTION-READY.
+DO NOT START STEP 6.

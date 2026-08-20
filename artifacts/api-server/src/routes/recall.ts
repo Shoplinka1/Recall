@@ -52,9 +52,9 @@ router.get("/dashboard", async (req, res, next) => {
       subtitle: "Your next best session is already waiting.",
       recommendation: null,
       stats: {
-        weeklyMinutes: 42,
+        weeklyMinutes: 0,
         weeklyGoal: 60,
-        streak: 6,
+        streak: 0,
         questionsAnswered: concepts.reduce(
           (total, concept) => total + concept.questionsAttempted,
           0,
@@ -323,13 +323,13 @@ router.get("/progress", async (req, res, next) => {
         0,
       ),
       weekly: [
-        { day: "Mon", minutes: 24, questions: 8 },
-        { day: "Tue", minutes: 12, questions: 5 },
-        { day: "Wed", minutes: 31, questions: 11 },
-        { day: "Thu", minutes: 18, questions: 7 },
-        { day: "Fri", minutes: 38, questions: 10 },
-        { day: "Sat", minutes: 19, questions: 7 },
-        { day: "Sun", minutes: 42, questions: 12 },
+        { day: "Mon", minutes: 0, questions: 0 },
+        { day: "Tue", minutes: 0, questions: 0 },
+        { day: "Wed", minutes: 0, questions: 0 },
+        { day: "Thu", minutes: 0, questions: 0 },
+        { day: "Fri", minutes: 0, questions: 0 },
+        { day: "Sat", minutes: 0, questions: 0 },
+        { day: "Sun", minutes: 0, questions: 0 },
       ],
       concepts,
     });

@@ -33,6 +33,15 @@ function expectStatus(result, expected, message) {
   );
 }
 
+async function waitForMaterial(client, id) {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const result = await client.request(`/api/materials/${id}`);
+    if (result.body.processingStatus !== "PROCESSING") return result.body;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`Timed out waiting for material ${id}`);
+}
+
 const unauthenticated = new Client();
 expectStatus(await unauthenticated.request("/api/practice/not-a-session"), 401, "unauthenticated practice access");
 
@@ -66,6 +75,11 @@ const material = await userA.json("/api/materials", "POST", {
   ].join("\n\n"),
 });
 expectStatus(material, 201, "practice material creation");
+const readyMaterial = await waitForMaterial(userA, material.body.id);
+assert.equal(readyMaterial.processingStatus, "READY", "practice source material should be ready");
+const generated = await userA.json(`/api/materials/${material.body.id}/questions/generate`, "POST", { count: 12 });
+expectStatus(generated, 201, "practice question generation");
+assert.ok(generated.body.length >= 3, "practice source should produce several grounded questions");
 
 const session = await userA.json("/api/practice", "POST", {
   subjectId: subject.body.id,
