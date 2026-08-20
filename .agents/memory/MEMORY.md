@@ -1,3 +1,4 @@
 - [Recall integrations](recall-integrations.md) — the first build keeps AI, billing, and user-file storage behind explicit seams with a grounded demo fallback.
 - [Recall runtime setup](recall-runtime-setup.md) — imported workspaces may need dependency install and an explicit Drizzle push before API persistence routes work.
 - [Recall private storage paths](recall-private-storage-paths.md) — database object paths are relative to the private prefix; only signed GCS paths include that prefix.
+- [Recall managed workflows](recall-managed-workflows.md) — legacy Recall API/Web workflows collide with the artifact-owned services on ports 8080 and 23566.

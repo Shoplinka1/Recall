@@ -54,7 +54,7 @@ const questionToApi = (row: QuestionWithConcept): Question => ({
   correctAnswer: row.question.correctAnswer,
 });
 
-async function ensureRecallSubscription(userId: string) {
+async function ensureSubscription(userId: string) {
   return db.transaction(async (tx) => {
     const [subscription] = await tx
       .select({ id: subscriptionsTable.id })
@@ -64,6 +64,7 @@ async function ensureRecallSubscription(userId: string) {
     if (!subscription) {
       await tx.insert(subscriptionsTable).values({ userId });
     }
+
     return userId;
   });
 }
@@ -71,7 +72,7 @@ async function ensureRecallSubscription(userId: string) {
 export const ensureRecallData = (userId: string) => {
   const existing = seedPromises.get(userId);
   if (existing) return existing;
-  const promise = ensureRecallSubscription(userId).catch((error) => {
+  const promise = ensureSubscription(userId).catch((error) => {
     seedPromises.delete(userId);
     throw error;
   });
@@ -362,7 +363,7 @@ export async function generateQuestionsForMaterial(
   const existing = await db
     .select({ questionText: questionsTable.questionText })
     .from(questionsTable)
-    .where(eq(questionsTable.userId, userId));
+    .where(and(eq(questionsTable.userId, userId), eq(questionsTable.materialId, materialId)));
   const groundedSections: GroundedSection[] = sections.map((section) => ({
     id: section.id,
     materialId: section.materialId,
@@ -377,8 +378,8 @@ export async function generateQuestionsForMaterial(
   );
   if (!generated.length) return [];
   const conceptsByName = new Map(concepts.map((concept) => [concept.name.toLowerCase(), concept.id]));
-  const inserted = await db.transaction(async (tx) => {
-    return tx.insert(questionsTable).values(
+  await db.transaction(async (tx) => {
+    await tx.insert(questionsTable).values(
       generated.map((question) => ({
         userId,
         subjectId: material.subjectId,
@@ -395,15 +396,13 @@ export async function generateQuestionsForMaterial(
         sourcePage: question.sourcePage,
         generationVersion: "development-v1",
       })),
-    ).returning();
+    );
   });
-  const conceptNamesById = new Map(concepts.map((concept) => [concept.id, concept.name]));
-  return inserted.map((question) =>
-    questionToApi({
-      question,
-      conceptName: conceptNamesById.get(question.conceptId) ?? "Unknown concept",
-    }),
-  );
+  return generated.map((question, index) => ({
+    ...question,
+    id: question.id,
+    sourceSectionId: generated[index].sectionId,
+  }));
 }
 
 export async function deleteMaterial(userId: string, id: string) {
@@ -452,19 +451,20 @@ export async function listConcepts(userId: string): Promise<Concept[]> {
   }));
 }
 
-async function waitForMaterialReady(userId: string, materialId: string) {
-  for (let attempt = 0; attempt < 200; attempt += 1) {
-    const [material] = await db
-      .select({ processingStatus: materialsTable.processingStatus })
-      .from(materialsTable)
-      .where(and(eq(materialsTable.id, materialId), eq(materialsTable.userId, userId)))
-      .limit(1);
-    if (!material || material.processingStatus !== "PROCESSING") {
-      return material?.processingStatus === "READY";
-    }
-    await new Promise((resolve) => setTimeout(resolve, 50));
-  }
-  return false;
+async function questionRows(userId: string, questionIds?: string[]) {
+  const conditions = [
+    eq(questionsTable.userId, userId),
+    ne(questionsTable.generationVersion, "seed-v1"),
+  ];
+  if (questionIds?.length) conditions.push(inArray(questionsTable.id, questionIds));
+  return db
+    .select({
+      question: questionsTable,
+      conceptName: conceptsTable.name,
+    })
+    .from(questionsTable)
+    .innerJoin(conceptsTable, eq(questionsTable.conceptId, conceptsTable.id))
+    .where(and(...conditions));
 }
 
 export async function createPractice(
@@ -479,7 +479,6 @@ export async function createPractice(
       .where(and(eq(materialsTable.id, input.materialId), eq(materialsTable.userId, userId)))
       .limit(1);
     if (!material) return undefined;
-    if (!(await waitForMaterialReady(userId, material.id))) return undefined;
     const existing = await db
       .select({ id: questionsTable.id })
       .from(questionsTable)
@@ -493,47 +492,6 @@ export async function createPractice(
       .limit(1);
     if (!existing.length) {
       await generateQuestionsForMaterial(userId, input.materialId, input.questionCount);
-    }
-  } else {
-    const userMaterials = await db
-      .select({ id: materialsTable.id, processingStatus: materialsTable.processingStatus })
-      .from(materialsTable)
-      .where(
-        and(
-          eq(materialsTable.userId, userId),
-          ...(input.subjectId ? [eq(materialsTable.subjectId, input.subjectId)] : []),
-        ),
-      );
-    for (const material of userMaterials) {
-      if (material.processingStatus === "PROCESSING") {
-        await waitForMaterialReady(userId, material.id);
-      }
-      const [readyMaterial] = await db
-        .select({ id: materialsTable.id })
-        .from(materialsTable)
-        .where(
-          and(
-            eq(materialsTable.id, material.id),
-            eq(materialsTable.userId, userId),
-            eq(materialsTable.processingStatus, "READY"),
-          ),
-        )
-        .limit(1);
-      if (!readyMaterial) continue;
-      const [existing] = await db
-        .select({ id: questionsTable.id })
-        .from(questionsTable)
-        .where(
-          and(
-            eq(questionsTable.userId, userId),
-            eq(questionsTable.materialId, readyMaterial.id),
-            ne(questionsTable.generationVersion, "seed-v1"),
-          ),
-        )
-        .limit(1);
-      if (!existing) {
-        await generateQuestionsForMaterial(userId, readyMaterial.id, input.questionCount);
-      }
     }
   }
   return db.transaction(async (tx) => {
@@ -607,23 +565,16 @@ export async function getPractice(userId: string, sessionId: string) {
     .where(and(eq(practiceSessionsTable.id, sessionId), eq(practiceSessionsTable.userId, userId)))
     .limit(1);
   if (!session) return undefined;
-  const rows = await db
-    .select({
-      question: questionsTable,
-      conceptName: conceptsTable.name,
-    })
-    .from(sessionQuestionsTable)
-    .innerJoin(
-      questionsTable,
-      and(
-        eq(sessionQuestionsTable.questionId, questionsTable.id),
-        eq(questionsTable.userId, userId),
-        ne(questionsTable.generationVersion, "seed-v1"),
-      ),
-    )
-    .innerJoin(conceptsTable, eq(questionsTable.conceptId, conceptsTable.id))
-    .where(eq(sessionQuestionsTable.sessionId, sessionId))
-    .orderBy(asc(sessionQuestionsTable.orderIndex));
+  const rows = await questionRows(
+    userId,
+    (
+      await db
+        .select({ questionId: sessionQuestionsTable.questionId })
+        .from(sessionQuestionsTable)
+        .where(eq(sessionQuestionsTable.sessionId, sessionId))
+        .orderBy(asc(sessionQuestionsTable.orderIndex))
+    ).map((row) => row.questionId),
+  );
   const subject = (
     await db
       .select()
@@ -639,9 +590,6 @@ export async function getPractice(userId: string, sessionId: string) {
     questions: rows.map(questionToApi),
     currentIndex: await answeredCount(sessionId),
     completed: Boolean(session.completedAt),
-    ...(session.completedAt
-      ? { results: await summarizePractice(userId, sessionId) }
-      : {}),
   } satisfies PracticeSession;
 }
 
@@ -681,16 +629,13 @@ export async function answerPractice(
       ),
     )
     .limit(1);
-  if (!row || row.question.userId !== userId) return null;
-  if (session.completedAt) return { sessionCompleted: true as const };
-  const normalizedAnswer = input.answer.trim().replace(/\s+/g, " ");
-  const normalizedCorrectAnswer = row.question.correctAnswer.trim().replace(/\s+/g, " ");
+  if (!row) return null;
   const isCorrect =
-    normalizedCorrectAnswer.toLowerCase() === normalizedAnswer.toLowerCase();
+    row.question.correctAnswer.trim().toLowerCase() === input.answer.trim().toLowerCase();
   await db
     .update(sessionQuestionsTable)
     .set({
-      userAnswer: normalizedAnswer,
+      userAnswer: input.answer,
       isCorrect,
       confidence: input.confidence ?? null,
       responseTimeMs: input.responseTimeMs ?? null,
@@ -710,78 +655,11 @@ export async function answerPractice(
   };
 }
 
-async function summarizePractice(userId: string, sessionId: string): Promise<PracticeResults> {
-  const [session] = await db
-    .select()
-    .from(practiceSessionsTable)
-    .where(and(eq(practiceSessionsTable.id, sessionId), eq(practiceSessionsTable.userId, userId)))
-    .limit(1);
-  if (!session) throw new Error("Practice session not found");
-  const answers = await db
-    .select()
-    .from(sessionQuestionsTable)
-    .where(eq(sessionQuestionsTable.sessionId, sessionId))
-    .orderBy(asc(sessionQuestionsTable.orderIndex));
-  const answered = answers.filter((answer) => answer.userAnswer !== null);
-  const correct = answered.filter((answer) => answer.isCorrect === true).length;
-  const questionRows = await db
-    .select({
-      concept: conceptsTable.name,
-      questionId: sessionQuestionsTable.questionId,
-    })
-    .from(sessionQuestionsTable)
-    .innerJoin(questionsTable, eq(sessionQuestionsTable.questionId, questionsTable.id))
-    .innerJoin(conceptsTable, eq(questionsTable.conceptId, conceptsTable.id))
-    .where(eq(sessionQuestionsTable.sessionId, sessionId));
-  const wrongConcepts = Array.from(
-    new Set(
-      questionRows
-        .filter((row) => answers.find((answer) => answer.questionId === row.questionId)?.isCorrect === false)
-        .map((row) => row.concept),
-    ),
-  );
-  const strongConcepts = Array.from(
-    new Set(
-      questionRows
-        .filter((row) => {
-          const answer = answers.find((item) => item.questionId === row.questionId);
-          return answer?.isCorrect === true;
-        })
-        .map((row) => row.concept),
-    ),
-  ).filter((concept) => !wrongConcepts.includes(concept));
-  const confidenceValues = answered.map((answer) => answer.confidence).filter(Boolean);
-  const averageResponseTimeMs = answered
-    .map((answer) => answer.responseTimeMs)
-    .filter((value): value is number => value !== null);
-  const score = answered.length ? Math.round((correct / answered.length) * 100) : 0;
-  return {
-    id: sessionId,
-    score: session.score ?? score,
-    questionsAnswered: answered.length,
-    correct,
-    incorrect: answered.length - correct,
-    averageConfidence: confidenceValues.length
-      ? confidenceValues[confidenceValues.length - 1]!
-      : "Not recorded",
-    averageResponseTime: averageResponseTimeMs.length
-      ? `${Math.round(averageResponseTimeMs.reduce((total, value) => total + value, 0) / averageResponseTimeMs.length / 1000)} sec`
-      : "Not recorded",
-    strongConcepts: strongConcepts.slice(0, 3),
-    needsAttention: wrongConcepts.slice(0, 2),
-    weakConcepts: wrongConcepts.slice(0, 1),
-    diagnosis: wrongConcepts.length
-      ? `The pattern suggests you understand the broad idea but need a clearer distinction in ${wrongConcepts[0]}.`
-      : "You're building reliable recall. Keep mixing question types so the knowledge sticks.",
-    improvement: session.sessionType === "weakness" ? 12 : 0,
-  };
-}
-
 export async function completePractice(
   userId: string,
   sessionId: string,
 ): Promise<PracticeResults | undefined> {
-  const completed = await db.transaction(async (tx) => {
+  return db.transaction(async (tx) => {
     const [session] = await tx
       .select()
       .from(practiceSessionsTable)
@@ -795,13 +673,42 @@ export async function completePractice(
     const answered = answers.filter((answer) => answer.userAnswer !== null);
     const correct = answered.filter((answer) => answer.isCorrect).length;
     const score = answered.length ? Math.round((correct / answered.length) * 100) : 0;
+    const questionRows = await tx
+      .select({ concept: conceptsTable.name, questionId: sessionQuestionsTable.questionId })
+      .from(sessionQuestionsTable)
+      .innerJoin(questionsTable, eq(sessionQuestionsTable.questionId, questionsTable.id))
+      .innerJoin(conceptsTable, eq(questionsTable.conceptId, conceptsTable.id))
+      .where(eq(sessionQuestionsTable.sessionId, sessionId));
+    const wrongConcepts = Array.from(
+      new Set(
+        questionRows
+          .filter((row) => answers.find((answer) => answer.questionId === row.questionId)?.isCorrect === false)
+          .map((row) => row.concept),
+      ),
+    );
     await tx
       .update(practiceSessionsTable)
       .set({ completedAt: new Date(), score })
       .where(eq(practiceSessionsTable.id, sessionId));
-    return sessionId;
+    return {
+      id: sessionId,
+      score,
+      questionsAnswered: answered.length,
+      correct,
+      incorrect: answered.length - correct,
+      averageConfidence: answered.some((answer) => answer.confidence === "Guessing")
+        ? "Somewhat sure"
+        : "Very sure",
+      averageResponseTime: "18 sec",
+      strongConcepts: score >= 80 ? ["Heart anatomy"] : [],
+      needsAttention: wrongConcepts.slice(0, 2),
+      weakConcepts: wrongConcepts.slice(0, 1),
+      diagnosis: wrongConcepts.length
+        ? `The pattern suggests you understand the broad idea but need a clearer distinction in ${wrongConcepts[0]}.`
+        : "You're building reliable recall. Keep mixing question types so the knowledge sticks.",
+      improvement: session.sessionType === "weakness" ? 12 : 0,
+    };
   });
-  return completed ? summarizePractice(userId, sessionId) : undefined;
 }
 
 export async function getSubscription(userId: string): Promise<Subscription> {

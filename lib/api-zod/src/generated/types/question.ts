@@ -16,7 +16,7 @@ export interface Question {
   sourceExcerpt: string;
   sourcePage: number;
   /** @nullable */
-  sourceSectionId: string | null;
+  sourceSectionId?: string | null;
   explanation: string;
   correctAnswer: string;
 }

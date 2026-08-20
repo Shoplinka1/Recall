@@ -36,7 +36,7 @@ export interface Material {
   fileType: string;
   processingStatus: string;
   /** @nullable */
-  processingError: string | null;
+  processingError?: string | null;
   concepts: number;
   sessions: number;
   /** @nullable */
@@ -93,7 +93,7 @@ export interface Question {
   sourceExcerpt: string;
   sourcePage: number;
   /** @nullable */
-  sourceSectionId: string | null;
+  sourceSectionId?: string | null;
   explanation: string;
   correctAnswer: string;
 }

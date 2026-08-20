@@ -14,7 +14,7 @@ export interface Material {
   fileType: string;
   processingStatus: string;
   /** @nullable */
-  processingError: string | null;
+  processingError?: string | null;
   concepts: number;
   sessions: number;
   /** @nullable */

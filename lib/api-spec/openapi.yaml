@@ -133,7 +133,9 @@ paths:
         content:
           application/json:
             schema:
-               $ref: "#/components/schemas/QuestionGenerationInput"
+              type: object
+              properties:
+                count: { type: number, format: int32, minimum: 1, maximum: 20 }
       responses:
         "201":
           description: Grounded questions
@@ -427,7 +429,7 @@ components:
         lastStudied: { type: ["string", "null"] }
         createdAt: { type: string }
         excerpt: { type: string }
-      required: [id, title, subjectId, subjectName, fileType, processingStatus, processingError, concepts, sessions, lastStudied, createdAt, excerpt]
+      required: [id, title, subjectId, subjectName, fileType, processingStatus, concepts, sessions, lastStudied, createdAt, excerpt]
     MaterialInput:
       type: object
       properties:
@@ -483,11 +485,7 @@ components:
         sourceSectionId: { type: ["string", "null"] }
         explanation: { type: string }
         correctAnswer: { type: string }
-      required: [id, questionText, type, options, concept, difficulty, sourceExcerpt, sourcePage, sourceSectionId, explanation, correctAnswer]
-    QuestionGenerationInput:
-      type: object
-      properties:
-        count: { type: number, format: int32, minimum: 1, maximum: 20 }
+      required: [id, questionText, type, options, concept, difficulty, sourceExcerpt, sourcePage, explanation, correctAnswer]
     PracticeSession:
       type: object
       properties:
@@ -501,8 +499,6 @@ components:
             $ref: "#/components/schemas/Question"
         currentIndex: { type: number }
         completed: { type: boolean }
-        results:
-          $ref: "#/components/schemas/PracticeResults"
       required: [id, title, sessionType, subjectName, questions, currentIndex, completed]
     PracticeInput:
       type: object
@@ -525,7 +521,7 @@ components:
       type: object
       properties:
         questionId: { type: string }
-        answer: { type: string, minLength: 1 }
+        answer: { type: string }
         confidence: { type: string }
         responseTimeMs: { type: number }
       required: [questionId, answer, confidence]

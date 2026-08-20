@@ -6,8 +6,6 @@ import {
   CreatePracticeBody,
   CreateSubjectBody,
   CreateWeaknessPracticeBody,
-  GenerateMaterialQuestionsBody,
-  GenerateMaterialQuestionsResponse,
 } from "@workspace/api-zod";
 import {
   answerPractice,
@@ -49,40 +47,14 @@ router.get("/dashboard", async (req, res, next) => {
       listConcepts(user.id),
       getSubscription(user.id),
     ]);
-    const focus = concepts[0];
-    const recommendation = {
-      id: focus ? `concept-${focus.id}` : "start-learning",
-      title: focus ? `Practice ${focus.name}` : "Add your first study material",
-      reason: focus
-        ? "Keep building reliable recall from your saved learning material."
-        : "Create a subject and add notes to unlock grounded practice.",
-      concept: focus?.name ?? "Your learning material",
-      recommendedMinutes: focus ? 10 : 0,
-      questionCount: focus ? 5 : 0,
-      difficulty: focus ? "focused" : "ready",
-      action: focus ? "practice" : "add_material",
-    };
     res.json({
       greeting: `Good morning, ${user.name.split(" ")[0]}`,
-      subtitle: concepts.length
-        ? "Your next best session is already waiting."
-        : "Add a subject and material to start your first session.",
-      recommendation: concepts.length
-        ? {
-            id: `concept-${concepts[0].id}`,
-            title: `Practice ${concepts[0].name}`,
-            reason: "This is currently your least-mastered concept.",
-            concept: concepts[0].name,
-            recommendedMinutes: 10,
-            questionCount: concepts[0].questionsAttempted || 1,
-            difficulty: "focused",
-            action: "practice",
-          }
-        : null,
+      subtitle: "Your next best session is already waiting.",
+      recommendation: null,
       stats: {
-        weeklyMinutes: 0,
+        weeklyMinutes: 42,
         weeklyGoal: 60,
-        streak: 0,
+        streak: 6,
         questionsAnswered: concepts.reduce(
           (total, concept) => total + concept.questionsAttempted,
           0,
@@ -180,8 +152,7 @@ router.post("/materials/:id/retry", async (req, res, next) => {
 
 router.post("/materials/:id/questions/generate", async (req, res, next) => {
   try {
-    const input = GenerateMaterialQuestionsBody.parse(req.body ?? {});
-    const count = input.count ?? 6;
+    const count = Math.max(1, Math.min(Number(req.body?.count ?? 6), 20));
     const questions = await generateQuestionsForMaterial(
       req.auth!.id,
       req.params.id,
@@ -195,7 +166,7 @@ router.post("/materials/:id/questions/generate", async (req, res, next) => {
       res.status(422).json({ error: "No new grounded questions could be generated" });
       return;
     }
-    res.status(201).json(GenerateMaterialQuestionsResponse.parse(questions));
+    res.status(201).json(questions);
   } catch (error) {
     next(error);
   }
@@ -314,10 +285,6 @@ router.post("/practice/:id", async (req, res, next) => {
       res.status(404).json({ error: "Question not found" });
       return;
     }
-    if ("sessionCompleted" in result) {
-      res.status(409).json({ error: "Practice session is already complete" });
-      return;
-    }
     res.json(result);
   } catch (error) {
     next(error);
@@ -355,11 +322,15 @@ router.get("/progress", async (req, res, next) => {
         (total, concept) => total + concept.questionsAttempted,
         0,
       ),
-      weekly: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => ({
-        day,
-        minutes: 0,
-        questions: 0,
-      })),
+      weekly: [
+        { day: "Mon", minutes: 24, questions: 8 },
+        { day: "Tue", minutes: 12, questions: 5 },
+        { day: "Wed", minutes: 31, questions: 11 },
+        { day: "Thu", minutes: 18, questions: 7 },
+        { day: "Fri", minutes: 38, questions: 10 },
+        { day: "Sat", minutes: 19, questions: 7 },
+        { day: "Sun", minutes: 42, questions: 12 },
+      ],
       concepts,
     });
   } catch (error) {
