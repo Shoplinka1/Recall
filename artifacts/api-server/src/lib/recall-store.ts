@@ -37,6 +37,7 @@ type QuestionWithConcept = {
 
 const iso = (value: Date | null | undefined) =>
   value ? value.toISOString() : null;
+const normalizedProcessingStatus = (value: string) => value.toUpperCase();
 
 const questionToApi = (row: QuestionWithConcept): Question => ({
   id: row.question.id,
@@ -141,7 +142,7 @@ export async function listMaterials(userId: string): Promise<Material[]> {
     subjectId: material.subjectId,
     subjectName,
     fileType: material.fileType,
-    processingStatus: material.processingStatus,
+    processingStatus: normalizedProcessingStatus(material.processingStatus),
     processingError: material.processingError,
     concepts: conceptsByMaterial.get(material.id) ?? 0,
     sessions: sessionCounts.get(material.id)?.size ?? 0,
@@ -316,7 +317,7 @@ export async function generateQuestionsForMaterial(
     .from(materialsTable)
     .where(and(eq(materialsTable.id, materialId), eq(materialsTable.userId, userId)))
     .limit(1);
-  if (!material || material.processingStatus !== "READY") return undefined;
+  if (!material || normalizedProcessingStatus(material.processingStatus) !== "READY") return undefined;
 
   const sections = await db
     .select()
@@ -575,8 +576,8 @@ async function waitForMaterialReady(userId: string, materialId: string) {
       .from(materialsTable)
       .where(and(eq(materialsTable.id, materialId), eq(materialsTable.userId, userId)))
       .limit(1);
-    if (!material || material.processingStatus !== "PROCESSING") {
-      return material?.processingStatus === "READY";
+    if (!material || normalizedProcessingStatus(material.processingStatus) !== "PROCESSING") {
+      return material ? normalizedProcessingStatus(material.processingStatus) === "READY" : false;
     }
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
@@ -621,7 +622,7 @@ export async function createPractice(
         ),
       );
     for (const material of userMaterials) {
-      if (material.processingStatus === "PROCESSING") {
+      if (normalizedProcessingStatus(material.processingStatus) === "PROCESSING") {
         await waitForMaterialReady(userId, material.id);
       }
       const [readyMaterial] = await db

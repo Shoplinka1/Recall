@@ -1,0 +1,86 @@
+RECALL — FINAL REAL-APP VERIFICATION
+
+CONTINUE FROM CURRENT GIT STATE. DO NOT START STEP 6.
+
+The latest branch contains the authenticated demo cleanup. Do not rebuild or redo Steps 1–5.
+
+Your ONLY goal now is to find and fix any remaining real-app defects and prove the authenticated application works without demo data.
+
+IMPORTANT:
+- NEVER enable DEMO_MODE.
+- NEVER use fake/demo data in authenticated production paths.
+- NEVER use localStorage/in-memory production persistence.
+- Keep PostgreSQL/Drizzle, auth, private storage, material processing, grounded questions and persisted practice.
+- Do not redesign the UI.
+- Do not start Step 6.
+
+AUDIT the authenticated frontend/API:
+dashboard, subjects, materials, material detail, library, progress, mistakes, recommendations, practice, results, profile and billing.
+
+Remove/fix any remaining:
+- demo fallbacks
+- fake questions/sessions/results
+- seeded demo records
+- hard-coded authenticated data
+- fake progress/recommendations
+- fake practice redirects
+- loading/error states that display demo content
+
+Empty real data must produce a genuine empty state.
+
+THEN VERIFY THE REAL PRACTICE FLOW:
+
+real signup/login
+→ real material upload/paste
+→ READY
+→ real persisted Step 4 questions
+→ actual practice UI
+→ MCQ answer
+→ true/false answer
+→ short-answer answer
+→ persisted answers
+→ completion
+→ persisted score/result
+→ browser reload
+→ API restart
+→ same session/result
+→ second user denied access
+
+Confirm the UI uses the real API and PostgreSQL-backed questions/results.
+
+If browser automation is available, actually click through the UI. If unavailable, use the real API tests and inspect the frontend/API integration; report browser interaction as NOT_VERIFIED.
+
+Run:
+- Step 1–5 tests
+- ownership tests
+- material/storage tests
+- question/grounding tests
+- practice/answer/completion tests
+- restart persistence
+- typecheck
+- build
+- Drizzle schema validation/push
+- /api/healthz
+- frontend HTTP check
+
+Fix actual failures and rerun affected tests. Never weaken/delete tests and never switch to demo mode.
+
+STOP AFTER STEP 1–5.
+
+FINAL REPORT ONLY:
+DEMO_REMOVAL
+AUTHENTICATED_UI
+MATERIALS
+QUESTIONS
+PRACTICE
+PERSISTENCE
+OWNERSHIP
+TESTED
+NOT_VERIFIED
+DATABASE
+BUILD
+RUNTIME
+
+Report only what was actually verified.
+DO NOT CLAIM PRODUCTION-READY.
+DO NOT START STEP 6.
