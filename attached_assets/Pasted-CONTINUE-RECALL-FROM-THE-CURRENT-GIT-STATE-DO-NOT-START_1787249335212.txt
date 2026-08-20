@@ -1,0 +1,64 @@
+CONTINUE RECALL FROM THE CURRENT GIT STATE. DO NOT START STEP 6.
+
+Steps 1–5 are already implemented. Do not rebuild or replace them.
+
+IMPORTANT:
+- Use the real PostgreSQL-backed application.
+- Do NOT enable DEMO_MODE.
+- Do NOT use fake/demo questions, demo sessions, seeded user data, localStorage, or in-memory production fallbacks.
+- Preserve PostgreSQL, authentication, private storage, material processing, Step 4 grounded questions, and Step 5 persistence.
+- Do not redesign the UI.
+- Do not start Step 6.
+
+YOUR TASK:
+Finish the remaining REAL authenticated browser-flow verification and fix any actual defects.
+
+Verify through the real UI:
+1. Sign up/login.
+2. Create/upload real material.
+3. Wait until material is READY.
+4. Generate real Step 4 questions.
+5. Open practice.
+6. Confirm displayed questions come from PostgreSQL Step 4 questions.
+7. Test MCQ answer submission.
+8. Test true/false submission.
+9. Test short-answer submission.
+10. Confirm answers are persisted through the real API.
+11. Complete the session.
+12. Confirm the displayed result comes from the persisted PostgreSQL result.
+13. Reload the browser and restore the session/result.
+14. Restart the API and verify the same persisted session/result still exists.
+15. Confirm no demo/fake data appears anywhere in this authenticated flow.
+
+Also inspect the authenticated frontend for remaining demo fallbacks. Remove them from the REAL production/authenticated path where necessary, but preserve legitimate test fixtures.
+
+Run:
+- Step 1–5 regression tests
+- ownership tests
+- typecheck
+- build
+- /api/healthz
+- frontend HTTP check
+- restart-persistence verification
+
+Fix real defects and rerun failed tests. Do not weaken tests.
+
+If browser automation cannot perform an authenticated interaction, inspect the actual UI/API integration and clearly report exactly what could and could not be verified.
+
+STOP AFTER THIS WORK.
+
+FINAL REPORT ONLY:
+BROWSER_FLOW
+DEMO_REMOVAL
+MATERIALS
+QUESTIONS
+PRACTICE
+PERSISTENCE
+OWNERSHIP
+TESTED
+NOT_VERIFIED
+BUILD
+RUNTIME
+
+DO NOT CLAIM PRODUCTION-READY.
+DO NOT START STEP 6.

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { writeFile } from "node:fs/promises";
 import { DevelopmentAIService } from "../artifacts/api-server/src/lib/ai.ts";
 
 const baseUrl = process.env.STEP4_TEST_BASE_URL ?? "http://127.0.0.1:8080";
@@ -143,6 +144,32 @@ expectStatus(result, 201, "practice should use persisted generated questions");
 assert.ok(result.body.questions.length > 0, "practice should contain generated questions");
 assert.ok(result.body.questions.every((question) => generatedIds.includes(question.id)), "practice should reuse stored questions");
 const practiceId = result.body.id;
+for (const question of result.body.questions) {
+  const answered = await userA.json(`/api/practice/${practiceId}`, "POST", {
+    questionId: question.id,
+    answer: question.correctAnswer,
+    confidence: "high",
+    responseTimeMs: 1200,
+  });
+  expectStatus(answered, 200, "answer persistence");
+  assert.equal(answered.body.isCorrect, true, "correct persisted answer should be scored correctly");
+}
+const completed = await userA.request(`/api/practice/${practiceId}/complete`, { method: "POST" });
+expectStatus(completed, 200, "practice completion");
+assert.equal(completed.body.questionsAnswered, result.body.questions.length, "all answers should be included in persisted result");
+const restored = await userA.request(`/api/practice/${practiceId}`);
+expectStatus(restored, 200, "completed practice restore");
+assert.equal(restored.body.completed, true, "completed practice should restore as completed");
+assert.equal(restored.body.results.score, 100, "restored result should come from PostgreSQL");
+await writeFile(
+  "/tmp/recall-step4-persistence.json",
+  JSON.stringify({
+    email: `step4-a-${suffix}@example.test`,
+    password: "correct horse battery staple",
+    practiceId,
+    score: restored.body.results.score,
+  }),
+);
 
 const userB = new Client();
 result = await userB.json("/api/auth/signup", "POST", {
@@ -158,4 +185,9 @@ expectStatus(
 );
 expectStatus(await userB.request(`/api/practice/${practiceId}`), 404, "cross-user practice protection");
 
-console.log("Step 4 grounded question tests passed.", { materialId, practiceId, generated: generatedIds.length });
+console.log("Step 4 grounded question and practice tests passed.", {
+  materialId,
+  practiceId,
+  generated: generatedIds.length,
+  score: restored.body.results.score,
+});

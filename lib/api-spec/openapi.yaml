@@ -499,6 +499,8 @@ components:
             $ref: "#/components/schemas/Question"
         currentIndex: { type: number }
         completed: { type: boolean }
+        results:
+          $ref: "#/components/schemas/PracticeResults"
       required: [id, title, sessionType, subjectName, questions, currentIndex, completed]
     PracticeInput:
       type: object
