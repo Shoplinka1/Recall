@@ -1,0 +1,78 @@
+RECALL — FINISH CURRENT STATE
+
+CONTINUE FROM THE CURRENT GIT CODEBASE. DO NOT START OVER.
+
+Steps 1–5 are implemented. The remaining task is FINAL REAL-APP CLEANUP + VERIFICATION.
+
+The previous agent already removed most demo seeding/fallbacks. It found the remaining blocker:
+
+PRIVATE_OBJECT_DIR is missing, so the real private file-upload regression fails.
+
+YOUR TASK:
+
+1. Inspect current Git/code first. Do not redo completed work.
+2. Remove ALL remaining demo/mock behavior from authenticated production paths.
+3. No DEMO_MODE, fake materials, fake questions, fake analytics, fake recommendations, fake sessions, hard-coded study data, localStorage, or in-memory production state.
+4. Empty states are fine. They must be real empty states, not fake data.
+5. Keep PostgreSQL, Drizzle, auth, ownership, private storage, material processing, grounded questions, and practice architecture.
+6. Provision/configure the existing Replit private App Storage correctly so PRIVATE_OBJECT_DIR exists. Do NOT replace storage with local/fake storage.
+7. Fix any real runtime defects discovered.
+8. Verify the actual browser UI uses real API/PostgreSQL data.
+
+TEST THE COMPLETE REAL FLOW:
+
+signup/login
+→ upload/paste real material
+→ PROCESSING
+→ READY
+→ sections/concepts persisted
+→ grounded questions generated
+→ practice session created
+→ MCQ answer
+→ true/false answer
+→ short-answer answer
+→ answers persisted
+→ completion/result persisted
+→ reload/resume
+→ API restart
+→ same session/result restored
+→ User B cannot access User A data.
+
+Run ALL Step 1–5 regression tests again.
+
+Then run:
+- typecheck
+- build
+- database schema/push if needed
+- API startup
+- /api/healthz
+- frontend HTTP check
+- browser practice flow
+- restart persistence
+
+IMPORTANT:
+If you find demo references, determine whether they are legitimate development fixtures/tests or active user-facing production fallbacks. Remove active production fallbacks. Do not blindly delete legitimate tests.
+
+Do not weaken tests.
+Do not use fake data to make tests pass.
+Do not claim anything passed unless it actually ran.
+
+DO NOT START STEP 6.
+
+STEP 5 IS FINISHED ONLY WHEN THE USER-FACING APP ACTUALLY USES THE REAL POSTGRESQL-BACKED MATERIAL → QUESTION → PRACTICE → ANSWER → RESULT FLOW.
+
+FINAL REPORT ONLY:
+
+DEMO REMOVAL
+MATERIALS
+QUESTIONS
+PRACTICE
+PERSISTENCE
+OWNERSHIP
+TESTED
+NOT VERIFIED
+DATABASE
+BUILD
+RUNTIME
+
+Do not claim production-ready.
