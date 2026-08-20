@@ -49,6 +49,19 @@ router.get("/dashboard", async (req, res, next) => {
       listConcepts(user.id),
       getSubscription(user.id),
     ]);
+    const focus = concepts[0];
+    const recommendation = {
+      id: focus ? `concept-${focus.id}` : "start-learning",
+      title: focus ? `Practice ${focus.name}` : "Add your first study material",
+      reason: focus
+        ? "Keep building reliable recall from your saved learning material."
+        : "Create a subject and add notes to unlock grounded practice.",
+      concept: focus?.name ?? "Your learning material",
+      recommendedMinutes: focus ? 10 : 0,
+      questionCount: focus ? 5 : 0,
+      difficulty: focus ? "focused" : "ready",
+      action: focus ? "practice" : "add_material",
+    };
     res.json({
       greeting: `Good morning, ${user.name.split(" ")[0]}`,
       subtitle: concepts.length
@@ -342,15 +355,11 @@ router.get("/progress", async (req, res, next) => {
         (total, concept) => total + concept.questionsAttempted,
         0,
       ),
-      weekly: [
-        { day: "Mon", minutes: 0, questions: 0 },
-        { day: "Tue", minutes: 0, questions: 0 },
-        { day: "Wed", minutes: 0, questions: 0 },
-        { day: "Thu", minutes: 0, questions: 0 },
-        { day: "Fri", minutes: 0, questions: 0 },
-        { day: "Sat", minutes: 0, questions: 0 },
-        { day: "Sun", minutes: 0, questions: 0 },
-      ],
+      weekly: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => ({
+        day,
+        minutes: 0,
+        questions: 0,
+      })),
       concepts,
     });
   } catch (error) {
