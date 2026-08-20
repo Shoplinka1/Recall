@@ -183,6 +183,12 @@ assert.equal((await userB.request(`/api/materials/${pastedId}`)).response.status
 assert.equal((await userB.request(`/api/materials/${pastedId}/sections`)).response.status, 404);
 const conceptsB = await userB.request("/api/concepts");
 assert.equal(conceptsB.body.some((concept) => concept.name === "Photosynthesis"), false);
+result = await userB.json("/api/subjects", "POST", {
+  name: "Material Test B Subject",
+  description: "Owned by User B",
+  color: "#3d8f76",
+});
+assert.equal(result.response.status, 201);
 const subjectB = (await userB.request("/api/subjects")).body[0];
 result = await userB.json("/api/materials", "POST", {
   title: "Wrong owner path",

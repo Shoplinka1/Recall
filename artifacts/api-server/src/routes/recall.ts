@@ -9,7 +9,6 @@ import {
   GenerateMaterialQuestionsBody,
   GenerateMaterialQuestionsResponse,
 } from "@workspace/api-zod";
-import { recommendation } from "../lib/recall-demo";
 import {
   answerPractice,
   completePractice,
@@ -52,12 +51,25 @@ router.get("/dashboard", async (req, res, next) => {
     ]);
     res.json({
       greeting: `Good morning, ${user.name.split(" ")[0]}`,
-      subtitle: "Your next best session is already waiting.",
-      recommendation,
+      subtitle: concepts.length
+        ? "Your next best session is already waiting."
+        : "Add a subject and material to start your first session.",
+      recommendation: concepts.length
+        ? {
+            id: `concept-${concepts[0].id}`,
+            title: `Practice ${concepts[0].name}`,
+            reason: "This is currently your least-mastered concept.",
+            concept: concepts[0].name,
+            recommendedMinutes: 10,
+            questionCount: concepts[0].questionsAttempted || 1,
+            difficulty: "focused",
+            action: "practice",
+          }
+        : null,
       stats: {
-        weeklyMinutes: 42,
+        weeklyMinutes: 0,
         weeklyGoal: 60,
-        streak: 6,
+        streak: 0,
         questionsAnswered: concepts.reduce(
           (total, concept) => total + concept.questionsAttempted,
           0,
@@ -322,22 +334,22 @@ router.get("/progress", async (req, res, next) => {
               concepts.length,
           )
         : 0,
-      changeThisWeek: 8,
-      accuracy: 78,
-      confidence: 69,
-      studyMinutes: 184,
+      changeThisWeek: 0,
+      accuracy: 0,
+      confidence: 0,
+      studyMinutes: 0,
       questionsAnswered: concepts.reduce(
         (total, concept) => total + concept.questionsAttempted,
         0,
       ),
       weekly: [
-        { day: "Mon", minutes: 24, questions: 8 },
-        { day: "Tue", minutes: 12, questions: 5 },
-        { day: "Wed", minutes: 31, questions: 11 },
-        { day: "Thu", minutes: 18, questions: 7 },
-        { day: "Fri", minutes: 38, questions: 10 },
-        { day: "Sat", minutes: 19, questions: 7 },
-        { day: "Sun", minutes: 42, questions: 12 },
+        { day: "Mon", minutes: 0, questions: 0 },
+        { day: "Tue", minutes: 0, questions: 0 },
+        { day: "Wed", minutes: 0, questions: 0 },
+        { day: "Thu", minutes: 0, questions: 0 },
+        { day: "Fri", minutes: 0, questions: 0 },
+        { day: "Sat", minutes: 0, questions: 0 },
+        { day: "Sun", minutes: 0, questions: 0 },
       ],
       concepts,
     });
@@ -351,19 +363,7 @@ router.get("/mistakes", (_req, res) => {
 });
 
 router.get("/recommendations", (_req, res) => {
-  res.json([
-    recommendation,
-    {
-      id: "rec-osmosis",
-      title: "Review osmosis",
-      reason: "You haven't practiced this concept in 4 days.",
-      concept: "Osmosis",
-      recommendedMinutes: 8,
-      questionCount: 5,
-      difficulty: "medium",
-      action: "practice",
-    },
-  ]);
+  res.json([]);
 });
 
 router.get("/subscription", async (req, res, next) => {
