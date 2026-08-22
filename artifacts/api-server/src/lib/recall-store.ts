@@ -634,6 +634,55 @@ async function waitForMaterialReady(userId: string, materialId: string) {
   return false;
 }
 
+function selectPracticeQuestions<
+  T extends { question: { id: string; conceptId: string; type: string; createdAt: Date } },
+>(
+  rows: T[],
+  masteryByConcept: Map<string, number>,
+  requestedCount: number,
+) {
+  const ranked = [...rows].sort(
+    (a, b) =>
+      (masteryByConcept.get(a.question.conceptId) ?? 0) -
+        (masteryByConcept.get(b.question.conceptId) ?? 0) ||
+      a.question.createdAt.getTime() - b.question.createdAt.getTime(),
+  );
+  const selected: T[] = [];
+  const selectedIds = new Set<string>();
+  const conceptCounts = new Map<string, number>();
+  const add = (row: T | undefined) => {
+    if (!row || selectedIds.has(row.question.id) || selected.length >= requestedCount) return;
+    selected.push(row);
+    selectedIds.add(row.question.id);
+    conceptCounts.set(row.question.conceptId, (conceptCounts.get(row.question.conceptId) ?? 0) + 1);
+  };
+  const find = (predicate: (row: T) => boolean) => ranked.find(
+    (row) => !selectedIds.has(row.question.id) && predicate(row),
+  );
+
+  // Reserve one slot for every available type before filling by weakness.
+  // This prevents a low-mastery concept from crowding out all other forms.
+  for (const type of ["multiple_choice", "true_false", "short_answer"]) {
+    add(find((row) => row.question.type === type));
+  }
+
+  // Give each concept one opportunity before reinforcing a concept. The
+  // ranking still makes the weakest concepts appear first.
+  for (const row of ranked) {
+    if (selected.length >= requestedCount) break;
+    if (!conceptCounts.has(row.question.conceptId)) add(row);
+  }
+
+  const conceptCount = new Set(rows.map((row) => row.question.conceptId)).size;
+  const perConceptLimit = Math.max(1, Math.ceil(requestedCount / Math.max(conceptCount, 1)));
+  for (const row of ranked) {
+    if (selected.length >= requestedCount) break;
+    if ((conceptCounts.get(row.question.conceptId) ?? 0) < perConceptLimit) add(row);
+  }
+  for (const row of ranked) add(row);
+  return selected;
+}
+
 export async function createPractice(
   userId: string,
   input: { subjectId?: string; materialId?: string; questionCount: number; sessionType: string },
@@ -730,18 +779,8 @@ export async function createPractice(
     const masteryByConcept = new Map(
       masteryRows.map((row) => [row.conceptId, row.masteryScore ?? 0]),
     );
-    const prioritized = [...rows].sort(
-      (a, b) =>
-        (masteryByConcept.get(a.question.conceptId) ?? 0) -
-        (masteryByConcept.get(b.question.conceptId) ?? 0),
-    );
     const requestedCount = Math.max(1, Math.min(input.questionCount, 20));
-    const typePriority = ["multiple_choice", "true_false", "short_answer"];
-    const diverse = typePriority.flatMap((type) =>
-      prioritized.find((row) => row.question.type === type) ? [prioritized.find((row) => row.question.type === type)!] : [],
-    );
-    const selected = [...diverse, ...prioritized.filter((row) => !diverse.includes(row))]
-      .slice(0, requestedCount);
+    const selected = selectPracticeQuestions(rows, masteryByConcept, requestedCount);
     const subject = input.subjectId
       ? (
           await tx

@@ -84,6 +84,9 @@ const questionSimilarity = (left: string, right: string) => {
   return intersection / new Set([...leftTokens, ...rightTokens]).size;
 };
 
+const maskTerm = (sentence: string, term: string) =>
+  sentence.replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig"), "_____");
+
 const normalizeShortAnswer = (value: string) => {
   let normalized = normalizeComparableText(value);
   for (const [pattern, replacement] of terminologyAliases) {
@@ -225,16 +228,9 @@ export class DevelopmentAIService implements AIService {
       );
       const coveredConcepts = sectionConcepts.length ? sectionConcepts : [concept];
       coveredConcepts.forEach((coveredConcept, conceptIndex) => {
-        generated.push({
-          id: stableId(`${section.id}:concept:${coveredConcept.id}`, conceptIndex),
+        const base = {
           materialId: section.materialId,
           sectionId: section.id,
-          questionText:
-            conceptIndex % 2 === 0
-              ? `Which key concept is named in this source section about ${coveredConcept.name}?`
-              : `What important term does this source section identify as ${coveredConcept.name}?`,
-          type: "short_answer",
-          options: [],
           concept: coveredConcept.name,
           difficulty: index % 3 === 0 ? "easy" : index % 3 === 1 ? "medium" : "hard",
           sourceExcerpt: section.excerpt,
@@ -242,7 +238,24 @@ export class DevelopmentAIService implements AIService {
           sourceSectionId: section.id,
           explanation: `The source section identifies “${coveredConcept.name}”: ${section.excerpt}`,
           correctAnswer: coveredConcept.name,
-        });
+        };
+        const maskedExcerpt = maskTerm(section.excerpt, coveredConcept.name);
+        generated.push(
+          {
+            ...base,
+            id: stableId(`${section.id}:definition:${coveredConcept.id}`, conceptIndex),
+            questionText: `What key concept is described by this source statement: “${maskedExcerpt}”?`,
+            type: "short_answer",
+            options: [],
+          },
+          {
+            ...base,
+            id: stableId(`${section.id}:application:${coveredConcept.id}`, conceptIndex),
+            questionText: `Which important term completes this source statement: “${maskedExcerpt}”?`,
+            type: "short_answer",
+            options: [],
+          },
+        );
       });
       generated.push({
         id: stableId(`${section.id}:true-false`, index),
@@ -285,16 +298,19 @@ export class DevelopmentAIService implements AIService {
         });
       }
     }
+    // `count` is a requested session size, not a cap on the useful question
+    // bank. Generate the complete grounded candidate set so later practice
+    // selection can choose a varied subset.
+    void options.count;
     return this.validateGroundedQuestions(generated, sections, concepts)
       .filter(
         (question) =>
           !excluded.some(
             (previous) =>
               previous === question.questionText.trim().toLowerCase() ||
-              questionSimilarity(previous, question.questionText) >= 0.85,
+            questionSimilarity(previous, question.questionText) >= 0.8,
           ),
-      )
-      .slice(0, Math.max(1, Math.min(options.count ?? 6, 20)));
+      );
   }
 
   validateGroundedQuestions(
@@ -352,7 +368,7 @@ export class DevelopmentAIService implements AIService {
         !seen.some(
           (previous) =>
             previous === normalizedQuestion ||
-            questionSimilarity(previous, normalizedQuestion) >= 0.85,
+            questionSimilarity(previous, normalizedQuestion) >= 0.8,
         );
       if (valid) seen.push(normalizedQuestion);
       return valid;

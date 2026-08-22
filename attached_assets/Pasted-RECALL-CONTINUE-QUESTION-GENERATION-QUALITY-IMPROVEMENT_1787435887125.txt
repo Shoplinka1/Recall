@@ -1,0 +1,192 @@
+RECALL — CONTINUE QUESTION GENERATION QUALITY IMPROVEMENT
+
+CONTINUE FROM THE CURRENT GIT STATE.
+
+IMPORTANT:
+The previous agent was implementing the pre-Step-7 Question Generation Quality Improvement and stopped because of the Replit quota limit.
+
+DO NOT START STEP 7.
+DO NOT REDO STEPS 1–6.
+DO NOT REBUILD THE APPLICATION.
+DO NOT REDESIGN THE UI.
+DO NOT ENABLE DEMO_MODE.
+DO NOT USE FAKE DATA.
+
+FIRST inspect the current Git state and the actual implementation. Do not assume the previous agent's claims are correct.
+
+The intended improvement is:
+
+Recall should generate a genuinely useful, intelligent practice set from the user's OWN uploaded study material rather than repeatedly producing only ~2 nearly identical questions.
+
+The current implementation was being improved with:
+- concept-aware question generation
+- multiple grounded question templates
+- section/concept coverage
+- exact duplicate protection
+- near-duplicate protection
+- repeated-concept limitation
+- question-type diversity
+- grounded answer validation
+- weak-first practice selection
+- preservation of Steps 1–6
+
+The previous agent reported two remaining corrections were being implemented:
+1. Generation was still honoring a small requested count, causing only a small number of questions to appear on the first request.
+2. Weak-first selection could fill a session before reaching different question types such as MCQ.
+
+CONTINUE FROM THE ACTUAL CODE, not from this description.
+
+GOAL:
+
+Make Recall behave like a genuinely useful learning assistant/teacher.
+
+For sufficiently large source material, Recall should intelligently identify the important concepts and create a varied practice set that helps the user actually understand and remember the material.
+
+It should NOT simply create more questions.
+
+QUALITY REQUIREMENTS:
+
+1. Generate as many useful questions as the source genuinely supports.
+2. Do not artificially cap substantial material at two questions.
+3. Cover multiple important concepts and source sections.
+4. Avoid asking essentially the same question repeatedly.
+5. Avoid repeatedly targeting the same answer/concept.
+6. Detect exact duplicates.
+7. Detect near-duplicates that test essentially the same knowledge.
+8. Use different question forms when the source supports them:
+   - definition
+   - explanation
+   - mechanism
+   - cause/effect
+   - comparison
+   - application
+   - scenario
+   - relationship
+   - MCQ
+   - true/false
+   - short-answer
+9. Prefer understanding/application over repetitive memorization.
+10. Never invent information that is not supported by the user's material.
+11. Every question must have valid source/section provenance.
+12. Every expected answer must be supported by the source.
+13. MCQ distractors must be plausible but clearly distinguishable and grounded.
+14. True/false statements must be directly supported or contradicted by the source.
+15. Short-answer questions must remain compatible with the existing Step 5 answer matcher.
+16. Preserve PostgreSQL/Drizzle persistence.
+17. Preserve authentication and server-side ownership.
+18. Preserve Step 6 mastery/confidence/weakness functionality.
+19. Never use demo data to increase question variety.
+
+IMPORTANT INTELLIGENCE REQUIREMENT:
+
+Do NOT just increase the number requested from the AI.
+
+The system should reason about the available source material and distribute questions across the concepts actually present.
+
+For example, if a document contains:
+- Concept A
+- Concept B
+- Concept C
+- Concept D
+
+the generated practice set should not contain six slightly different questions about Concept A.
+
+It should deliberately cover A, B, C and D where sufficient evidence exists.
+
+Also distinguish between:
+- testing the same fact in different wording
+- genuinely testing a different aspect of understanding.
+
+Only the latter should count as useful diversity.
+
+STEP 6 INTEGRATION:
+
+Use the existing mastery/weakness data intelligently.
+
+When selecting questions for practice:
+- prioritize concepts the learner is weak on,
+- but do not repeatedly serve only one weak concept,
+- preserve reasonable concept coverage,
+- preserve question-type diversity,
+- avoid questions the learner has already answered repeatedly unless useful for reinforcement.
+
+Do not change the Step 6 architecture.
+
+TESTS MUST PROVE:
+
+- substantial material can generate substantially more than 2 useful questions when enough source content exists;
+- questions cover multiple concepts;
+- questions cover multiple source sections when available;
+- exact duplicates are rejected;
+- near-duplicates are rejected;
+- repeated same-concept questions are bounded;
+- question types vary when appropriate;
+- grounded questions are accepted;
+- unsupported questions are rejected;
+- unsupported answers are rejected;
+- provenance remains valid;
+- MCQ options remain valid;
+- true/false remains grounded;
+- short-answer remains compatible with Step 5;
+- weak concepts receive appropriate priority;
+- practice still maintains diversity;
+- Steps 4, 5 and 6 regressions remain passing.
+
+RUN:
+
+- Step 4 tests
+- Step 5 tests
+- Step 6 tests
+- question-generation quality tests
+- auth/ownership tests
+- materials tests if affected
+- typecheck
+- build
+- /api/healthz
+- frontend HTTP check
+
+If a test fails:
+
+1. Determine whether it is a real application defect.
+2. Fix the smallest real defect.
+3. Never weaken or delete the test.
+4. Never enable demo mode.
+5. Rerun the affected tests.
+
+BEFORE FINISHING:
+
+Create or use a realistic sufficiently large test material containing multiple distinct concepts/sections.
+
+Verify that the resulting questions are genuinely different and useful—not merely different wording of the same question.
+
+Inspect the generated questions and answers for:
+- concept coverage
+- educational usefulness
+- grounding
+- duplication
+- question-type diversity
+- provenance
+
+Do not claim success based only on question count.
+
+STOP HERE.
+
+DO NOT START STEP 7.
+
+FINAL REPORT ONLY:
+
+QUESTION_GENERATION
+DIVERSITY
+CONCEPT_COVERAGE
+DUPLICATE_PROTECTION
+GROUNDING
+MASTERY_INTEGRATION
+TESTED
+NOT_VERIFIED
+BUILD
+RUNTIME
+
+Only report what was actually verified.
+DO NOT CLAIM PRODUCTION-READY.
+
+Do not consider the task complete merely because tests pass. Inspect a real generated practice set from substantial multi-section material and verify that the questions are educationally different, not just syntactically different.
