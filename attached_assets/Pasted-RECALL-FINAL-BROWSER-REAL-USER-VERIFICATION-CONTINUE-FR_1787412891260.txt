@@ -1,0 +1,78 @@
+RECALL — FINAL BROWSER/REAL-USER VERIFICATION
+
+CONTINUE FROM THE CURRENT GIT STATE.
+DO NOT START STEP 6.
+DO NOT REBUILD OR REDESIGN RECALL.
+DO NOT ENABLE DEMO_MODE OR USE FAKE DATA.
+
+Steps 1–5 backend verification already passed. The remaining gap is the actual user-facing browser flow.
+
+FIRST inspect the current code/workflows and do not assume old notes are correct.
+
+Fix only genuine issues preventing the real preview/browser from working.
+
+VERIFY THE REAL PREVIEW:
+
+1. Start the existing Recall API and web workflows.
+2. Make the actual Recall preview URL accessible.
+3. Open the real frontend.
+4. Sign up/login with a temporary real account.
+5. Confirm the session persists in the browser.
+6. Confirm dashboard/study data loads from the real API.
+7. Create/paste real study material.
+8. Confirm processing reaches READY.
+9. Generate real persisted questions.
+10. Open the actual practice page.
+11. Answer an MCQ.
+12. Answer true/false.
+13. Answer short-answer.
+14. Submit answers.
+15. Complete the practice session.
+16. Confirm the displayed score/result comes from PostgreSQL.
+17. Reload the browser.
+18. Confirm the session/result remains.
+19. Restart the API.
+20. Confirm the same data/result remains.
+21. Confirm another user cannot access the first user's data.
+
+IMPORTANT:
+- Never use DEMO_MODE.
+- Never create fake data to make the UI appear functional.
+- Never use localStorage/in-memory production persistence.
+- Keep PostgreSQL/Drizzle, authentication, private storage and the existing architecture.
+- Do not weaken or delete tests.
+- Do not redesign the UI.
+- Do not start Step 6.
+
+If browser automation/preview is unavailable, diagnose WHY.
+Fix only the actual preview/workflow/configuration problem if possible.
+Do not claim browser verification unless it was genuinely performed.
+
+Then run:
+- test:auth
+- test:materials
+- test:step4
+- test:step5
+- typecheck
+- build
+- /api/healthz
+- frontend HTTP check
+- restart-persistence check
+
+FINAL REPORT ONLY:
+
+BROWSER_FLOW
+DEMO_REMOVAL
+MATERIALS
+QUESTIONS
+PRACTICE
+PERSISTENCE
+OWNERSHIP
+TESTED
+NOT_VERIFIED
+DATABASE
+BUILD
+RUNTIME
+
+STOP AFTER STEP 1–5.
+DO NOT START STEP 6.
