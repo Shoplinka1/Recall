@@ -219,12 +219,15 @@ export const sessionQuestionsTable = pgTable("recall_session_questions", {
     .notNull()
     .references(() => questionsTable.id, { onDelete: "cascade" }),
   orderIndex: integer("order_index").notNull(),
+  isFollowUp: boolean("is_follow_up").notNull().default(false),
   userAnswer: text("user_answer"),
   isCorrect: boolean("is_correct"),
   confidence: text("confidence"),
   responseTimeMs: integer("response_time_ms"),
   ...timestamps,
-});
+}, (table) => [
+  uniqueIndex("recall_session_questions_attempt_idx").on(table.sessionId, table.questionId),
+]);
 
 export const conceptMasteryTable = pgTable("recall_concept_mastery", {
   id: uuid("id").defaultRandom().primaryKey(),

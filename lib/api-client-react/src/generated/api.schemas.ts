@@ -146,12 +146,31 @@ export interface AnswerInput {
   responseTimeMs?: number;
 }
 
+export interface TeachingResult {
+  result: string;
+  explanation: string;
+  keyIdea: string;
+  /** @nullable */
+  misconception: string | null;
+  followUpQuestion: Question | null;
+  followUpStatus: string;
+}
+
 export interface AnswerResult {
   isCorrect: boolean;
   correctAnswer: string;
   explanation: string;
   concept: string;
   sourceExcerpt: string;
+  teaching: TeachingResult;
+}
+
+export interface GenerateQuestionsInput {
+  /**
+     * @minimum 1
+     * @maximum 20
+     */
+  count?: number;
 }
 
 export interface Recommendation {
@@ -250,12 +269,4 @@ export interface Session {
  * Not found
  */
 export type NotFoundResponse = Error;
-
-export type GenerateMaterialQuestionsBody = {
-  /**
-     * @minimum 1
-     * @maximum 20
-     */
-  count?: number;
-};
 

@@ -142,26 +142,47 @@ function PracticeSessionPage() {
   const [choice, setChoice] = useState('');
   const [confidence, setConfidence] = useState('medium');
   const [result, setResult] = useState<any>(null);
+  const [followUpQuestions, setFollowUpQuestions] = useState<any[]>([]);
+  useEffect(() => {
+    setFollowUpQuestions([]);
+  }, [id]);
   useEffect(() => {
     if (session?.completed) setLocation(`/results/${id}`);
     if (session?.currentIndex !== undefined) setIndex(session.currentIndex);
   }, [id, session?.completed, session?.currentIndex, setLocation]);
   if (q.isLoading) return <Loading label="Loading your persisted practice session" />;
   if (q.isError || !session) return <ErrorState retry={() => q.refetch()} />;
-  const question = session.questions[index];
+  const questions = [
+    ...session.questions,
+    ...followUpQuestions.filter(
+      (followUp) => !session.questions.some((question: any) => question.id === followUp.id),
+    ),
+  ];
+  const question = questions[index];
   if (!question) return <Empty icon={Brain} title="No question is available" body="This session has no persisted questions to practice." action={<Link href="/practice" className="text-sm font-semibold text-primary">Build another session</Link>} />;
   const advance = () => {
     setResult(null);
     setChoice('');
     setConfidence('medium');
-    if (index + 1 < session.questions.length) setIndex(index + 1);
+    if (index + 1 < questions.length) setIndex(index + 1);
     else complete.mutate({ id }, { onSuccess: (r) => setLocation(`/results/${r.id}`) });
   };
   const submit = () => answer.mutate(
     { id, data: { questionId: question.id, answer: choice, confidence, responseTimeMs: 28000 } },
-    { onSuccess: setResult },
+    {
+      onSuccess: (response: any) => {
+        setResult(response);
+        if (response.teaching?.followUpQuestion) {
+          setFollowUpQuestions((current) =>
+            current.some((item) => item.id === response.teaching.followUpQuestion.id)
+              ? current
+              : [...current, response.teaching.followUpQuestion],
+          );
+        }
+      },
+    },
   );
-  return <div className="mx-auto max-w-3xl"><div className="mb-8 flex items-center justify-between"><div><Link href="/practice" className="text-sm text-muted-foreground hover:text-foreground" data-testid="link-exit-practice">Exit practice</Link><p className="mt-3 font-bold">{session.title}</p></div><div className="text-right"><p className="mono text-xs text-primary">{String(index + 1).padStart(2, '0')} / {String(session.questions.length).padStart(2, '0')}</p><div className="mt-2 w-32"><ProgressBar value={((index + 1) / session.questions.length) * 100} /></div></div></div><Card className="p-6 md:p-10"><div className="flex flex-wrap items-center gap-2"><Badge tone="green">{session.subjectName}</Badge><Badge>{question.concept}</Badge><Badge tone="amber">{question.difficulty}</Badge></div><h1 className="display mt-8 text-4xl leading-tight md:text-5xl">{question.questionText}</h1><div className="mt-8 space-y-3">{question.options.length ? question.options.map((option: string, i: number) => <button key={option} onClick={() => setChoice(option)} className={`flex w-full items-center gap-4 rounded-xl border p-4 text-left text-sm transition-colors ${choice === option ? 'border-primary bg-primary/10' : 'border-border hover:bg-muted'}`} data-testid={`button-answer-option-${i}`}><span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border text-xs font-bold ${choice === option ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground'}`}>{String.fromCharCode(65 + i)}</span>{option}</button>) : <input value={choice} onChange={(event) => setChoice(event.target.value)} placeholder="Type your answer…" className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-ring" data-testid="input-short-answer" />}</div>{!result ? <div className="mt-8 border-t border-border pt-6"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[.12em] text-muted-foreground">How confident are you?</p><div className="mt-2 flex gap-2">{['low', 'medium', 'high'].map(c => <button key={c} onClick={() => setConfidence(c)} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${confidence === c ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-muted'}`} data-testid={`button-confidence-${c}`}>{c}</button>)}</div></div><Button onClick={submit} disabled={!choice.trim() || answer.isPending} data-testid="button-submit-answer">{answer.isPending ? 'Checking…' : 'Lock answer'} <ArrowRight className="h-4 w-4" /></Button></div></div> : <div className={`mt-8 rounded-2xl p-5 ${result.isCorrect ? 'bg-primary/10' : 'bg-accent/15'}`}><div className="flex items-center gap-2 font-bold">{result.isCorrect ? <Check className="h-5 w-5 text-primary" /> : <Target className="h-5 w-5 text-accent-foreground" />}{result.isCorrect ? 'That holds up.' : 'This is the gap to repair.'}</div><p className="mt-3 text-sm leading-6">{result.explanation}</p><p className="mt-4 border-l-2 border-primary/40 pl-3 text-xs italic text-muted-foreground">“{result.sourceExcerpt}”</p><Button onClick={advance} className="mt-5" data-testid="button-next-question">{index + 1 === session.questions.length ? 'See my results' : 'Next question'} <ArrowRight className="h-4 w-4" /></Button></div>}</Card></div>;
+  return <div className="mx-auto max-w-3xl"><div className="mb-8 flex items-center justify-between"><div><Link href="/practice" className="text-sm text-muted-foreground hover:text-foreground" data-testid="link-exit-practice">Exit practice</Link><p className="mt-3 font-bold">{session.title}</p></div><div className="text-right"><p className="mono text-xs text-primary">{String(index + 1).padStart(2, '0')} / {String(questions.length).padStart(2, '0')}</p><div className="mt-2 w-32"><ProgressBar value={((index + 1) / questions.length) * 100} /></div></div></div><Card className="p-6 md:p-10"><div className="flex flex-wrap items-center gap-2"><Badge tone="green">{session.subjectName}</Badge><Badge>{question.concept}</Badge><Badge tone="amber">{question.difficulty}</Badge></div><h1 className="display mt-8 text-4xl leading-tight md:text-5xl">{question.questionText}</h1><div className="mt-8 space-y-3">{question.options.length ? question.options.map((option: string, i: number) => <button key={option} onClick={() => setChoice(option)} className={`flex w-full items-center gap-4 rounded-xl border p-4 text-left text-sm transition-colors ${choice === option ? 'border-primary bg-primary/10' : 'border-border hover:bg-muted'}`} data-testid={`button-answer-option-${i}`}><span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border text-xs font-bold ${choice === option ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground'}`}>{String.fromCharCode(65 + i)}</span>{option}</button>) : <input value={choice} onChange={(event) => setChoice(event.target.value)} placeholder="Type your answer…" className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-ring" data-testid="input-short-answer" />}</div>{!result ? <div className="mt-8 border-t border-border pt-6"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[.12em] text-muted-foreground">How confident are you?</p><div className="mt-2 flex gap-2">{['low', 'medium', 'high'].map(c => <button key={c} onClick={() => setConfidence(c)} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${confidence === c ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-muted'}`} data-testid={`button-confidence-${c}`}>{c}</button>)}</div></div><Button onClick={submit} disabled={!choice.trim() || answer.isPending} data-testid="button-submit-answer">{answer.isPending ? 'Checking…' : 'Lock answer'} <ArrowRight className="h-4 w-4" /></Button></div>{answer.isError && <p className="mt-3 text-sm text-destructive">Recall could not save this answer. Try again.</p>}</div> : <div className={`mt-8 rounded-2xl p-5 ${result.isCorrect ? 'bg-primary/10' : 'bg-accent/15'}`}><div className="flex items-center gap-2 font-bold">{result.isCorrect ? <Check className="h-5 w-5 text-primary" /> : <Target className="h-5 w-5 text-accent-foreground" />}{result.isCorrect ? 'That holds up.' : 'This is the gap to repair.'}</div><p className="mt-3 text-sm leading-6">{result.teaching?.explanation ?? result.explanation}</p>{result.teaching?.misconception && <div className="mt-4 rounded-xl bg-accent/20 p-4"><p className="text-xs font-bold uppercase tracking-[.12em] text-accent-foreground">Possible mix-up</p><p className="mt-1 text-sm leading-6">{result.teaching.misconception}</p></div>}<div className="mt-4 rounded-xl bg-background/60 p-4"><p className="text-xs font-bold uppercase tracking-[.12em] text-primary">Key idea</p><p className="mt-1 text-sm leading-6">{result.teaching?.keyIdea ?? result.sourceExcerpt}</p></div><p className="mt-4 border-l-2 border-primary/40 pl-3 text-xs italic text-muted-foreground">“{result.sourceExcerpt}”</p>{result.teaching?.followUpQuestion && <p className="mt-4 text-xs font-semibold text-primary">A different question on this idea has been added next.</p>}{result.teaching?.followUpStatus === 'none' && <p className="mt-4 text-xs text-muted-foreground">No additional grounded question was available, so you can continue safely.</p>}<Button onClick={advance} className="mt-5" data-testid="button-next-question">{index + 1 === questions.length ? 'See my results' : 'Next question'} <ArrowRight className="h-4 w-4" /></Button></div>}</Card></div>;
 }
 
 function ResultsPage() {

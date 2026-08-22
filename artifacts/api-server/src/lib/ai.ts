@@ -11,6 +11,12 @@ export type AnswerEvaluation = {
   explanation: string;
   concept: string;
 };
+export type TeachingResult = {
+  result: "correct" | "incorrect";
+  explanation: string;
+  keyIdea: string;
+  misconception: string | null;
+};
 export type Weakness = {
   concept: string;
   reason: string;
@@ -39,6 +45,12 @@ export interface AIService {
   ): GroundedQuestion[];
   validateQuestions(questions: Question[]): Question[];
   evaluateAnswer(question: Question, answer: AnswerInput): AnswerEvaluation;
+  teachAnswer(
+    question: Question,
+    answer: AnswerInput,
+    isCorrect: boolean,
+    recentFailures: number,
+  ): TeachingResult;
   diagnoseWeaknesses(
     attempts: Array<{ question: Question; isCorrect: boolean; confidence: string }>,
   ): Weakness[];
@@ -76,7 +88,7 @@ const normalizeComparableText = (value: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
-const questionSimilarity = (left: string, right: string) => {
+export const questionSimilarity = (left: string, right: string) => {
   const leftTokens = new Set(normalizeComparableText(left).split(" ").filter(Boolean));
   const rightTokens = new Set(normalizeComparableText(right).split(" ").filter(Boolean));
   if (!leftTokens.size || !rightTokens.size) return 0;
@@ -433,6 +445,46 @@ export class DevelopmentAIService implements AIService {
     return { isCorrect, concept: question.concept, explanation: this.generateExplanation(question, answer.answer) };
   }
 
+  teachAnswer(
+    question: Question,
+    answer: AnswerInput,
+    isCorrect: boolean,
+    recentFailures: number,
+  ): TeachingResult {
+    const keyIdea = question.sourceExcerpt.trim();
+    if (isCorrect) {
+      return {
+        result: "correct",
+        explanation:
+          answer.confidence === "low"
+            ? `Your answer matches the source. ${question.explanation}`
+            : question.explanation,
+        keyIdea,
+        misconception: null,
+      };
+    }
+
+    const submitted = answer.answer.trim();
+    const expected = question.correctAnswer.trim();
+    const source = question.sourceExcerpt.trim();
+    const sourceIncludesSubmitted =
+      submitted.length >= 3 && normalizeComparableText(source).includes(normalizeComparableText(submitted));
+    const misconception =
+      sourceIncludesSubmitted && normalizeShortAnswer(submitted) !== normalizeShortAnswer(expected)
+        ? `You may be mixing “${submitted}” with “${expected}”. The source distinguishes them here.`
+        : null;
+    const scaffold =
+      recentFailures >= 2
+        ? `Start with the key distinction: the answer supported by this source is “${expected}”.`
+        : `The source supports “${expected}”, not “${submitted || "an empty answer"}”.`;
+    return {
+      result: "incorrect",
+      explanation: `${scaffold} ${question.explanation}`,
+      keyIdea,
+      misconception,
+    };
+  }
+
   diagnoseWeaknesses(
     attempts: Array<{ question: Question; isCorrect: boolean; confidence: string }>,
   ): Weakness[] {
@@ -490,6 +542,7 @@ class RealAIServiceUnavailable implements AIService {
   generateQuestionsFromSections(): never { return this.fail(); }
   validateQuestions(): never { return this.fail(); }
   evaluateAnswer(): never { return this.fail(); }
+  teachAnswer(): never { return this.fail(); }
   diagnoseWeaknesses(): never { return this.fail(); }
   generateTargetedPractice(): never { return this.fail(); }
   generateExplanation(): never { return this.fail(); }

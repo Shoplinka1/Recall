@@ -5,6 +5,7 @@
  * Recall learning workspace API
  * OpenAPI spec version: 0.1.0
  */
+import type { TeachingResult } from './teachingResult';
 
 export interface AnswerResult {
   isCorrect: boolean;
@@ -12,4 +13,5 @@ export interface AnswerResult {
   explanation: string;
   concept: string;
   sourceExcerpt: string;
+  teaching: TeachingResult;
 }

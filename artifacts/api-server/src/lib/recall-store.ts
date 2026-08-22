@@ -11,6 +11,7 @@ import {
   sessionQuestionsTable,
   subjectsTable,
   subscriptionsTable,
+  teachingInterventionsTable,
 } from "@workspace/db/schema";
 import type {
   Concept,
@@ -21,8 +22,8 @@ import type {
   Subject,
   Subscription,
 } from "@workspace/api-zod";
-import { answersMatch, getAIService } from "./ai";
-import type { GroundedConcept, GroundedSection } from "./ai";
+import { answersMatch, getAIService, questionSimilarity } from "./ai";
+import type { GroundedConcept, GroundedSection, TeachingResult } from "./ai";
 import {
   extractConceptNames,
   extractMaterialText,
@@ -885,6 +886,81 @@ async function answeredCount(sessionId: string) {
   return Number(row?.value ?? 0);
 }
 
+async function findFollowUpQuestion(
+  userId: string,
+  sessionId: string,
+  original: typeof questionsTable.$inferSelect,
+  masteryScore: number,
+) {
+  const used = await db
+    .select({ questionId: sessionQuestionsTable.questionId })
+    .from(sessionQuestionsTable)
+    .where(eq(sessionQuestionsTable.sessionId, sessionId));
+  const usedIds = new Set(used.map((row) => row.questionId));
+  const candidates = await db
+    .select({ question: questionsTable, conceptName: conceptsTable.name })
+    .from(questionsTable)
+    .innerJoin(conceptsTable, eq(questionsTable.conceptId, conceptsTable.id))
+    .where(
+      and(
+        eq(questionsTable.userId, userId),
+        eq(questionsTable.materialId, original.materialId),
+        eq(questionsTable.conceptId, original.conceptId),
+        ne(questionsTable.generationVersion, "seed-v1"),
+      ),
+    );
+  const valid = candidates
+    .filter(({ question }) => {
+      if (usedIds.has(question.id)) return false;
+      if (questionSimilarity(question.questionText, original.questionText) >= 0.8) return false;
+      return true;
+    })
+    .sort((left, right) => {
+      const leftDifferent = left.question.type !== original.type ? 1 : 0;
+      const rightDifferent = right.question.type !== original.type ? 1 : 0;
+      if (leftDifferent !== rightDifferent) return rightDifferent - leftDifferent;
+      if (masteryScore >= 80) {
+        const leftTransfer = left.question.type === "multiple_choice" ? 1 : 0;
+        const rightTransfer = right.question.type === "multiple_choice" ? 1 : 0;
+        if (leftTransfer !== rightTransfer) return rightTransfer - leftTransfer;
+      }
+      return left.question.createdAt.getTime() - right.question.createdAt.getTime();
+    });
+  const selected = valid[0];
+  return selected ? questionToApi(selected) : null;
+}
+
+async function recentConceptFailures(userId: string, conceptId: string) {
+  const attempts = (await listAnsweredAttempts(userId))
+    .filter(({ question }) => question.conceptId === conceptId)
+    .slice(0, 4);
+  return attempts.filter(({ attempt }) => attempt.isCorrect === false).length;
+}
+
+function safeTeaching(
+  question: Question,
+  answer: string,
+  confidence: string,
+  isCorrect: boolean,
+  failures: number,
+): TeachingResult {
+  try {
+    return getAIService().teachAnswer(
+      question,
+      { answer, confidence },
+      isCorrect,
+      failures,
+    );
+  } catch {
+    return {
+      result: isCorrect ? "correct" : "incorrect",
+      explanation: question.explanation,
+      keyIdea: question.sourceExcerpt,
+      misconception: null,
+    };
+  }
+}
+
 export async function answerPractice(
   userId: string,
   sessionId: string,
@@ -897,7 +973,11 @@ export async function answerPractice(
     .limit(1);
   if (!session) return undefined;
   const [row] = await db
-    .select({ question: questionsTable, conceptName: conceptsTable.name })
+    .select({
+      question: questionsTable,
+      conceptName: conceptsTable.name,
+      attempt: sessionQuestionsTable,
+    })
     .from(sessionQuestionsTable)
     .innerJoin(questionsTable, eq(sessionQuestionsTable.questionId, questionsTable.id))
     .innerJoin(conceptsTable, eq(questionsTable.conceptId, conceptsTable.id))
@@ -911,32 +991,113 @@ export async function answerPractice(
   if (!row || row.question.userId !== userId) return null;
   if (session.completedAt) return { sessionCompleted: true as const };
   const normalizedAnswer = input.answer.trim().replace(/\s+/g, " ");
-  const isCorrect = answersMatch(
-    row.question.correctAnswer,
-    normalizedAnswer,
-    row.question.type as Question["type"],
+  const alreadyAnswered = row.attempt.userAnswer !== null;
+  const isCorrect = alreadyAnswered
+    ? row.attempt.isCorrect === true
+    : answersMatch(
+        row.question.correctAnswer,
+        normalizedAnswer,
+        row.question.type as Question["type"],
+      );
+  let attemptId = row.attempt.id;
+  if (!alreadyAnswered) {
+    const [updated] = await db
+      .update(sessionQuestionsTable)
+      .set({
+        userAnswer: normalizedAnswer,
+        isCorrect,
+        confidence: input.confidence ?? null,
+        responseTimeMs: input.responseTimeMs ?? null,
+      })
+      .where(eq(sessionQuestionsTable.id, row.attempt.id))
+      .returning();
+    attemptId = updated.id;
+    await refreshConceptMastery(userId, row.question.conceptId);
+  }
+  const failures = await recentConceptFailures(userId, row.question.conceptId);
+  const teaching = safeTeaching(
+    questionToApi({ question: row.question, conceptName: row.conceptName }),
+    alreadyAnswered ? row.attempt.userAnswer ?? "" : normalizedAnswer,
+    input.confidence ?? row.attempt.confidence ?? "medium",
+    isCorrect,
+    failures,
   );
-  await db
-    .update(sessionQuestionsTable)
-    .set({
-      userAnswer: normalizedAnswer,
-      isCorrect,
-      confidence: input.confidence ?? null,
-      responseTimeMs: input.responseTimeMs ?? null,
-    })
-    .where(
-      and(
-        eq(sessionQuestionsTable.sessionId, sessionId),
-        eq(sessionQuestionsTable.questionId, input.questionId),
-      ),
-    );
-  await refreshConceptMastery(userId, row.question.conceptId);
+  const mastery = (
+    await db
+      .select({ masteryScore: conceptMasteryTable.masteryScore })
+      .from(conceptMasteryTable)
+      .where(
+        and(
+          eq(conceptMasteryTable.userId, userId),
+          eq(conceptMasteryTable.conceptId, row.question.conceptId),
+        ),
+      )
+      .limit(1)
+  )[0]?.masteryScore ?? 0;
+  const shouldFollowUp = !row.attempt.isFollowUp && (!isCorrect || input.confidence === "low" || mastery < 80);
+  const followUpQuestion = shouldFollowUp
+    ? await findFollowUpQuestion(userId, sessionId, row.question, mastery)
+    : null;
+  if (followUpQuestion) {
+    const existingFollowUp = await db
+      .select({ questionId: sessionQuestionsTable.questionId })
+      .from(sessionQuestionsTable)
+      .where(
+        and(
+          eq(sessionQuestionsTable.sessionId, sessionId),
+          eq(sessionQuestionsTable.questionId, followUpQuestion.id),
+        ),
+      )
+      .limit(1);
+    if (!existingFollowUp.length) {
+      const current = await db
+        .select({ orderIndex: sessionQuestionsTable.orderIndex })
+        .from(sessionQuestionsTable)
+        .where(eq(sessionQuestionsTable.sessionId, sessionId))
+        .orderBy(desc(sessionQuestionsTable.orderIndex))
+        .limit(1);
+      await db.insert(sessionQuestionsTable).values({
+        sessionId,
+        questionId: followUpQuestion.id,
+        orderIndex: (current[0]?.orderIndex ?? -1) + 1,
+        isFollowUp: true,
+      });
+    }
+  }
+  const followUpStatus = followUpQuestion ? "offered" : "none";
+  const existingIntervention = await db
+    .select({ id: teachingInterventionsTable.id })
+    .from(teachingInterventionsTable)
+    .where(eq(teachingInterventionsTable.attemptId, attemptId))
+    .limit(1);
+  if (!existingIntervention.length) {
+    await db.insert(teachingInterventionsTable).values({
+      userId,
+      sessionId,
+      attemptId,
+      questionId: row.question.id,
+      conceptId: row.question.conceptId,
+      materialId: row.question.materialId,
+      sourceSectionId: row.question.sectionId,
+      result: teaching.result,
+      explanation: teaching.explanation,
+      keyIdea: teaching.keyIdea,
+      misconception: teaching.misconception,
+      followUpQuestionId: followUpQuestion?.id ?? null,
+      followUpStatus,
+    });
+  }
   return {
     isCorrect,
     correctAnswer: row.question.correctAnswer,
     explanation: row.question.explanation,
     concept: row.conceptName,
     sourceExcerpt: row.question.sourceExcerpt,
+    teaching: {
+      ...teaching,
+      followUpQuestion,
+      followUpStatus,
+    },
   };
 }
 

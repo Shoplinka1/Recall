@@ -442,7 +442,27 @@ export const AnswerPracticeResponse = zod.object({
   "correctAnswer": zod.string(),
   "explanation": zod.string(),
   "concept": zod.string(),
-  "sourceExcerpt": zod.string()
+  "sourceExcerpt": zod.string(),
+  "teaching": zod.object({
+  "result": zod.string(),
+  "explanation": zod.string(),
+  "keyIdea": zod.string(),
+  "misconception": zod.string().nullable(),
+  "followUpQuestion": zod.union([zod.object({
+  "id": zod.string(),
+  "questionText": zod.string(),
+  "type": zod.string(),
+  "options": zod.array(zod.string()),
+  "concept": zod.string(),
+  "difficulty": zod.string(),
+  "sourceExcerpt": zod.string(),
+  "sourcePage": zod.number(),
+  "sourceSectionId": zod.string().nullish(),
+  "explanation": zod.string(),
+  "correctAnswer": zod.string()
+}),zod.null()]),
+  "followUpStatus": zod.string()
+})
 })
 
 

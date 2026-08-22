@@ -133,9 +133,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                count: { type: number, format: int32, minimum: 1, maximum: 20 }
+              $ref: "#/components/schemas/GenerateQuestionsInput"
       responses:
         "201":
           description: Grounded questions
@@ -535,7 +533,26 @@ components:
         explanation: { type: string }
         concept: { type: string }
         sourceExcerpt: { type: string }
-      required: [isCorrect, correctAnswer, explanation, concept, sourceExcerpt]
+        teaching:
+          $ref: "#/components/schemas/TeachingResult"
+      required: [isCorrect, correctAnswer, explanation, concept, sourceExcerpt, teaching]
+    GenerateQuestionsInput:
+      type: object
+      properties:
+        count: { type: number, format: int32, minimum: 1, maximum: 20 }
+    TeachingResult:
+      type: object
+      properties:
+        result: { type: string }
+        explanation: { type: string }
+        keyIdea: { type: string }
+        misconception: { type: ["string", "null"] }
+        followUpQuestion:
+          anyOf:
+            - $ref: "#/components/schemas/Question"
+            - type: "null"
+        followUpStatus: { type: string }
+      required: [result, explanation, keyIdea, misconception, followUpQuestion, followUpStatus]
     PracticeResults:
       type: object
       properties:
