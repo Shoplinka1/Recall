@@ -58,6 +58,59 @@ const sentences = (content: string) =>
     .map(clean)
     .filter((sentence) => sentence.length >= 30);
 
+const terminologyAliases: Array<[RegExp, string]> = [
+  [/\bcarbon dioxide\b|\bco2\b/g, "carbon dioxide"],
+  [/\bwater\b|\bh2o\b/g, "water"],
+  [/\boxygen\b|\bo2\b/g, "oxygen"],
+  [/\bglucose\b|\bdextrose\b/g, "glucose"],
+  [/\badenosine triphosphate\b|\batp\b/g, "adenosine triphosphate"],
+  [/\bnicotinamide adenine dinucleotide phosphate\b|\bnadph\b/g, "nadph"],
+];
+
+const normalizeComparableText = (value: string) =>
+  value
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[’']/g, "")
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const normalizeShortAnswer = (value: string) => {
+  let normalized = normalizeComparableText(value);
+  for (const [pattern, replacement] of terminologyAliases) {
+    normalized = normalized.replace(pattern, replacement);
+  }
+  normalized = normalized
+    .replace(/^(the answer is|the term is|it is|this is)\s+/, "")
+    .replace(/^the process of\s+/, "")
+    .replace(/^(the|a|an)\s+/, "")
+    .replace(/\s+(process|term|molecule|compound|element|gas)$/, "")
+    .trim();
+  const words = normalized.split(" ").filter(Boolean).map((word) => {
+    if (word.endsWith("ies") && word.length > 4) return `${word.slice(0, -3)}y`;
+    if (word.endsWith("s") && !word.endsWith("ss") && word.length > 3) return word.slice(0, -1);
+    return word;
+  });
+  return words.join(" ");
+};
+
+/**
+ * Match a submitted answer against the answer stored with the question.
+ * Short-answer flexibility is deliberately bounded to terminology and
+ * grammatical variants; extra content is not ignored.
+ */
+export const answersMatch = (
+  expected: string,
+  submitted: string,
+  type: Question["type"] = "short_answer",
+) => {
+  if (type !== "short_answer") {
+    return normalizeComparableText(expected) === normalizeComparableText(submitted);
+  }
+  return normalizeShortAnswer(expected) === normalizeShortAnswer(submitted);
+};
+
 const termsFrom = (sentence: string) =>
   Array.from(
     new Set(
@@ -337,7 +390,7 @@ export class DevelopmentAIService implements AIService {
   }
 
   evaluateAnswer(question: Question, answer: AnswerInput): AnswerEvaluation {
-    const isCorrect = question.correctAnswer.trim().toLowerCase() === answer.answer.trim().toLowerCase();
+    const isCorrect = answersMatch(question.correctAnswer, answer.answer, question.type);
     return { isCorrect, concept: question.concept, explanation: this.generateExplanation(question, answer.answer) };
   }
 

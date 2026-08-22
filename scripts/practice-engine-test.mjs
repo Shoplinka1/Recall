@@ -100,7 +100,12 @@ for (const type of ["multiple_choice", "true_false", "short_answer"]) {
 
 const selectedQuestions = [...byType.values()];
 for (const [index, question] of selectedQuestions.entries()) {
-  const answer = index === 0 ? "__intentionally_wrong__" : question.correctAnswer;
+  const answer =
+    question.type === "short_answer"
+      ? `The process of ${question.correctAnswer.toUpperCase()}.`
+      : index === 0
+        ? "__intentionally_wrong__"
+        : question.correctAnswer;
   const result = await userA.json(`/api/practice/${session.body.id}`, "POST", {
     questionId: question.id,
     answer,
@@ -108,7 +113,11 @@ for (const [index, question] of selectedQuestions.entries()) {
     responseTimeMs: 1200,
   });
   expectStatus(result, 200, `${question.type} answer submission`);
-  assert.equal(result.body.isCorrect, index !== 0, `${question.type} should be scored from persisted data`);
+  assert.equal(
+    result.body.isCorrect,
+    question.type === "short_answer" ? true : index !== 0,
+    `${question.type} should be scored from persisted data`,
+  );
 }
 
 const persistedProgress = await userA.request(`/api/practice/${session.body.id}`);

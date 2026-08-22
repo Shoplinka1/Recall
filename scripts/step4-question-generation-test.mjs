@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { writeFile } from "node:fs/promises";
-import { DevelopmentAIService } from "../artifacts/api-server/src/lib/ai.ts";
+import { answersMatch, DevelopmentAIService } from "../artifacts/api-server/src/lib/ai.ts";
 
 const baseUrl = process.env.STEP4_TEST_BASE_URL ?? "http://127.0.0.1:8080";
 const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -35,6 +35,12 @@ const sourceText =
   "Photosynthesis converts light energy into chemical energy. Chlorophyll absorbs photons during photosynthesis. Carbon fixation produces glucose molecules through cellular pathways. The Calvin cycle uses carbon dioxide to build carbohydrate molecules.";
 
 const developmentAI = new DevelopmentAIService();
+assert.equal(answersMatch("chlorophyll", "The CHLOROPHYLL."), true, "short answers should ignore harmless casing and articles");
+assert.equal(answersMatch("carbon dioxide", "CO2"), true, "short answers should accept a grounded terminology alias");
+assert.equal(answersMatch("photosynthesis", "the process of photosynthesis"), true, "short answers should accept harmless answer framing");
+assert.equal(answersMatch("carbon dioxide", "oxygen"), false, "short answers must reject a different scientific term");
+assert.equal(answersMatch("carbon dioxide", "carbon dioxide in water"), false, "short answers must reject extra unrelated content");
+assert.equal(answersMatch("True", "false", "true_false"), false, "true-false matching must remain exact");
 const section = {
   id: "section-step4",
   materialId: "material-step4",
