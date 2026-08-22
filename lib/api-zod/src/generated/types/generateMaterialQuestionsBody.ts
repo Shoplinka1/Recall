@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface QuestionGenerationInput {
+export type GenerateMaterialQuestionsBody = {
   /**
      * @minimum 1
      * @maximum 20
      */
   count?: number;
-}
+};

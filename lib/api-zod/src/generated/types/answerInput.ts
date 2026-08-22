@@ -8,7 +8,6 @@
 
 export interface AnswerInput {
   questionId: string;
-  /** @minLength 1 */
   answer: string;
   confidence: string;
   responseTimeMs?: number;

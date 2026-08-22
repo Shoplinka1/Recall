@@ -26,6 +26,7 @@ import type {
   CheckoutInput,
   Concept,
   Dashboard,
+  GenerateMaterialQuestionsBody,
   HealthStatus,
   Material,
   MaterialInput,
@@ -36,7 +37,6 @@ import type {
   PracticeSession,
   Progress,
   Question,
-  QuestionGenerationInput,
   Recommendation,
   Session,
   Subject,
@@ -608,14 +608,14 @@ export const getGenerateMaterialQuestionsUrl = (id: string,) => {
  * @summary Generate grounded questions from a ready material
  */
 export const generateMaterialQuestions = async (id: string,
-    questionGenerationInput?: QuestionGenerationInput, options?: Parameters<typeof customFetch>[1]): Promise<Question[]> => {
+    generateMaterialQuestionsBody?: GenerateMaterialQuestionsBody, options?: Parameters<typeof customFetch>[1]): Promise<Question[]> => {
 
   return customFetch<Question[]>(getGenerateMaterialQuestionsUrl(id),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(questionGenerationInput)
+    body: JSON.stringify(generateMaterialQuestionsBody)
   }
 );}
 
@@ -624,8 +624,8 @@ export const generateMaterialQuestions = async (id: string,
 
 
 export const getGenerateMaterialQuestionsMutationOptions = <TError = ErrorType<NotFoundResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateMaterialQuestions>>, TError,{id: string;data?: BodyType<QuestionGenerationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof generateMaterialQuestions>>, TError,{id: string;data?: BodyType<QuestionGenerationInput>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateMaterialQuestions>>, TError,{id: string;data?: BodyType<GenerateMaterialQuestionsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateMaterialQuestions>>, TError,{id: string;data?: BodyType<GenerateMaterialQuestionsBody>}, TContext> => {
 
 const mutationKey = ['generateMaterialQuestions'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -637,7 +637,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateMaterialQuestions>>, {id: string;data?: BodyType<QuestionGenerationInput>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateMaterialQuestions>>, {id: string;data?: BodyType<GenerateMaterialQuestionsBody>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  generateMaterialQuestions(id,data,requestOptions)
@@ -651,18 +651,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type GenerateMaterialQuestionsMutationResult = NonNullable<Awaited<ReturnType<typeof generateMaterialQuestions>>>
-    export type GenerateMaterialQuestionsMutationBody = BodyType<QuestionGenerationInput> | undefined
+    export type GenerateMaterialQuestionsMutationBody = BodyType<GenerateMaterialQuestionsBody> | undefined
     export type GenerateMaterialQuestionsMutationError = ErrorType<NotFoundResponse>
 
     /**
  * @summary Generate grounded questions from a ready material
  */
 export const useGenerateMaterialQuestions = <TError = ErrorType<NotFoundResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateMaterialQuestions>>, TError,{id: string;data?: BodyType<QuestionGenerationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateMaterialQuestions>>, TError,{id: string;data?: BodyType<GenerateMaterialQuestionsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof generateMaterialQuestions>>,
         TError,
-        {id: string;data?: BodyType<QuestionGenerationInput>},
+        {id: string;data?: BodyType<GenerateMaterialQuestionsBody>},
         TContext
       > => {
       return useMutation(getGenerateMaterialQuestionsMutationOptions(options));

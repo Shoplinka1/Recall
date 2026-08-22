@@ -98,14 +98,6 @@ export interface Question {
   correctAnswer: string;
 }
 
-export interface QuestionGenerationInput {
-  /**
-     * @minimum 1
-     * @maximum 20
-     */
-  count?: number;
-}
-
 export interface PracticeResults {
   id: string;
   score: number;
@@ -149,7 +141,6 @@ export interface WeaknessPracticeInput {
 
 export interface AnswerInput {
   questionId: string;
-  /** @minLength 1 */
   answer: string;
   confidence: string;
   responseTimeMs?: number;
@@ -259,4 +250,12 @@ export interface Session {
  * Not found
  */
 export type NotFoundResponse = Error;
+
+export type GenerateMaterialQuestionsBody = {
+  /**
+     * @minimum 1
+     * @maximum 20
+     */
+  count?: number;
+};
 

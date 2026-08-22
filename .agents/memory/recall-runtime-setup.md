@@ -9,16 +9,14 @@ Imported Recall workspaces can have configured workflows but no installed node_m
 
 **How to apply:** Before runtime verification, install from pnpm-lock.yaml, provision App Storage when upload flows are exercised, run the existing Drizzle push command for the development schema, then restart the existing Recall API and web workflows. If the app is not registered with the artifact registry, use direct HTTP checks and report that screenshot capture is unavailable rather than creating a replacement artifact.
 
-<<<<<<< HEAD
 The managed API workflow does not inherit private storage configuration until App Storage is provisioned through the workspace storage setup flow; restart the API after provisioning so presigned upload requests can see `PRIVATE_OBJECT_DIR`.
 
 **Why:** A reachable PostgreSQL server and healthy API process can still fail authenticated signup or upload checks when the schema or private object directory has not been initialized in the current workspace.
 
 **How to apply:** Treat schema push and App Storage provisioning as separate runtime prerequisites, then verify `/api/healthz`, an authenticated upload request, and a restart persistence check.
-=======
+
 For practice verification, restart persistence must be checked through a fresh authenticated request after the API process restarts; an in-memory result or client cache is not sufficient.
 
 **Why:** The practice screen previously depended on client-only fallback results, which hid whether completed sessions could be restored from PostgreSQL.
 
 **How to apply:** Treat a completed practice session's persisted result as part of the session restore contract and verify it after an API restart.
->>>>>>> 463baeb (Implement recall store functionality and update associated schemas and test scripts)

@@ -430,12 +430,9 @@ export const AnswerPracticeParams = zod.object({
   "id": zod.coerce.string()
 })
 
-
-
-
 export const AnswerPracticeBody = zod.object({
   "questionId": zod.string(),
-  "answer": zod.string().min(1),
+  "answer": zod.string(),
   "confidence": zod.string(),
   "responseTimeMs": zod.number().optional()
 })

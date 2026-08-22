@@ -9,6 +9,44 @@ args = ["pnpm", "store", "prune"]
 env = { "CI" = "true" }
 
 [workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Recall API"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Recall web"
+
+[[workflows.workflow]]
+name = "Recall API"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=8080 NODE_ENV=development pnpm --filter @workspace/api-server run dev"
+waitForPort = 8080
+
+[[workflows.workflow]]
+name = "Recall web"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=23566 BASE_PATH=/ pnpm --filter @workspace/recall run dev"
+waitForPort = 23566
 
 [agent]
 stack = "PNPM_WORKSPACE"
