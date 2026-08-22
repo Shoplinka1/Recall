@@ -18,6 +18,17 @@ assert.ok(
   ) > calculateMasteryScore([attempt(true, "low"), attempt(false, "high"), attempt(false, "high")], now),
   "repeated success should beat repeated mistakes",
 );
+assert.equal(
+  calculateMasteryScore(
+    [attempt(true, "high", "medium", 0), attempt(false, "high", "medium", 10)],
+    now,
+  ),
+  calculateMasteryScore(
+    [attempt(false, "high", "medium", 10), attempt(true, "high", "medium", 0)],
+    now,
+  ),
+  "mastery should be independent of newest-first versus oldest-first history",
+);
 assert.ok(
   calculateMisconceptionSignal([attempt(false, "high"), attempt(false, "high")]) >
     calculateMisconceptionSignal([attempt(false, "low"), attempt(false, "low")]),

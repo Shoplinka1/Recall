@@ -41,7 +41,11 @@ export function calculateMisconceptionSignal(attempts: MasteryAttempt[]): number
 export function calculateMasteryScore(attempts: MasteryAttempt[], now = Date.now()): number {
   if (attempts.length === 0) return 0;
 
-  const recent = attempts.slice(-12);
+  // Attempt history is commonly returned newest-first. Normalize it before
+  // selecting the recent window so position and recency always agree.
+  const recent = [...attempts]
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+    .slice(-12);
   let weightedTotal = 0;
   let weightedCorrect = 0;
   recent.forEach((attempt, index) => {
