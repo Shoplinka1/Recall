@@ -76,6 +76,14 @@ const normalizeComparableText = (value: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
+const questionSimilarity = (left: string, right: string) => {
+  const leftTokens = new Set(normalizeComparableText(left).split(" ").filter(Boolean));
+  const rightTokens = new Set(normalizeComparableText(right).split(" ").filter(Boolean));
+  if (!leftTokens.size || !rightTokens.size) return 0;
+  const intersection = [...leftTokens].filter((token) => rightTokens.has(token)).length;
+  return intersection / new Set([...leftTokens, ...rightTokens]).size;
+};
+
 const normalizeShortAnswer = (value: string) => {
   let normalized = normalizeComparableText(value);
   for (const [pattern, replacement] of terminologyAliases) {
@@ -198,9 +206,7 @@ export class DevelopmentAIService implements AIService {
     concepts: GroundedConcept[],
     options: { count?: number; excludeQuestionTexts?: string[] } = {},
   ): GroundedQuestion[] {
-    const excluded = new Set(
-      (options.excludeQuestionTexts ?? []).map((value) => value.trim().toLowerCase()),
-    );
+    const excluded = (options.excludeQuestionTexts ?? []).map((value) => value.trim().toLowerCase());
     const usable = sections
       .map((section) => ({
         ...section,
@@ -214,30 +220,35 @@ export class DevelopmentAIService implements AIService {
           section.excerpt.toLowerCase().includes(candidate.name.toLowerCase()),
         ) ?? concepts[index % Math.max(concepts.length, 1)];
       if (!concept) continue;
-      const terms = termsFrom(section.excerpt);
-      const shortAnswer = terms[0];
-      if (shortAnswer) {
+      const sectionConcepts = concepts.filter((candidate) =>
+        section.excerpt.toLowerCase().includes(candidate.name.toLowerCase()),
+      );
+      const coveredConcepts = sectionConcepts.length ? sectionConcepts : [concept];
+      coveredConcepts.forEach((coveredConcept, conceptIndex) => {
         generated.push({
-          id: stableId(`${section.id}:short`, index),
+          id: stableId(`${section.id}:concept:${coveredConcept.id}`, conceptIndex),
           materialId: section.materialId,
           sectionId: section.id,
-          questionText: `Which key term is named in this source section about ${concept.name}?`,
+          questionText:
+            conceptIndex % 2 === 0
+              ? `Which key concept is named in this source section about ${coveredConcept.name}?`
+              : `What important term does this source section identify as ${coveredConcept.name}?`,
           type: "short_answer",
           options: [],
-          concept: concept.name,
+          concept: coveredConcept.name,
           difficulty: index % 3 === 0 ? "easy" : index % 3 === 1 ? "medium" : "hard",
           sourceExcerpt: section.excerpt,
           sourcePage: section.sectionIndex + 1,
           sourceSectionId: section.id,
-          explanation: `The source section names “${shortAnswer}”: ${section.excerpt}`,
-          correctAnswer: shortAnswer,
+          explanation: `The source section identifies “${coveredConcept.name}”: ${section.excerpt}`,
+          correctAnswer: coveredConcept.name,
         });
-      }
+      });
       generated.push({
         id: stableId(`${section.id}:true-false`, index),
-          materialId: section.materialId,
+        materialId: section.materialId,
         sectionId: section.id,
-        questionText: `True or false: ${section.excerpt}`,
+        questionText: `True or false: the source says that ${section.excerpt}`,
         type: "true_false",
         options: ["True", "False"],
         concept: concept.name,
@@ -251,10 +262,7 @@ export class DevelopmentAIService implements AIService {
     }
     if (usable.length >= 4) {
       for (const [index, section] of usable.entries()) {
-        const options = usable
-          .slice(Math.floor(index / 4) * 4, Math.floor(index / 4) * 4 + 4)
-          .map((candidate) => candidate.excerpt);
-        if (options.length !== 4) break;
+        const options = Array.from({ length: 4 }, (_, offset) => usable[(index + offset) % usable.length].excerpt);
         const concept =
           concepts.find((candidate) =>
             section.excerpt.toLowerCase().includes(candidate.name.toLowerCase()),
@@ -264,7 +272,7 @@ export class DevelopmentAIService implements AIService {
           id: stableId(`${section.id}:multiple-choice`, index),
           materialId: section.materialId,
           sectionId: section.id,
-          questionText: "Which statement is taken from this source section?",
+          questionText: `Which source statement best explains ${concept.name} in section ${index + 1}?`,
           type: "multiple_choice",
           options,
           concept: concept.name,
@@ -278,7 +286,14 @@ export class DevelopmentAIService implements AIService {
       }
     }
     return this.validateGroundedQuestions(generated, sections, concepts)
-      .filter((question) => !excluded.has(question.questionText.trim().toLowerCase()))
+      .filter(
+        (question) =>
+          !excluded.some(
+            (previous) =>
+              previous === question.questionText.trim().toLowerCase() ||
+              questionSimilarity(previous, question.questionText) >= 0.85,
+          ),
+      )
       .slice(0, Math.max(1, Math.min(options.count ?? 6, 20)));
   }
 
@@ -287,7 +302,7 @@ export class DevelopmentAIService implements AIService {
     sections: GroundedSection[],
     concepts: GroundedConcept[],
   ): GroundedQuestion[] {
-    const seen = new Set<string>();
+    const seen: string[] = [];
     const sectionMap = new Map(sections.map((section) => [section.id, section]));
     const conceptNames = new Set(concepts.map((concept) => concept.name.toLowerCase()));
     return questions.filter((question) => {
@@ -334,8 +349,12 @@ export class DevelopmentAIService implements AIService {
         question.concept.trim().length >= 2 &&
         grounded &&
         !this.isAmbiguous(question, type) &&
-        !seen.has(normalizedQuestion);
-      if (valid) seen.add(normalizedQuestion);
+        !seen.some(
+          (previous) =>
+            previous === normalizedQuestion ||
+            questionSimilarity(previous, normalizedQuestion) >= 0.85,
+        );
+      if (valid) seen.push(normalizedQuestion);
       return valid;
     });
   }
@@ -348,7 +367,11 @@ export class DevelopmentAIService implements AIService {
     if (type === "true_false") {
       return !text.startsWith("true or false:") || text.length < 30;
     }
-    return !text.includes("key term") || text.length < 20;
+    return (
+      !text.includes("key term") &&
+      !text.includes("key concept") &&
+      !text.includes("important term")
+    ) || text.length < 20;
   }
 
   validateQuestions(questions: Question[]): Question[] {

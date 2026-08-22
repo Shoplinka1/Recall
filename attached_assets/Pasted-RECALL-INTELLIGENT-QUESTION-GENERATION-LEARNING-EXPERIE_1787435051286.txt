@@ -1,0 +1,137 @@
+RECALL — INTELLIGENT QUESTION GENERATION & LEARNING EXPERIENCE
+
+CONTINUE FROM CURRENT GIT STATE.
+DO NOT START STEP 7 YET.
+
+Steps 1–6 are implemented and must be preserved.
+
+CORE PRODUCT GOAL:
+
+Recall is not just a PDF-to-quiz generator.
+
+A user uploads their own study material, and Recall should act like an intelligent study tutor: understand the material, identify important concepts, test understanding in different ways, recognize what the learner knows and does not know, and make practice progressively more useful.
+
+The current generator produces only about 2 questions and can repeat nearly the same question. This must be fixed before continuing the roadmap.
+
+Improve the existing Step 4 question-generation and existing Step 5/6 learning flow WITHOUT rebuilding the architecture.
+
+DO NOT:
+- rebuild Recall
+- redesign the UI
+- start Step 7
+- enable DEMO_MODE
+- use fake/demo data
+- weaken source grounding
+- weaken answer validation
+- replace PostgreSQL/Drizzle
+- replace authentication
+- replace private storage
+
+QUESTION GENERATION:
+
+1. Generate as many genuinely useful questions as the source supports, rather than an arbitrary fixed number.
+2. For substantial material, identify and cover multiple important concepts and sections.
+3. Prioritize important learning concepts instead of randomly sampling sentences.
+4. Prevent exact duplicate questions.
+5. Detect and reject near-duplicate questions testing essentially the same knowledge.
+6. Avoid repeatedly asking for the same answer or concept.
+7. Vary question forms when supported:
+   - recall/definition
+   - explanation
+   - mechanism
+   - cause/effect
+   - comparison
+   - application
+   - scenario
+   - relationship
+   - MCQ
+   - true/false
+   - short-answer
+8. Prefer questions that test understanding, reasoning and application rather than repeated memorization.
+9. Never invent information outside the user's material.
+10. Every question and expected answer must be grounded in the persisted source.
+11. Preserve valid section/source provenance.
+12. MCQ options must be plausible, unambiguous and source-grounded.
+13. True/false statements must be genuinely supported by the source.
+14. Short answers must remain compatible with the Step 5 answer evaluator.
+15. Preserve PostgreSQL/Drizzle persistence, authentication and ownership.
+
+LEARNING BEHAVIOR:
+
+Use the existing Step 6 mastery/weakness information when it is already available.
+
+Recall should avoid wasting practice on concepts the learner repeatedly demonstrates strong mastery of.
+
+When the learner struggles:
+- give useful additional practice on that concept
+- vary the way the concept is tested
+- prefer understanding/application questions where the source supports them
+- do not simply repeat the exact failed question
+
+When the learner demonstrates mastery:
+- reduce unnecessary repetition
+- move toward broader connections and application when supported by the material
+
+Do NOT invent a new mastery system.
+Use the existing Step 6 implementation.
+
+IMPORTANT:
+
+Do not solve this by merely increasing the question count.
+
+Implement real:
+- concept coverage
+- question diversity
+- duplicate/near-duplicate protection
+- source grounding
+- useful practice selection
+
+QUALITY TESTS MUST PROVE:
+
+- Substantial material can produce substantially more than 2 useful questions when enough content exists.
+- Multiple important sections/concepts are represented.
+- Exact duplicates are rejected.
+- Near-duplicate questions are rejected.
+- Repeated questions testing the same concept are limited.
+- Question types vary when appropriate.
+- Questions test more than simple repeated definitions when the source supports deeper questions.
+- Questions and answers remain grounded in the source.
+- Unsupported questions/answers are rejected.
+- Provenance remains valid.
+- MCQ options remain valid.
+- Existing Step 4 tests pass.
+- Existing Step 5 tests pass.
+- Existing Step 6 tests pass.
+- Existing ownership/persistence behavior remains intact.
+
+Do not weaken or delete existing tests.
+
+Run:
+- Step 4 tests
+- Step 5 tests
+- Step 6 tests
+- ownership tests
+- typecheck
+- build
+- relevant runtime checks
+
+Fix genuine failures and rerun affected tests.
+
+STOP AFTER THIS QUALITY IMPROVEMENT.
+DO NOT START STEP 7.
+
+FINAL REPORT:
+
+QUESTION_GENERATION
+DIVERSITY
+CONCEPT_COVERAGE
+DUPLICATE_PROTECTION
+GROUNDING
+LEARNING_BEHAVIOR
+TESTED
+NOT_VERIFIED
+BUILD
+RUNTIME
+
+Report only what was actually verified.
+DO NOT CLAIM PRODUCTION-READY.

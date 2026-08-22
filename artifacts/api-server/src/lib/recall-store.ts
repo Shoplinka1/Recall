@@ -356,7 +356,7 @@ export async function generateQuestionsForMaterial(
   const generated = getAIService().generateQuestionsFromSections(
     groundedSections,
     groundedConcepts,
-    { count, excludeQuestionTexts: existing.map((row) => row.questionText) },
+    { count: Math.max(count, 20), excludeQuestionTexts: existing.map((row) => row.questionText) },
   );
   if (!generated.length) return [];
   const conceptsByName = new Map(concepts.map((concept) => [concept.name.toLowerCase(), concept.id]));
@@ -720,7 +720,28 @@ export async function createPractice(
       .where(and(...conditions))
       .orderBy(asc(questionsTable.createdAt));
     if (!rows.length) return undefined;
-    const selected = rows.slice(0, Math.max(1, Math.min(input.questionCount, 20)));
+    const masteryRows = await tx
+      .select({
+        conceptId: conceptMasteryTable.conceptId,
+        masteryScore: conceptMasteryTable.masteryScore,
+      })
+      .from(conceptMasteryTable)
+      .where(eq(conceptMasteryTable.userId, userId));
+    const masteryByConcept = new Map(
+      masteryRows.map((row) => [row.conceptId, row.masteryScore ?? 0]),
+    );
+    const prioritized = [...rows].sort(
+      (a, b) =>
+        (masteryByConcept.get(a.question.conceptId) ?? 0) -
+        (masteryByConcept.get(b.question.conceptId) ?? 0),
+    );
+    const requestedCount = Math.max(1, Math.min(input.questionCount, 20));
+    const typePriority = ["multiple_choice", "true_false", "short_answer"];
+    const diverse = typePriority.flatMap((type) =>
+      prioritized.find((row) => row.question.type === type) ? [prioritized.find((row) => row.question.type === type)!] : [],
+    );
+    const selected = [...diverse, ...prioritized.filter((row) => !diverse.includes(row))]
+      .slice(0, requestedCount);
     const subject = input.subjectId
       ? (
           await tx
