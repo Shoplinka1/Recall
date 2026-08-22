@@ -1,0 +1,86 @@
+RECALL — DEFINE STEP 7: TEACH & CORRECT
+
+CONTINUE FROM CURRENT GIT STATE.
+
+READ-ONLY PRODUCT/TECHNICAL SPECIFICATION ONLY.
+DO NOT MODIFY CODE.
+DO NOT START IMPLEMENTATION.
+DO NOT ENABLE DEMO_MODE.
+DO NOT USE FAKE DATA.
+DO NOT REDESIGN THE UI.
+
+Steps 1–6 are implemented and must remain unchanged.
+
+The previous audit found that Recall is currently strong at:
+- grounded study-material processing
+- question generation
+- practice
+- answer evaluation
+- confidence tracking
+- mastery
+- weakness detection
+- adaptive question selection
+
+But Recall is still weaker at actually TEACHING the learner after mistakes.
+
+Define the exact Step 7 milestone: TEACH → CORRECT → REINFORCE.
+
+Design the specification for this learning loop:
+
+1. User answers a question.
+2. Recall determines whether the answer is correct and considers confidence.
+3. If incorrect, explain WHY using only the user's source material.
+4. Identify the likely misconception or missing concept when evidence supports it.
+5. Give a concise teaching explanation grounded in the source.
+6. Highlight the important idea the learner should remember.
+7. Generate a new follow-up question that tests the same underlying concept differently.
+8. Avoid simply repeating the original question.
+9. If the learner answers correctly but has low confidence, provide reinforcement when appropriate.
+10. If the learner repeatedly fails a concept, increase teaching/reinforcement instead of endlessly repeating questions.
+11. If mastery becomes strong, reduce repetition and move toward application/transfer questions.
+12. Preserve the existing confidence, mastery and weakness system.
+
+The specification MUST define:
+
+- learner experience
+- API/data flow
+- grounded explanation rules
+- misconception detection
+- follow-up question selection
+- mastery integration
+- persistence requirements
+- ownership/security requirements
+- UI states needed
+- failure/error states
+- exact automated tests required
+- what is explicitly out of scope
+
+IMPORTANT:
+
+Explanations must never invent facts outside the user's material.
+
+Do not simply add a generic AI chatbot.
+
+Do not replace the existing practice engine.
+
+Do not redesign Recall.
+
+Do not start billing.
+
+Do not start Step 8 or later.
+
+FINAL REPORT:
+
+STEP_7_GOAL
+LEARNER_FLOW
+TEACHING_BEHAVIOR
+MISCONCEPTION_HANDLING
+FOLLOW_UP_LOGIC
+MASTERY_INTEGRATION
+PERSISTENCE
+SECURITY
+TEST_REQUIREMENTS
+OUT_OF_SCOPE
+IMPLEMENTATION_PLAN
+
+STOP AFTER THE SPECIFICATION.
