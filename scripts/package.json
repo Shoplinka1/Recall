@@ -10,6 +10,7 @@
     "test:materials": "tsx ./material-pipeline-test.mjs",
     "test:step4": "tsx ./step4-question-generation-test.mjs",
     "test:step5": "tsx ./practice-engine-test.mjs"
+    ,"test:step6": "tsx ./step6-mastery-test.mjs"
   },
   "devDependencies": {
     "@types/node": "catalog:",

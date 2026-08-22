@@ -29,6 +29,7 @@ import {
   splitMaterialText,
 } from "./material-processing";
 import { downloadPrivateObject } from "./object-storage";
+import { averageConfidence, calculateMasteryScore, type MasteryAttempt } from "./mastery";
 
 type QuestionWithConcept = {
   question: typeof questionsTable.$inferSelect;
@@ -464,6 +465,55 @@ async function listAnsweredAttempts(userId: string) {
     .orderBy(desc(sessionQuestionsTable.createdAt));
 }
 
+async function refreshConceptMastery(userId: string, conceptId: string) {
+  const attempts = (await listAnsweredAttempts(userId))
+    .filter(({ question }) => question.conceptId === conceptId)
+    .sort((a, b) => a.attempt.createdAt.getTime() - b.attempt.createdAt.getTime())
+    .map(({ attempt, question }) => ({
+      isCorrect: attempt.isCorrect,
+      confidence: attempt.confidence,
+      responseTimeMs: attempt.responseTimeMs,
+      difficulty: question.difficulty,
+      type: question.type,
+      createdAt: attempt.createdAt,
+    })) satisfies MasteryAttempt[];
+  if (!attempts.length) return;
+
+  const masteryScore = calculateMasteryScore(attempts);
+  const confidenceScore = averageConfidence(attempts);
+  const questionsCorrect = attempts.filter((attempt) => attempt.isCorrect === true).length;
+  const [existing] = await db
+    .select({ id: conceptMasteryTable.id })
+    .from(conceptMasteryTable)
+    .where(
+      and(
+        eq(conceptMasteryTable.userId, userId),
+        eq(conceptMasteryTable.conceptId, conceptId),
+      ),
+    )
+    .limit(1);
+  const values = {
+    userId,
+    conceptId,
+    subjectId: (await db
+      .select({ subjectId: conceptsTable.subjectId })
+      .from(conceptsTable)
+      .where(eq(conceptsTable.id, conceptId))
+      .limit(1))[0]?.subjectId,
+    masteryScore,
+    confidenceScore,
+    questionsAttempted: attempts.length,
+    questionsCorrect,
+    lastPracticedAt: attempts[attempts.length - 1].createdAt,
+  };
+  if (!values.subjectId) return;
+  if (existing) {
+    await db.update(conceptMasteryTable).set(values).where(eq(conceptMasteryTable.id, existing.id));
+  } else {
+    await db.insert(conceptMasteryTable).values(values);
+  }
+}
+
 export async function listMistakes(userId: string) {
   const rows = await listAnsweredAttempts(userId);
   return rows
@@ -820,6 +870,7 @@ export async function answerPractice(
         eq(sessionQuestionsTable.questionId, input.questionId),
       ),
     );
+  await refreshConceptMastery(userId, row.question.conceptId);
   return {
     isCorrect,
     correctAnswer: row.question.correctAnswer,
@@ -874,6 +925,23 @@ async function summarizePractice(userId: string, sessionId: string): Promise<Pra
     .map((answer) => answer.responseTimeMs)
     .filter((value): value is number => value !== null);
   const score = answered.length ? Math.round((correct / answered.length) * 100) : 0;
+  const allAttempts = await listAnsweredAttempts(userId);
+  const sessionConceptIds = new Set(questionRows.map((row) => row.questionId));
+  const highConfidenceMistakes = allAttempts.filter(
+    ({ attempt, question }) =>
+      sessionConceptIds.has(question.id) && attempt.isCorrect === false && attempt.confidence === "high",
+  ).length;
+  const lowConfidenceCorrect = allAttempts.filter(
+    ({ attempt, question }) =>
+      sessionConceptIds.has(question.id) && attempt.isCorrect === true && attempt.confidence === "low",
+  ).length;
+  const diagnosis = wrongConcepts.length
+    ? highConfidenceMistakes
+      ? `Your answers point to a misconception in ${wrongConcepts[0]}; you were very sure on ${highConfidenceMistakes} missed answer${highConfidenceMistakes === 1 ? "" : "s"}.`
+      : `You need another retrieval pass on ${wrongConcepts[0]}. Revisit the source distinction, then try a fresh question.`
+    : lowConfidenceCorrect
+      ? `You got the answers right, but ${lowConfidenceCorrect} correct response${lowConfidenceCorrect === 1 ? " was" : "s were"} still a guess. Keep practicing until the recall feels deliberate.`
+      : "Your recent retrieval is holding up across the questions. Keep mixing difficulty and question types.";
   return {
     id: sessionId,
     score: session.score ?? score,
@@ -881,7 +949,10 @@ async function summarizePractice(userId: string, sessionId: string): Promise<Pra
     correct,
     incorrect: answered.length - correct,
     averageConfidence: confidenceValues.length
-      ? confidenceValues[confidenceValues.length - 1]!
+      ? `${Math.round(
+          confidenceValues.reduce((sum, value) => sum + (value === "high" ? 100 : value === "medium" ? 67 : 33), 0) /
+            confidenceValues.length,
+        )}%`
       : "Not recorded",
     averageResponseTime: averageResponseTimeMs.length
       ? `${Math.round(averageResponseTimeMs.reduce((total, value) => total + value, 0) / averageResponseTimeMs.length / 1000)} sec`
@@ -889,10 +960,8 @@ async function summarizePractice(userId: string, sessionId: string): Promise<Pra
     strongConcepts: strongConcepts.slice(0, 3),
     needsAttention: wrongConcepts.slice(0, 2),
     weakConcepts: wrongConcepts.slice(0, 1),
-    diagnosis: wrongConcepts.length
-      ? `The pattern suggests you understand the broad idea but need a clearer distinction in ${wrongConcepts[0]}.`
-      : "You're building reliable recall. Keep mixing question types so the knowledge sticks.",
-    improvement: session.sessionType === "weakness" ? 12 : 0,
+    diagnosis,
+    improvement: 0,
   };
 }
 
