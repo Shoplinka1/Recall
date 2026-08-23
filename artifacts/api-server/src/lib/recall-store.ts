@@ -1022,6 +1022,11 @@ export async function answerPractice(
     isCorrect,
     failures,
   );
+  const [existingIntervention] = await db
+    .select()
+    .from(teachingInterventionsTable)
+    .where(eq(teachingInterventionsTable.attemptId, attemptId))
+    .limit(1);
   const mastery = (
     await db
       .select({ masteryScore: conceptMasteryTable.masteryScore })
@@ -1034,10 +1039,26 @@ export async function answerPractice(
       )
       .limit(1)
   )[0]?.masteryScore ?? 0;
-  const shouldFollowUp = !row.attempt.isFollowUp && (!isCorrect || input.confidence === "low" || mastery < 80);
-  const followUpQuestion = shouldFollowUp
-    ? await findFollowUpQuestion(userId, sessionId, row.question, mastery)
-    : null;
+  let followUpQuestion = null;
+  if (existingIntervention?.followUpQuestionId) {
+    const [persistedFollowUp] = await db
+      .select({ question: questionsTable, conceptName: conceptsTable.name })
+      .from(questionsTable)
+      .innerJoin(conceptsTable, eq(questionsTable.conceptId, conceptsTable.id))
+      .where(
+        and(
+          eq(questionsTable.id, existingIntervention.followUpQuestionId),
+          eq(questionsTable.userId, userId),
+        ),
+      )
+      .limit(1);
+    followUpQuestion = persistedFollowUp ? questionToApi(persistedFollowUp) : null;
+  } else if (!existingIntervention) {
+    const shouldFollowUp = !row.attempt.isFollowUp && (!isCorrect || input.confidence === "low" || mastery < 80);
+    followUpQuestion = shouldFollowUp
+      ? await findFollowUpQuestion(userId, sessionId, row.question, mastery)
+      : null;
+  }
   if (followUpQuestion) {
     const existingFollowUp = await db
       .select({ questionId: sessionQuestionsTable.questionId })
@@ -1064,13 +1085,8 @@ export async function answerPractice(
       });
     }
   }
-  const followUpStatus = followUpQuestion ? "offered" : "none";
-  const existingIntervention = await db
-    .select({ id: teachingInterventionsTable.id })
-    .from(teachingInterventionsTable)
-    .where(eq(teachingInterventionsTable.attemptId, attemptId))
-    .limit(1);
-  if (!existingIntervention.length) {
+  const followUpStatus = existingIntervention?.followUpStatus ?? (followUpQuestion ? "offered" : "none");
+  if (!existingIntervention) {
     await db.insert(teachingInterventionsTable).values({
       userId,
       sessionId,
