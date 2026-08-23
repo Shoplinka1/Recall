@@ -1,0 +1,78 @@
+RECALL — VERIFY STEP 7 ONLY
+
+Step 7 is already implemented in commit b9da195. Do NOT redesign it, rebuild it, redo Steps 1–6, or start Step 8.
+
+IMPORTANT:
+A previous agent made an UNCOMMITTED change to:
+lib/api-client-react/src/custom-fetch.ts
+
+Before changing anything else, inspect that change and determine whether it is actually required for Step 7. Do not keep unrelated changes. If it is not required, revert only that change.
+
+Then perform VERIFICATION ONLY.
+
+Run:
+- Step 7 tests
+- Step 4 tests
+- Step 5 tests
+- Step 6 tests
+- question-generation quality tests
+- auth/ownership tests
+- materials tests
+- typecheck
+- build
+- /api/healthz
+- frontend HTTP check
+
+Perform a realistic end-to-end Step 7 test:
+
+ANSWER → RESULT → GROUNDED TEACHING → KEY IDEA → OPTIONAL MISCONCEPTION → FOLLOW-UP → SEPARATE ATTEMPT → EXISTING MASTERY UPDATE
+
+Verify:
+- incorrect answers receive source-grounded correction
+- correct low-confidence answers can receive reinforcement
+- one vague wrong answer does not create an unsupported misconception diagnosis
+- follow-up tests the same concept but is meaningfully different
+- follow-up remains grounded in persisted source material
+- teaching does not change mastery
+- follow-up uses the existing Step 6 mastery calculation
+- repeated answer requests are idempotent
+- User B cannot access User A's teaching/follow-up/session data
+- teaching/follow-up failure does not break practice
+- session works normally when no follow-up exists
+
+Use realistic multi-section study material for the runtime test.
+
+Do NOT:
+- use DEMO_MODE
+- use fake learner data
+- use web search
+- use external knowledge
+- weaken/delete tests
+- modify Steps 1–6
+- start Step 8
+- make unrelated improvements
+
+If a genuine Step 7 defect is found, fix ONLY that defect and rerun the affected checks.
+
+IMPORTANT:
+Do not stop merely because the tests pass. Inspect the actual generated teaching and follow-up output and verify that it is useful, concise, grounded, concept-specific, and non-repetitive.
+
+At the end report exactly:
+
+STEP_7
+TEACHING
+GROUNDING
+MISCONCEPTIONS
+FOLLOW_UP
+MASTERY_INTEGRATION
+PERSISTENCE
+OWNERSHIP
+UI_STATES
+TESTED
+NOT_VERIFIED
+BUILD
+RUNTIME
+
+Only report behavior actually verified.
+
+STOP AFTER STEP 7.
