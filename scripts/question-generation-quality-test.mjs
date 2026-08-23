@@ -59,8 +59,16 @@ assert.ok(
   questions.every((question) => question.type !== "multiple_choice" || question.options.every((option) => option.length <= 40)),
   "multiple-choice options should be concise concepts, not source paragraphs",
 );
+const clozeQuestions = questions.filter((question) => question.type === "short_answer");
+assert.ok(clozeQuestions.length > 0, "quality material should produce cloze questions");
+assert.ok(
+  clozeQuestions.every((question) => (question.questionText.match(/_{5,}/g) ?? []).length === 1),
+  "every cloze question should contain exactly one blank",
+);
 
 const first = questions[0];
+const shortAnswer = questions.find((question) => question.type === "short_answer");
+assert.ok(shortAnswer, "quality material should produce a short-answer question");
 assert.equal(
   ai.validateGroundedQuestions(
     [first, { ...first, id: "quality-near-duplicate", questionText: `${first.questionText} ` }],
@@ -79,12 +87,20 @@ assert.equal(
   0,
   "unsupported answers should be rejected",
 );
+assert.equal(
+  ai.validateGroundedQuestions(
+    [{ ...shortAnswer, id: "quality-multiple-blanks", questionText: "Complete the sentence: “_____ and _____ work together.”" }],
+    sections,
+    concepts,
+  ).length,
+  0,
+  "cloze questions with multiple blanks should be rejected",
+);
 
 const mcq = questions.find((question) => question.type === "multiple_choice");
 assert.ok(mcq && mcq.options.length === 4 && mcq.options.includes(mcq.correctAnswer), "MCQ options should remain valid");
 const trueFalse = questions.find((question) => question.type === "true_false");
 assert.ok(trueFalse && trueFalse.correctAnswer === "True", "true/false should remain grounded");
-const shortAnswer = questions.find((question) => question.type === "short_answer");
 assert.ok(shortAnswer && !shortAnswer.questionText.includes(shortAnswer.correctAnswer), "short-answer prompts should not reveal their answers");
 
 console.log("Question-generation quality tests passed.", {

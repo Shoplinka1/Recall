@@ -96,8 +96,12 @@ export const questionSimilarity = (left: string, right: string) => {
   return intersection / new Set([...leftTokens, ...rightTokens]).size;
 };
 
-const maskTerm = (sentence: string, term: string) =>
-  sentence.replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig"), "_____");
+const maskTerm = (sentence: string, term: string) => {
+  const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return sentence.replace(new RegExp(escapedTerm, "i"), "_____");
+};
+
+const blankCount = (text: string) => (text.match(/_{5,}/g) ?? []).length;
 
 const compactSource = (source: string, focus?: string, maxLength = 140) => {
   const candidate =
@@ -258,7 +262,7 @@ export class DevelopmentAIService implements AIService {
       coveredConcepts.forEach((coveredConcept, conceptIndex) => {
         const focusedSource = compactSource(section.excerpt, coveredConcept.name);
         const maskedExcerpt = maskTerm(focusedSource, coveredConcept.name);
-        if (!maskedExcerpt.includes("_____")) return;
+        if (blankCount(maskedExcerpt) !== 1) return;
         const base = {
           materialId: section.materialId,
           sectionId: section.id,
@@ -369,6 +373,8 @@ export class DevelopmentAIService implements AIService {
               options.map((option) => option.toLowerCase()).join("|") === "true|false" &&
               ["true", "false"].includes(question.correctAnswer.trim().toLowerCase())
             : options.length === 0;
+      const validCloze =
+        type !== "short_answer" || blankCount(question.questionText) === 1;
       const grounded =
         Boolean(section) &&
         question.materialId === section?.materialId &&
@@ -381,6 +387,7 @@ export class DevelopmentAIService implements AIService {
             : question.sourceExcerpt.toLowerCase().includes(question.correctAnswer.toLowerCase()));
       const valid =
         validType &&
+        validCloze &&
         ["easy", "medium", "hard"].includes(difficulty) &&
         validOptions &&
         Boolean(normalizedQuestion) &&

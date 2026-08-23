@@ -1,0 +1,118 @@
+# RECALL — FIX CLOZE SINGLE-BLANK + ANSWER SAVING
+
+CONTINUE FROM THE CURRENT GIT STATE.
+
+Do NOT start Step 8.
+Do NOT redo Step 7.
+Do NOT redesign the app.
+Do NOT weaken authentication, validation, mastery, or persistence.
+
+There are TWO issues to investigate.
+
+## 1. CLOZE QUESTIONS
+
+The app still produced a cloze question with multiple blanks, such as:
+
+"The light-dependent _____ and the light-independent _____ ..."
+
+This must NEVER happen.
+
+Enforce the rule in both generation and validation:
+
+- Every cloze question must contain exactly ONE blank.
+- One blank = one expected answer.
+- Target one high-value concept only.
+- Never generate multiple blanks in one question.
+- Never require answers like "X and Y" for separate blanks.
+- Keep the question short and mobile-friendly.
+- Preserve source grounding and appropriate difficulty.
+- Reject/regenerate any generated cloze containing more than one blank.
+
+Add or update tests for this behavior.
+
+## 2. ANSWER-SAVING FAILURE
+
+The app also shows:
+
+"Couldn't save your answer. Try again later."
+
+Observed flow:
+
+5 questions → Check Results → returns to question page → answer another question → save failure.
+
+Trace the REAL flow:
+
+Frontend → session/question state → answer API → authentication → validation → database → response → frontend.
+
+Determine the actual cause.
+
+Check specifically:
+
+- session completion state
+- current question/session ID
+- follow-up questions
+- already-answered attempts
+- idempotency
+- authentication cookies
+- request payload
+- API route
+- database persistence
+- server logs
+- frontend error handling
+
+Do NOT hide the error or bypass validation.
+
+A real authenticated answer must be persisted successfully.
+
+## TEST
+
+Use realistic persisted multi-section study material.
+
+Verify:
+
+1. Exactly one blank in every cloze.
+2. One expected answer per cloze.
+3. Answering all questions works.
+4. Check Results works.
+5. After results, the UI does not incorrectly return to an already-completed question.
+6. A new/remaining question can be answered and saved.
+7. Follow-ups still work.
+8. Repeated submissions remain idempotent.
+9. Mastery remains correct.
+10. Teaching remains grounded.
+11. User ownership/security remains intact.
+
+Run:
+
+- question-generation quality tests
+- Step 4 regression
+- Step 5 regression
+- Step 6 regression
+- Step 7 tests
+- auth/ownership tests
+- materials tests
+- typecheck
+- build
+- /api/healthz
+- frontend HTTP check
+
+Do NOT use DEMO_MODE, fake data, or external knowledge.
+
+If a genuine defect is found, fix ONLY that defect and rerun the affected tests.
+
+## FINAL REPORT
+
+CLOZE_SINGLE_BLANK
+ANSWER_SAVING
+SESSION_FLOW
+TEACHING
+MASTERY
+PERSISTENCE
+OWNERSHIP
+TESTED
+NOT_VERIFIED
+TYPECHECK
+BUILD
+RUNTIME
+
+STOP AFTER THESE FIXES.
