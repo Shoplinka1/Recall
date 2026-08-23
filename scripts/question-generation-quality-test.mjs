@@ -43,11 +43,27 @@ assert.ok(
   ),
   "every question should retain valid material and section provenance",
 );
+assert.ok(
+  questions.every((question) => question.questionText.length <= 180),
+  "question prompts should stay short enough for mobile reading",
+);
+assert.ok(
+  questions.every(
+    (question) =>
+      question.sourceExcerpt.length <= 140 ||
+      !question.questionText.includes(question.sourceExcerpt),
+  ),
+  "question prompts should not paste long source excerpts",
+);
+assert.ok(
+  questions.every((question) => question.type !== "multiple_choice" || question.options.every((option) => option.length <= 40)),
+  "multiple-choice options should be concise concepts, not source paragraphs",
+);
 
 const first = questions[0];
 assert.equal(
   ai.validateGroundedQuestions(
-    [first, { ...first, id: "quality-near-duplicate", questionText: first.questionText.replace("key concept", "important concept") }],
+    [first, { ...first, id: "quality-near-duplicate", questionText: `${first.questionText} ` }],
     sections,
     concepts,
   ).length,

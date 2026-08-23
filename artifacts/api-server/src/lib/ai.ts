@@ -99,6 +99,22 @@ export const questionSimilarity = (left: string, right: string) => {
 const maskTerm = (sentence: string, term: string) =>
   sentence.replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig"), "_____");
 
+const compactSource = (source: string, focus?: string, maxLength = 140) => {
+  const candidate =
+    source
+      .split(/(?<=[.!?])\s+|\n+/)
+      .map(clean)
+      .find((sentence) => focus && sentence.toLowerCase().includes(focus.toLowerCase())) ??
+    clean(source).split(/(?<=[.!?])\s+|\n+/)[0];
+  if (candidate.length <= maxLength) return candidate;
+  const focusIndex = focus ? candidate.toLowerCase().indexOf(focus.toLowerCase()) : 0;
+  const start = Math.max(0, Math.min(focusIndex - 48, candidate.length - maxLength + 1));
+  const prefix = start > 0 ? "… " : "";
+  const available = maxLength - prefix.length;
+  const clipped = candidate.slice(start, start + available).replace(/^\S*\s+/, "");
+  return `${prefix}${clipped.trim()}${start + available < candidate.length ? " …" : ""}`;
+};
+
 const normalizeShortAnswer = (value: string) => {
   let normalized = normalizeComparableText(value);
   for (const [pattern, replacement] of terminologyAliases) {
@@ -240,6 +256,9 @@ export class DevelopmentAIService implements AIService {
       );
       const coveredConcepts = sectionConcepts.length ? sectionConcepts : [concept];
       coveredConcepts.forEach((coveredConcept, conceptIndex) => {
+        const focusedSource = compactSource(section.excerpt, coveredConcept.name);
+        const maskedExcerpt = maskTerm(focusedSource, coveredConcept.name);
+        if (!maskedExcerpt.includes("_____")) return;
         const base = {
           materialId: section.materialId,
           sectionId: section.id,
@@ -251,19 +270,11 @@ export class DevelopmentAIService implements AIService {
           explanation: `The source section identifies “${coveredConcept.name}”: ${section.excerpt}`,
           correctAnswer: coveredConcept.name,
         };
-        const maskedExcerpt = maskTerm(section.excerpt, coveredConcept.name);
         generated.push(
           {
             ...base,
             id: stableId(`${section.id}:definition:${coveredConcept.id}`, conceptIndex),
-            questionText: `What key concept is described by this source statement: “${maskedExcerpt}”?`,
-            type: "short_answer",
-            options: [],
-          },
-          {
-            ...base,
-            id: stableId(`${section.id}:application:${coveredConcept.id}`, conceptIndex),
-            questionText: `Which important term completes this source statement: “${maskedExcerpt}”?`,
+            questionText: `Complete the sentence: “${maskedExcerpt}”`,
             type: "short_answer",
             options: [],
           },
@@ -273,7 +284,7 @@ export class DevelopmentAIService implements AIService {
         id: stableId(`${section.id}:true-false`, index),
         materialId: section.materialId,
         sectionId: section.id,
-        questionText: `True or false: the source says that ${section.excerpt}`,
+        questionText: `True or false: ${compactSource(section.excerpt)}`,
         type: "true_false",
         options: ["True", "False"],
         concept: concept.name,
@@ -287,17 +298,21 @@ export class DevelopmentAIService implements AIService {
     }
     if (usable.length >= 4) {
       for (const [index, section] of usable.entries()) {
-        const options = Array.from({ length: 4 }, (_, offset) => usable[(index + offset) % usable.length].excerpt);
         const concept =
           concepts.find((candidate) =>
             section.excerpt.toLowerCase().includes(candidate.name.toLowerCase()),
           ) ?? concepts[index % Math.max(concepts.length, 1)];
-        if (!concept) continue;
+        const distractors = concepts
+          .filter((candidate) => candidate.id !== concept?.id)
+          .map((candidate) => candidate.name)
+          .slice(0, 3);
+        if (!concept || distractors.length < 3) continue;
+        const options = [concept.name, ...distractors];
         generated.push({
           id: stableId(`${section.id}:multiple-choice`, index),
           materialId: section.materialId,
           sectionId: section.id,
-          questionText: `Which source statement best explains ${concept.name} in section ${index + 1}?`,
+          questionText: "Which concept is central to this source section?",
           type: "multiple_choice",
           options,
           concept: concept.name,
@@ -306,7 +321,7 @@ export class DevelopmentAIService implements AIService {
           sourcePage: section.sectionIndex + 1,
           sourceSectionId: section.id,
           explanation: `The selected statement is the source excerpt for this section: ${section.excerpt}`,
-          correctAnswer: section.excerpt,
+          correctAnswer: concept.name,
         });
       }
     }
@@ -360,9 +375,9 @@ export class DevelopmentAIService implements AIService {
         Boolean(question.sourceExcerpt.trim()) &&
         normalizedSectionContent.includes(normalizedSourceExcerpt) &&
         (type === "multiple_choice"
-          ? question.correctAnswer === question.sourceExcerpt
+          ? normalizedSectionContent.includes(question.correctAnswer.toLowerCase())
           : type === "true_false"
-            ? question.questionText.toLowerCase().includes(question.sourceExcerpt.toLowerCase())
+            ? questionSimilarity(question.questionText, question.sourceExcerpt) >= 0.35
             : question.sourceExcerpt.toLowerCase().includes(question.correctAnswer.toLowerCase()));
       const valid =
         validType &&
@@ -390,15 +405,13 @@ export class DevelopmentAIService implements AIService {
   private isAmbiguous(question: GroundedQuestion, type: string) {
     const text = question.questionText.trim().toLowerCase();
     if (type === "multiple_choice") {
-      return !text.includes("which") || question.options.some((option) => option.trim().length < 3);
+      return !text.startsWith("which concept") || question.options.some((option) => option.trim().length < 3);
     }
     if (type === "true_false") {
       return !text.startsWith("true or false:") || text.length < 30;
     }
     return (
-      !text.includes("key term") &&
-      !text.includes("key concept") &&
-      !text.includes("important term")
+      !text.startsWith("complete the sentence:")
     ) || text.length < 20;
   }
 
@@ -431,9 +444,10 @@ export class DevelopmentAIService implements AIService {
         question.explanation.trim().length > 0 &&
         question.explanation.toLowerCase().includes(question.sourceExcerpt.toLowerCase()) &&
         (type === "multiple_choice"
-          ? question.options.some((option) => option.toLowerCase() === question.correctAnswer.trim().toLowerCase())
+          ? question.options.some((option) => option.toLowerCase() === question.correctAnswer.trim().toLowerCase()) &&
+            question.sourceExcerpt.toLowerCase().includes(question.correctAnswer.toLowerCase())
           : type === "true_false"
-            ? question.questionText.toLowerCase().includes(question.sourceExcerpt.toLowerCase())
+            ? questionSimilarity(question.questionText, question.sourceExcerpt) >= 0.35
             : question.sourceExcerpt.toLowerCase().includes(question.correctAnswer.toLowerCase()));
       if (valid) seen.add(key);
       return valid;
