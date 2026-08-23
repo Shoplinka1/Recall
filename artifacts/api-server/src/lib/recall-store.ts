@@ -947,7 +947,7 @@ function safeTeaching(
   try {
     return getAIService().teachAnswer(
       question,
-      { answer, confidence },
+      { questionId: question.id, answer, confidence },
       isCorrect,
       failures,
     );
