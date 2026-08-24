@@ -2,9 +2,16 @@ import { randomUUID } from "node:crypto";
 
 const SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
 
+export class ObjectStorageConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ObjectStorageConfigurationError";
+  }
+}
+
 function privateObjectDir() {
   const value = process.env.PRIVATE_OBJECT_DIR;
-  if (!value) throw new Error("PRIVATE_OBJECT_DIR is not configured");
+  if (!value) throw new ObjectStorageConfigurationError("Private App Storage is not configured. Set PRIVATE_OBJECT_DIR, DEFAULT_OBJECT_STORAGE_BUCKET_ID, and PUBLIC_OBJECT_SEARCH_PATHS.");
   return value.replace(/\/+$/, "");
 }
 

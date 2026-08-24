@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { Link, Redirect, Route, Router as WouterRouter, Switch, useLocation, useParams } from 'wouter';
 import {
@@ -157,6 +157,9 @@ function MaterialsPage() {
   const q = useListMaterials(); const subjectsQuery = useListSubjects(); const create = useCreateMaterial(); const subjectCreate = useCreateSubject(); const remove = useDeleteMaterial(); const retry = useRetryMaterial(); const requestUpload = useRequestMaterialUploadUrl(); const client = useQueryClient();
   const [search, setSearch] = useState(''); const [adding, setAdding] = useState(false); const [title, setTitle] = useState(''); const [text, setText] = useState(''); const [subjectId, setSubjectId] = useState(''); const [file, setFile] = useState<File | null>(null); const [error, setError] = useState(''); const [success, setSuccess] = useState(''); const [creatingSubject, setCreatingSubject] = useState(false); const [subjectName, setSubjectName] = useState(''); const [subjectError, setSubjectError] = useState('');
   const materials = (q.data ?? []) as any[]; const subjects = (subjectsQuery.data ?? []) as any[]; const filtered = materials.filter(m => `${m.title} ${m.subjectName}`.toLowerCase().includes(search.toLowerCase()));
+  useEffect(() => {
+    if (!subjectId && subjects.length) setSubjectId(subjects[0].id);
+  }, [subjectId, subjects]);
   const busy = create.isPending || requestUpload.isPending || subjectCreate.isPending;
   const selectedSubjectId = subjectId || '';
   const missing = [
