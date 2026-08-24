@@ -1,0 +1,81 @@
+RECALL — PHASE 6: PAID PRODUCTION LAUNCH
+
+IMPORTANT: First verify that origin/main contains commit 9d05cd8 and that the working tree is clean. Do not reset, rollback, or discard existing work.
+
+Continue from the latest origin/main.
+
+Recall is launching with PAID subscriptions, so Paystack is launch-critical.
+
+Do NOT redesign, start Step 8, or modify protected learning logic.
+
+Prepare and verify the real production deployment:
+
+PRODUCTION
+- production database
+- private storage
+- authentication/session secrets
+- real AI provider
+- Paystack LIVE credentials/configuration
+- production migrations
+- web + API deployment
+
+PAYSTACK
+- verify the existing subscription/checkout implementation
+- verify plan configuration and pricing
+- verify Paystack initialization/checkout
+- verify callback/verification handling
+- verify webhook handling if implemented
+- verify successful payment creates the correct entitlement
+- verify failed/cancelled payment does not grant access
+- verify subscription status persists after reload
+- verify server remains authoritative for paid access
+- never trust client-side payment status
+
+REAL USER FLOW
+Landing → Sign up → Add real material → Study → Results → Upgrade → Pay → Verify subscription → Access paid features.
+
+Also verify:
+- no demo/fake learner data
+- ownership/security
+- persistence
+- AI generation
+- mobile/desktop
+- health checks
+- typecheck
+- build
+- all available regressions
+
+Never expose secret values.
+Never use DEMO_MODE or fake payment success.
+Do not weaken/delete tests.
+Fix only genuine launch blockers.
+
+If Paystack LIVE credentials or required production configuration are missing, identify exactly what is needed instead of using test/demo credentials.
+
+FINAL REPORT:
+DEPLOYMENT
+DATABASE
+STORAGE
+AI
+PAYSTACK
+SUBSCRIPTIONS
+ENTITLEMENTS
+FIRST_USER
+CORE_LOOP
+SECURITY
+MOBILE
+DESKTOP
+TESTS
+BLOCKERS
+NOT_VERIFIED
+
+PAYMENT SAFETY
+- Never grant a paid entitlement based only on a frontend redirect or client request.
+- Verify Paystack transactions server-side.
+- Ensure the transaction/reference cannot be reused to grant access incorrectly.
+- Ensure the authenticated user receiving the entitlement matches the intended customer/payment.
+- Ensure subscription status can be revoked/updated correctly.
+- Test duplicate webhook/event handling idempotently.
+- Do not expose Paystack secret keys.
+
+STOP AFTER PRODUCTION LAUNCH VERIFICATION.
