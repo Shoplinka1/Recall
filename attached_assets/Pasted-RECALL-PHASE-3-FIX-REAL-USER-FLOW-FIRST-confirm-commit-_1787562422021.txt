@@ -1,0 +1,91 @@
+RECALL — PHASE 3 + FIX REAL USER FLOW
+
+FIRST confirm commit 53b9938 is present. Continue from the current Git state.
+
+Before Phase 3, fix these real issues:
+
+1. DEMO/FAKE DATA
+After signing in, I see materials/progress/questions I did not create.
+Find the actual source: DEMO_MODE, seed/mock data, fallback data, or development fixtures.
+Remove/disable only the fake-data path for normal authenticated users.
+Do NOT delete/reset real user data.
+New users must see only their own persisted data.
+Do NOT use fake/demo data.
+
+2. SESSION ERRORS
+Fix the genuine causes of:
+- “This practice session could not be opened. Nothing was changed. Check your connection and try again.”
+- “Recall could not build this session. Try a different subject or add more material.”
+
+Trace the real API → database → frontend flow. Do not hide errors or use fake fallbacks.
+
+THEN IMPLEMENT PHASE 3:
+
+Make Recall feel like a premium learning product:
+- premium landing page and strong human copy
+- clear differentiation
+- polished mobile-first study experience
+- better answer feedback
+- elegant teaching/follow-up presentation
+- meaningful mastery/results experience
+- intentional loading/saving/empty/error states
+- subtle purposeful animations
+- polished desktop UI
+
+Core product story:
+
+YOUR MATERIAL
+→ ACTIVE RECALL
+→ CONCEPT MASTERY
+→ TARGETED TEACHING
+→ REINFORCEMENT
+
+Do NOT start Step 8.
+Do NOT redesign backend architecture.
+Do NOT change Step 7 logic, answer evaluation, teaching logic, mastery calculations, authentication, persistence, security, grounding, or question generation unless fixing one of the genuine issues above requires it.
+
+Use only real persisted user data and existing APIs.
+Do not weaken/delete tests.
+
+VERIFY:
+- real sign-in/new-user state
+- real material → session creation
+- real session opening
+- answer saving
+- results/continuation
+- teaching/follow-up
+- mastery
+- no demo data
+- mobile + desktop UI
+- regression/auth/material/question-quality tests
+- typecheck
+- build
+- /api/healthz
+- frontend HTTP
+
+If a genuine defect is found, fix only that defect and rerun the affected checks.
+
+FINAL REPORT:
+DEMO_DATA
+SESSION_CREATION
+SESSION_LOADING
+LANDING_PAGE
+COPY
+STUDY_EXPERIENCE
+ANSWER_FEEDBACK
+TEACHING
+FOLLOW_UP
+MASTERY
+RESULTS
+MOBILE
+DESKTOP
+ERROR_STATES
+REGRESSIONS
+TYPECHECK
+BUILD
+RUNTIME
+NOT_VERIFIED
+
+Only report what was actually verified.
+
+STOP AFTER PHASE 3.
