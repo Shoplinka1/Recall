@@ -352,7 +352,7 @@ export async function generateQuestionsForMaterial(
     content: section.content,
   }));
   const groundedConcepts: GroundedConcept[] = concepts;
-  const generated = getAIService().generateQuestionsFromSections(
+  const generated = await getAIService().generateQuestionsFromSections(
     groundedSections,
     groundedConcepts,
     { count, excludeQuestionTexts: existing.map((row) => row.questionText) },
@@ -1025,9 +1025,9 @@ export async function getSubscription(userId: string): Promise<Subscription> {
     plan: subscription?.plan ?? "free",
     status: subscription?.status ?? "free",
     sessionsUsed: Number(sessionCount?.value ?? 0),
-    sessionsLimit: 5,
+    sessionsLimit: subscription?.status === "active" ? 1000000 : 5,
     materialsUsed: Number(materialCount?.value ?? 0),
-    materialsLimit: 5,
+    materialsLimit: subscription?.status === "active" ? 1000000 : 5,
     resetDate,
   };
 }

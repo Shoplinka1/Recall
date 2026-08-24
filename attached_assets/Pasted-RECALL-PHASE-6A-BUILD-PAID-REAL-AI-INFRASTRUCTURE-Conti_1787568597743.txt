@@ -1,0 +1,56 @@
+RECALL — PHASE 6A: BUILD PAID + REAL AI INFRASTRUCTURE
+
+Continue from the current Git state. Do NOT reset, discard, or overwrite existing commits.
+
+I currently have NO paid AI API keys and NO Paystack Live credentials. Do not invent, fake, or use demo credentials.
+
+Implement everything that can safely be completed without credentials.
+
+PAYSTACK
+- Implement real server-side checkout initialization
+- unique transaction references
+- server-side verification architecture
+- callback handling
+- webhook + signature verification
+- idempotent webhook processing
+- prevent reused references
+- verify payment belongs to the authenticated user
+- persist subscription/entitlement state
+- handle failed/cancelled/expired payments
+- server-authoritative paid access
+- preserve existing subscription schema where possible
+
+AI
+
+CRITICAL: Do not remove, replace, degrade, or bypass the existing development AI provider. It must continue working exactly as before when AI_MODE=development.
+
+- Implement ONE real provider through the existing AI abstraction.
+- Keep the existing development provider for development/tests.
+- AI_MODE=real must use the real provider implementation when credentials are supplied.
+- Do not make production appear functional without credentials.
+- Add clear configuration/error handling for missing credentials.
+- Preserve grounding, question generation, teaching, mastery, authentication and persistence.
+
+TEST WITHOUT PAID CREDENTIALS
+- Unit/integration test the payment logic using mocked provider responses ONLY inside tests.
+- Test successful, failed, invalid, wrong-user, duplicate, reused-reference and entitlement cases.
+- Test AI provider configuration and failure handling without making paid API calls.
+- Do NOT use fake payment success in the actual application.
+- Do NOT use DEMO_MODE.
+
+IMPORTANT:
+- Do NOT start Step 8.
+- Do NOT redesign.
+- Do NOT change Step 7 or protected learning logic.
+- Do NOT weaken/delete tests.
+- Never expose secrets.
+
+At the end clearly separate:
+IMPLEMENTED
+TESTED WITHOUT PAID CREDENTIALS
+REQUIRES MY CREDENTIALS
+NOT VERIFIED
+
+Also run existing tests, typecheck, build and health checks.
+
+STOP AFTER PHASE 6A.

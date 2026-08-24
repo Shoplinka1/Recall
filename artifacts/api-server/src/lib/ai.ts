@@ -32,35 +32,35 @@ export type GroundedConcept = { id: string; name: string };
 export type GroundedQuestion = Question & { sectionId: string; materialId: string };
 
 export interface AIService {
-  analyzeMaterial(content: string): MaterialAnalysis;
-  extractConcepts(content: string): Concept[];
+  analyzeMaterial(content: string): MaterialAnalysis | Promise<MaterialAnalysis>;
+  extractConcepts(content: string): Concept[] | Promise<Concept[]>;
   generateQuestions(
     content: string,
     options?: { count?: number; excludeQuestionTexts?: string[] },
-  ): Question[];
+  ): Question[] | Promise<Question[]>;
   generateQuestionsFromSections(
     sections: GroundedSection[],
     concepts: GroundedConcept[],
     options?: { count?: number; excludeQuestionTexts?: string[] },
-  ): GroundedQuestion[];
-  validateQuestions(questions: Question[]): Question[];
-  evaluateAnswer(question: Question, answer: AnswerInput): AnswerEvaluation;
+  ): GroundedQuestion[] | Promise<GroundedQuestion[]>;
+  validateQuestions(questions: Question[]): Question[] | Promise<Question[]>;
+  evaluateAnswer(question: Question, answer: AnswerInput): AnswerEvaluation | Promise<AnswerEvaluation>;
   teachAnswer(
     question: Question,
     answer: AnswerInput,
     isCorrect: boolean,
     recentFailures: number,
-  ): TeachingResult;
+  ): TeachingResult | Promise<TeachingResult>;
   diagnoseWeaknesses(
     attempts: Array<{ question: Question; isCorrect: boolean; confidence: string }>,
-  ): Weakness[];
+  ): Weakness[] | Promise<Weakness[]>;
   generateTargetedPractice(
     content: string,
     weaknesses: Weakness[],
     excludeQuestionTexts?: string[],
-  ): Question[];
-  generateExplanation(question: Question, answer: string): string;
-  generateRecommendation(weaknesses: Weakness[]): string | null;
+  ): Question[] | Promise<Question[]>;
+  generateExplanation(question: Question, answer: string): string | Promise<string>;
+  generateRecommendation(weaknesses: Weakness[]): string | null | Promise<string | null>;
 }
 
 const clean = (value: string) => value.replace(/\s+/g, " ").trim();
@@ -549,6 +549,140 @@ export class AIConfigurationError extends Error {
   }
 }
 
+class RealGeminiAIService implements AIService {
+  private readonly apiKey: string;
+  private readonly model: string;
+
+  constructor() {
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
+    if (!apiKey) throw new AIConfigurationError("AI_MODE=real requires GEMINI_API_KEY.");
+    this.apiKey = apiKey;
+    this.model = process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash";
+  }
+
+  private async ask<T>(instruction: string): Promise<T> {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(this.model)}:generateContent?key=${encodeURIComponent(this.apiKey)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: instruction }] }],
+          generationConfig: { responseMimeType: "application/json", temperature: 0.2 },
+        }),
+        signal: AbortSignal.timeout(60_000),
+      },
+    );
+    if (!response.ok) throw new AIConfigurationError(`Gemini request failed (${response.status}).`);
+    const body = (await response.json()) as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    };
+    const text = body.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("") ?? "";
+    if (!text) throw new Error("Gemini returned no content.");
+    try {
+      return JSON.parse(text.replace(/^```json\s*/i, "").replace(/\s*```$/, "")) as T;
+    } catch {
+      throw new Error("Gemini returned invalid JSON.");
+    }
+  }
+
+  async analyzeMaterial(content: string) {
+    return this.ask<MaterialAnalysis>(`Analyze only this study material. Return JSON with summary and sections (each section has title, excerpt, and sourcePage). Do not add facts not present.
+MATERIAL:
+${content}`);
+  }
+
+  async extractConcepts(content: string) {
+    const result = await this.ask<{ concepts: Concept[] }>(`Extract the important concepts from this material. Return JSON {"concepts":[{"name":string,"description":string,"excerpt":string}]}. Every excerpt must be copied from the material.
+MATERIAL:
+${content}`);
+    return result.concepts ?? [];
+  }
+
+  async generateQuestions(content: string, options: { count?: number; excludeQuestionTexts?: string[] } = {}) {
+    const result = await this.ask<{ questions: Question[] }>(`Create ${options.count ?? 6} grounded questions from this material. Return JSON {"questions":[Question]}; use short_answer, multiple_choice, or true_false; every sourceExcerpt, explanation, and correctAnswer must be supported by the material. Avoid these question texts: ${JSON.stringify(options.excludeQuestionTexts ?? [])}.
+MATERIAL:
+${content}`);
+    return new DevelopmentAIService().validateQuestions(result.questions ?? []);
+  }
+
+  async generateQuestionsFromSections(
+    sections: GroundedSection[],
+    concepts: GroundedConcept[],
+    options: { count?: number; excludeQuestionTexts?: string[] } = {},
+  ) {
+    const result = await this.ask<{ questions: GroundedQuestion[] }>(`Create ${options.count ?? 6} grounded questions using only the supplied sections and concepts. Return JSON {"questions":[Question]}. Each question must include the supplied sectionId and materialId, and sourceExcerpt must be copied exactly from its section. Avoid these question texts: ${JSON.stringify(options.excludeQuestionTexts ?? [])}.
+SECTIONS:
+${JSON.stringify(sections)}
+CONCEPTS:
+${JSON.stringify(concepts)}`);
+    return result.questions
+      ? (new DevelopmentAIService().validateQuestions(result.questions) as Array<
+          Question & Partial<Pick<GroundedQuestion, "sectionId" | "materialId">>
+        >).filter(
+          (question): question is GroundedQuestion =>
+            typeof question.sectionId === "string" &&
+            typeof question.materialId === "string" &&
+            sections.some((section) => section.id === question.sectionId) &&
+            sections.some((section) => section.materialId === question.materialId),
+        )
+      : [];
+  }
+
+  validateQuestions(questions: Question[]) {
+    return new DevelopmentAIService().validateQuestions(questions);
+  }
+
+  async evaluateAnswer(question: Question, answer: AnswerInput) {
+    return this.ask<AnswerEvaluation>(`Evaluate the learner answer against the grounded question. Return JSON with isCorrect, explanation, and concept. Do not change the concept.
+QUESTION:
+${JSON.stringify(question)}
+ANSWER:
+${JSON.stringify(answer)}`);
+  }
+
+  async teachAnswer(question: Question, answer: AnswerInput, isCorrect: boolean, recentFailures: number) {
+    return this.ask<TeachingResult>(`Teach this learner from the grounded question and answer. Return JSON with result ("correct" or "incorrect"), explanation, keyIdea, and misconception (string or null). Do not add facts beyond the question source.
+QUESTION:
+${JSON.stringify(question)}
+ANSWER:
+${JSON.stringify(answer)}
+IS_CORRECT: ${isCorrect}
+RECENT_FAILURES: ${recentFailures}`);
+  }
+
+  async diagnoseWeaknesses(attempts: Array<{ question: Question; isCorrect: boolean; confidence: string }>) {
+    const result = await this.ask<{ weaknesses: Weakness[] }>(`Diagnose learning weaknesses from these grounded attempts. Return JSON {"weaknesses":[{"concept":string,"reason":string,"severity":"low"|"medium"|"high"}]}.
+ATTEMPTS:
+${JSON.stringify(attempts)}`);
+    return result.weaknesses ?? [];
+  }
+
+  async generateTargetedPractice(content: string, weaknesses: Weakness[], excludeQuestionTexts: string[] = []) {
+    return this.generateQuestions(`${content}\nFocus on these weaknesses: ${JSON.stringify(weaknesses)}`, {
+      count: 6,
+      excludeQuestionTexts,
+    });
+  }
+
+  async generateExplanation(question: Question, answer: string) {
+    const result = await this.ask<{ explanation: string }>(`Explain the answer using only the question's source excerpt. Return JSON {"explanation":string}.
+QUESTION:
+${JSON.stringify(question)}
+LEARNER ANSWER:
+${answer}`);
+    return result.explanation;
+  }
+
+  async generateRecommendation(weaknesses: Weakness[]) {
+    if (!weaknesses.length) return null;
+    const result = await this.ask<{ recommendation: string }>(`Recommend one focused study action for these weaknesses. Return JSON {"recommendation":string}.
+WEAKNESSES:
+${JSON.stringify(weaknesses)}`);
+    return result.recommendation ?? null;
+  }
+}
+
 class RealAIServiceUnavailable implements AIService {
   constructor(private readonly provider: AIProvider) {}
   private fail(): never {
@@ -580,6 +714,7 @@ export const getAIService = (): AIService => {
   if (!["gemini", "openai", "anthropic"].includes(provider)) {
     throw new AIConfigurationError(`Unsupported AI_PROVIDER "${provider}". Use gemini, openai, or anthropic.`);
   }
+  if (provider === "gemini") return new RealGeminiAIService();
   return new RealAIServiceUnavailable(provider);
 };
 

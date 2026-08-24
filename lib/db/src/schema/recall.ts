@@ -86,6 +86,44 @@ export const subscriptionsTable = pgTable("recall_subscriptions", {
   ...timestamps,
 });
 
+export const paymentTransactionsTable = pgTable(
+  "recall_payment_transactions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    reference: text("reference").notNull().unique(),
+    interval: text("interval").notNull(),
+    planCode: text("plan_code").notNull(),
+    status: text("status").notNull().default("pending"),
+    amount: integer("amount"),
+    currency: text("currency"),
+    providerTransactionId: text("provider_transaction_id"),
+    providerCustomerCode: text("provider_customer_code"),
+    accessCode: text("access_code"),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+    ...timestamps,
+  },
+  (table) => [
+    index("recall_payment_transactions_user_id_idx").on(table.userId),
+    index("recall_payment_transactions_status_idx").on(table.status),
+  ],
+);
+
+export const billingEventsTable = pgTable("recall_billing_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  eventKey: text("event_key").notNull().unique(),
+  event: text("event").notNull(),
+  reference: text("reference"),
+  payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
+  processedAt: timestamp("processed_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  ...timestamps,
+});
+
 export const subjectsTable = pgTable("recall_subjects", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id")

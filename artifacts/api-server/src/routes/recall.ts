@@ -1,7 +1,6 @@
 import { Router, type IRouter } from "express";
 import {
   AnswerPracticeBody,
-  CreateCheckoutBody,
   CreateMaterialBody,
   CreatePracticeBody,
   CreateSubjectBody,
@@ -115,17 +114,12 @@ router.post("/materials", async (req, res, next) => {
   try {
     const input = CreateMaterialBody.parse(req.body);
     const user = req.auth!;
-    const subject = (await listSubjects(user.id)).find(
-      (item) => item.id === input.subjectId,
-    );
+    const subject = (await listSubjects(user.id)).find((item) => item.id === input.subjectId);
     if (!subject) {
       res.status(404).json({ error: "Subject not found" });
       return;
     }
-    if (
-      input.storagePath &&
-      !input.storagePath.startsWith(`/objects/uploads/${user.id}/`)
-    ) {
+    if (input.storagePath && !input.storagePath.startsWith(`/objects/uploads/${user.id}/`)) {
       res.status(403).json({ error: "Material file ownership mismatch" });
       return;
     }
@@ -184,8 +178,7 @@ router.post("/materials/:id/questions/generate", async (req, res, next) => {
 
 router.get("/materials/:id", async (req, res, next) => {
   try {
-    const user = req.auth!;
-    const material = await getMaterial(user.id, req.params.id);
+    const material = await getMaterial(req.auth!.id, req.params.id);
     if (!material) {
       res.status(404).json({ error: "Material not found" });
       return;
@@ -210,8 +203,7 @@ router.get("/materials/:id/sections", async (req, res, next) => {
 
 router.delete("/materials/:id", async (req, res, next) => {
   try {
-    const user = req.auth!;
-    if (!(await deleteMaterial(user.id, req.params.id))) {
+    if (!(await deleteMaterial(req.auth!.id, req.params.id))) {
       res.status(404).json({ error: "Material not found" });
       return;
     }
@@ -232,8 +224,7 @@ router.get("/concepts", async (req, res, next) => {
 router.post("/practice", async (req, res, next) => {
   try {
     const input = CreatePracticeBody.parse(req.body);
-    const user = req.auth!;
-    const session = await createPractice(user.id, {
+    const session = await createPractice(req.auth!.id, {
       subjectId: input.subjectId ?? undefined,
       materialId: input.materialId ?? undefined,
       questionCount: input.questionCount,
@@ -252,9 +243,8 @@ router.post("/practice", async (req, res, next) => {
 router.post("/practice/weakness", async (req, res, next) => {
   try {
     const input = CreateWeaknessPracticeBody.parse(req.body);
-    const user = req.auth!;
     const session = await createPractice(
-      user.id,
+      req.auth!.id,
       { questionCount: 6, sessionType: "weakness" },
       input.conceptIds,
     );
@@ -270,8 +260,7 @@ router.post("/practice/weakness", async (req, res, next) => {
 
 router.get("/practice/:id", async (req, res, next) => {
   try {
-    const user = req.auth!;
-    const session = await getPractice(user.id, req.params.id);
+    const session = await getPractice(req.auth!.id, req.params.id);
     if (!session) {
       res.status(404).json({ error: "Practice session not found" });
       return;
@@ -284,9 +273,7 @@ router.get("/practice/:id", async (req, res, next) => {
 
 router.post("/practice/:id", async (req, res, next) => {
   try {
-    const input = AnswerPracticeBody.parse(req.body);
-    const user = req.auth!;
-    const result = await answerPractice(user.id, req.params.id, input);
+    const result = await answerPractice(req.auth!.id, req.params.id, AnswerPracticeBody.parse(req.body));
     if (result === undefined) {
       res.status(404).json({ error: "Practice session not found" });
       return;
@@ -348,22 +335,6 @@ router.get("/subscription", async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-});
-
-router.post("/billing/checkout", (req, res) => {
-  const input = CreateCheckoutBody.parse(req.body);
-  const planCode =
-    input.interval === "annual"
-      ? process.env.PAYSTACK_PRO_ANNUAL_PLAN_CODE
-      : process.env.PAYSTACK_PRO_MONTHLY_PLAN_CODE;
-  const configured = Boolean(process.env.PAYSTACK_SECRET_KEY && planCode);
-  res.json({
-    url: null,
-    configured,
-    message: configured
-      ? `Paystack checkout is ready for the ${input.interval} plan.`
-      : "Paystack billing is not configured yet. Your learning data is safe, and you can keep using Recall Free.",
-  });
 });
 
 export default router;
