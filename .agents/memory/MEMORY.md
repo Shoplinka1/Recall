@@ -3,3 +3,6 @@
 - [Recall private storage paths](recall-private-storage-paths.md) — database object paths are relative to the private prefix; only signed GCS paths include that prefix.
 - [Recall managed workflows](recall-managed-workflows.md) — legacy Recall API/Web workflows collide with the artifact-owned services on ports 8080 and 23566.
 - [Recall answer evaluation](recall-answer-evaluation.md) — short answers use bounded terminology and framing equivalence; MCQ/true-false remain exact.
+- [Recall verification contracts](recall-verification-contracts.md) — persistence probes must follow the current generated API contract and explicitly complete practice sessions.
+- [Recall answer idempotency](recall-answer-idempotency.md) — repeated submissions must reuse the persisted teaching intervention and follow-up rather than generate a new one.
+- [Recall question quality](recall-question-quality.md) — grounded prompts should use compact source sentences, one focused cloze blank, and concept-level choices.

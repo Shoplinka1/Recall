@@ -1,0 +1,114 @@
+RECALL — FINISH STEP 7 VERIFICATION + FIX ANSWER SAVING
+
+CONTINUE EXACTLY FROM THE CURRENT GIT STATE.
+
+Step 7 is already implemented. Do NOT restart Step 7, redo Steps 1–6, redesign the UI, change question-generation behavior, or start Step 8.
+
+The latest Step 7 fixes were already pushed to GitHub in commit 517ea1e.
+
+FIRST — FIX THE CURRENT SAVE ERROR
+
+The app currently shows:
+
+“Couldn’t save your answer”
+
+Investigate the actual cause using the existing API/server logs and current code.
+
+Trace the complete answer flow:
+
+Frontend → answer API → server validation → persistence → response → frontend state
+
+Determine whether the failure is caused by:
+	•	authentication/session cookies
+	•	API request credentials
+	•	wrong endpoint/request payload
+	•	database/schema
+	•	server validation
+	•	generated API contract
+	•	runtime exception
+	•	frontend handling
+
+Fix ONLY the genuine cause.
+
+Do NOT hide the error, bypass validation, use fake data, or weaken security.
+
+After fixing it, verify that a real authenticated learner can submit an answer and that the answer is actually persisted.
+
+THEN — FINISH STEP 7 VERIFICATION
+
+Run the realistic flow:
+
+ANSWER → RESULT → GROUNDED TEACHING → KEY IDEA → MISCONCEPTION WHEN SUPPORTED → FOLLOW-UP → SEPARATE ATTEMPT → EXISTING MASTERY UPDATE
+
+Verify:
+	•	incorrect answers receive source-grounded correction
+	•	low-confidence correct answers can receive reinforcement
+	•	high-confidence correct answers do not receive unnecessary teaching every time
+	•	one vague mistake does not create a misconception
+	•	supported repeated mistakes can create a cautious misconception signal
+	•	follow-up tests the same concept
+	•	follow-up is meaningfully different
+	•	different question type is preferred when possible
+	•	follow-up is grounded in persisted study material
+	•	duplicate/near-duplicate follow-ups are rejected
+	•	no valid follow-up safely returns null
+	•	teaching failure does not break answering
+	•	follow-up failure does not break answering
+	•	teaching does not change mastery
+	•	follow-up answers use the existing Step 6 mastery calculation
+	•	unanswered follow-ups are not scored
+	•	repeated answer submission is idempotent
+	•	User B cannot access User A’s material, session, teaching, or follow-up
+	•	session completion works when there is no follow-up
+
+TESTS
+
+Run available:
+	•	Step 7 tests
+	•	Step 4 regression
+	•	Step 5 regression
+	•	Step 6 regression
+	•	question-generation quality tests
+	•	authentication/ownership tests
+	•	materials tests
+	•	typecheck
+	•	build
+	•	/api/healthz
+	•	frontend HTTP check
+
+Use realistic persisted multi-section study material.
+
+Inspect the actual teaching and follow-up outputs. Confirm they are concise, useful, concept-specific, grounded, and non-repetitive.
+
+Do NOT modify the question-generation prompt yet. That is a separate task after Step 7 is complete.
+
+Do NOT weaken/delete tests.
+
+If something fails:
+	1.	Identify whether it is genuinely caused by Step 7 or the answer-saving path.
+	2.	Fix only that genuine defect.
+	3.	Rerun the affected test.
+
+Do NOT start Step 8.
+
+FINAL REPORT
+
+STEP_7
+TEACHING
+GROUNDING
+MISCONCEPTIONS
+FOLLOW_UP
+MASTERY_INTEGRATION
+PERSISTENCE
+OWNERSHIP
+UI_STATES
+ANSWER_SAVING
+TESTED
+NOT_VERIFIED
+BUILD
+RUNTIME
+
+Only report what was actually verified.
+
+STOP AFTER STEP 7.
+:::

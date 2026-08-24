@@ -1,0 +1,93 @@
+RECALL — START STEP 7
+
+CONTINUE FROM CURRENT GIT STATE. Steps 1–6 are implemented and verified.
+
+DO NOT redo Steps 1–6, redesign the UI, rebuild architecture, enable DEMO_MODE, use fake data, use external/web knowledge, implement billing, or start Step 8.
+
+GOAL:
+Turn Recall's existing practice engine into a TEACH → CORRECT → REINFORCE learning loop.
+
+After every answer:
+- Evaluate correctness + confidence using the existing system.
+- Show correct/incorrect immediately.
+- Give a concise explanation using ONLY the user's uploaded material.
+- Show the key idea worth remembering.
+- For incorrect answers, explain what was wrong and what the source actually says.
+- Identify a misconception ONLY when source evidence supports it.
+- For repeated failures, increase teaching/scaffolding and use a simpler corrective question.
+- For correct low-confidence answers, provide reinforcement when useful.
+- When mastery is strong, reduce basic repetition and prefer application/comparison/cause-effect/scenario questions when supported.
+
+FOLLOW-UP:
+Offer at most one meaningful follow-up when appropriate.
+
+It must:
+- test the same concept differently
+- preferably use a different question type
+- not repeat or expose the answer
+- pass existing duplicate/similarity checks
+- remain grounded in the same/related source section
+- respect mastery/confidence/history
+- return null safely when no valid follow-up exists
+
+GROUNDING + SECURITY:
+Server must remain authoritative and verify user, material, section, concept, question, and follow-up ownership.
+
+Never trust client-provided correctness, expected answers, explanations, source excerpts, or concept IDs.
+
+No unsupported facts. No external knowledge.
+
+PERSISTENCE:
+Persist teaching interventions minimally, including original attempt, explanation, key idea, misconception (if supported), source section, follow-up relationship/status, and timestamp.
+
+Teaching itself must NOT change mastery.
+Follow-up answers are separate normal attempts and use the existing Step 6 mastery calculation.
+Unanswered follow-ups are not scored.
+Repeated answer requests must be idempotent.
+
+UI:
+Keep the existing practice screen. Add usable states for submitting, correct, incorrect, teaching, follow-up-ready, follow-up-submitting, session-complete, teaching-unavailable, and follow-up-generation failure.
+
+If teaching/follow-up generation fails, the practice session must continue safely.
+
+TESTS MUST PROVE:
+- grounded explanations
+- incorrect-answer teaching
+- low-confidence reinforcement
+- evidence-based misconception detection
+- deeper teaching after repeated failures
+- different grounded follow-ups
+- duplicate/near-duplicate protection
+- follow-up persistence
+- idempotency
+- existing mastery remains correct
+- teaching does not alter mastery
+- ownership/security
+- UI states
+- Steps 4–6 regressions
+
+Run:
+Step 4, Step 5, Step 6, question-quality, auth/ownership, materials, typecheck, build, health check, frontend HTTP.
+
+Use realistic multi-concept source material and inspect actual teaching/follow-up outputs. Do not claim success from tests alone.
+
+The real loop must work:
+
+ANSWER → RESULT → GROUNDED TEACHING → KEY IDEA → DIFFERENT FOLLOW-UP → NEW ATTEMPT → EXISTING MASTERY UPDATE
+
+Preserve Steps 1–6. STOP after Step 7.
+
+FINAL REPORT:
+STEP_7
+TEACHING
+GROUNDING
+MISCONCEPTIONS
+FOLLOW_UP
+MASTERY_INTEGRATION
+PERSISTENCE
+OWNERSHIP
+UI_STATES
+TESTED
+NOT_VERIFIED
+BUILD
+RUNTIME

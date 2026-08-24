@@ -29,3 +29,4 @@ export type {
   UploadResponse,
   WeaknessPracticeInput,
 } from "./generated/types";
+export * from './generated/types';

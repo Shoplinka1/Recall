@@ -1,0 +1,390 @@
+RECALL — PHASE 3: PREMIUM LEARNING EXPERIENCE + PRODUCT DIFFERENTIATION
+
+Continue from the current Git state.
+
+Phase 2 is complete. Now transform Recall into a polished, premium active-recall learning product that feels substantially better than a basic quiz/question generator.
+
+IMPORTANT:
+- Do NOT start Step 8.
+- Do NOT modify the existing backend architecture unnecessarily.
+- Do NOT break Step 7, answer saving, teaching, mastery, authentication, persistence, source grounding, or security.
+- Do NOT use DEMO_MODE or fake learner data.
+- Do NOT use external knowledge to generate study content.
+- Preserve all existing functionality and tests.
+- Make real product improvements, not cosmetic changes only.
+
+GOAL
+
+Recall should feel like a premium learning product from the first landing-page visit through:
+
+LANDING PAGE
+→ SIGN UP
+→ STUDY MATERIAL
+→ QUESTION
+→ ANSWER
+→ FEEDBACK
+→ TEACHING
+→ FOLLOW-UP
+→ MASTERY
+→ RESULTS
+→ NEXT STUDY SESSION
+
+The experience should feel:
+- intelligent
+- focused
+- modern
+- calm
+- premium
+- motivating
+- fast
+- trustworthy
+- genuinely useful for students
+
+1. PREMIUM LANDING PAGE
+
+Rewrite ALL landing-page copy.
+
+Do not use generic AI/SaaS phrases such as:
+"Revolutionize your learning"
+"Unlock your potential"
+"AI-powered learning platform"
+"Study smarter, not harder"
+
+Instead communicate a clear product promise.
+
+Core positioning:
+
+Recall turns a student's own study material into focused active-recall practice, identifies what they actually remember, teaches weak concepts, and brings them back to the concepts they need to strengthen.
+
+The landing page should immediately answer:
+
+WHAT IS RECALL?
+WHO IS IT FOR?
+WHY IS IT BETTER THAN JUST REREADING?
+HOW DOES IT WORK?
+WHY SHOULD I TRUST IT?
+WHY SHOULD I SIGN UP?
+
+Create premium sections such as:
+
+HERO
+- strong concise headline
+- supporting explanation
+- primary CTA
+- secondary CTA if appropriate
+- polished visual treatment
+
+HOW IT WORKS
+1. Add your study material
+2. Recall turns it into focused questions
+3. Answer and receive useful feedback
+4. Recall identifies what needs strengthening
+5. Return to weak concepts until they stick
+
+WHY RECALL FEELS DIFFERENT
+Explain the product's actual differentiators:
+- questions grounded in the learner's own material
+- active recall instead of passive rereading
+- concept-level mastery
+- targeted teaching after mistakes
+- meaningful follow-up questions
+- persistent progress
+- adaptive reinforcement
+
+Include a concise example showing:
+
+SOURCE MATERIAL
+→ QUESTION
+→ ANSWER
+→ FEEDBACK
+→ TEACHING
+→ FOLLOW-UP
+→ MASTERY
+
+Use real product behavior, not fake claims.
+
+PREMIUM TRUST SECTION
+
+Communicate that Recall:
+- works from the student's own material
+- does not invent study facts
+- keeps learning progress persistent
+- focuses on understanding rather than meaningless scores
+
+CTA SECTION
+
+End with a strong reason to start studying.
+
+2. PREMIUM WRITING / COPY
+
+Review every visible piece of product copy.
+
+Improve:
+- buttons
+- headings
+- subtitles
+- empty states
+- onboarding text
+- loading messages
+- error messages
+- answer feedback
+- results copy
+- progress labels
+- study instructions
+
+Copy should be concise, human, confident and useful.
+
+Avoid robotic AI wording.
+
+Examples of desired tone:
+
+Instead of:
+"Submit your answer to continue."
+
+Prefer:
+"Trust your recall."
+
+Instead of:
+"Incorrect answer."
+
+Prefer:
+"Not quite. Let's lock this concept in."
+
+Instead of:
+"Correct answer."
+
+Prefer:
+"Exactly. You remembered it."
+
+Do not overdo motivational language. Keep it sophisticated.
+
+3. PREMIUM STUDY EXPERIENCE
+
+Make the question screen feel exceptional on mobile.
+
+Each question should have:
+- clear hierarchy
+- minimal distraction
+- obvious answer area
+- confidence selection where supported
+- clear submit/check action
+- elegant correct/incorrect feedback
+- concise explanation
+- source grounding where appropriate
+- teaching intervention when triggered
+- follow-up question when available
+
+The student should always understand:
+
+"What am I answering?"
+"How confident am I?"
+"Was I right?"
+"Why?"
+"What should I remember?"
+"What happens next?"
+
+4. MAKE RECALL FEEL ADAPTIVE
+
+The product should communicate that Recall is paying attention to the learner.
+
+Use the existing mastery/weakness data to make the experience feel personalized.
+
+Examples:
+
+"You're getting stronger on Photosynthesis."
+
+"This concept needs another pass."
+
+"Let's reinforce this one."
+
+"Strong recall. Keep going."
+
+Do NOT invent mastery values.
+
+Use only persisted real learner data.
+
+5. RESULTS EXPERIENCE
+
+Make results feel like a useful learning diagnosis, NOT just a score screen.
+
+Prioritize:
+
+WHAT YOU KNOW
+WHAT NEEDS WORK
+WHAT YOU SHOULD REVIEW NEXT
+
+Show meaningful concept-level information using existing mastery data.
+
+Avoid making the experience feel like a generic exam result.
+
+The results screen should naturally lead into:
+
+"Study again"
+"Strengthen weak concepts"
+"Continue learning"
+
+without creating fake data or changing backend scoring.
+
+6. MICRO-INTERACTIONS
+
+Add subtle premium motion where appropriate:
+
+- question transitions
+- answer feedback
+- progress updates
+- mastery changes
+- result reveal
+- loading states
+
+Keep animations:
+- fast
+- subtle
+- purposeful
+
+No excessive bouncing, flashy effects, or distracting animations.
+
+7. MOBILE-FIRST QUALITY
+
+Recall is primarily a mobile study experience.
+
+Test at approximately:
+- 375px
+- 390px
+- 402px
+
+Ensure:
+- no horizontal scrolling
+- buttons remain reachable
+- text remains readable
+- answer inputs are comfortable
+- important information appears above the fold where possible
+- keyboard/input interaction remains usable
+
+Also ensure desktop remains polished.
+
+8. PREMIUM VISUAL SYSTEM
+
+Improve visual consistency across the product.
+
+Create a coherent design language for:
+- typography
+- spacing
+- cards
+- buttons
+- borders
+- shadows
+- colors
+- progress indicators
+- feedback states
+
+Do not blindly add gradients, glassmorphism, huge shadows, or flashy effects.
+
+The visual direction should feel closer to a serious premium education product than a generic AI startup template.
+
+9. EMPTY / LOADING / ERROR STATES
+
+Every important state should feel intentional.
+
+Examples:
+
+Loading:
+"Building your recall session..."
+
+Saving:
+"Saving your answer..."
+
+Connection failure:
+"Your answer wasn't saved. Check your connection and try again."
+
+Empty study material:
+"Add something you're studying and we'll turn it into recall practice."
+
+Do not hide real errors.
+
+10. PRODUCT DIFFERENTIATION
+
+Do not copy Anki, Quizlet, or other competitors.
+
+Recall's identity should center around:
+
+YOUR MATERIAL
+→ ACTIVE RECALL
+→ CONCEPT MASTERY
+→ TARGETED TEACHING
+→ REINFORCEMENT
+
+Make that story obvious throughout the product.
+
+11. SECURITY / BACKEND PROTECTION
+
+Do not move authoritative logic to the client.
+
+Never trust the client for:
+- correctness
+- mastery
+- expected answers
+- source material
+- concept ownership
+- follow-up correctness
+
+Preserve existing server validation and ownership checks.
+
+12. VERIFICATION
+
+After implementation run:
+
+- existing regression tests
+- auth/ownership tests
+- materials tests
+- question-generation quality tests
+- typecheck
+- build
+- /api/healthz
+- frontend HTTP check
+
+Inspect the actual product at mobile and desktop sizes.
+
+Inspect:
+- landing page
+- sign-up/login
+- study screen
+- answer feedback
+- teaching
+- follow-up
+- results
+- empty states
+- loading states
+- error states
+
+Do NOT claim browser interactions were tested if the environment cannot actually perform them.
+
+If a genuine defect is discovered:
+1. identify the cause
+2. fix only the relevant defect
+3. rerun the affected checks
+
+Do not weaken or delete tests.
+
+FINAL REPORT
+
+LANDING_PAGE
+PRODUCT_POSITIONING
+COPY
+STUDY_EXPERIENCE
+ANSWER_FEEDBACK
+TEACHING
+FOLLOW_UP
+MASTERY
+RESULTS
+MOBILE
+DESKTOP
+ERROR_STATES
+REGRESSIONS
+TYPECHECK
+BUILD
+RUNTIME
+NOT_VERIFIED
+
+Only report what was actually verified.
+
+STOP AFTER PHASE 3.

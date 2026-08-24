@@ -1,0 +1,93 @@
+RECALL — PHASE 3: PREMIUM PRODUCT EXPERIENCE
+
+Continue from the current Git state.
+
+Phase 2 is complete. Upgrade Recall into a polished, premium learning product.
+
+DO NOT:
+- Start Step 8.
+- Break Step 7, answer saving, teaching, mastery, auth, persistence, grounding, or security.
+- Change question-generation logic.
+- Use DEMO_MODE, fake learner data, or external study knowledge.
+- Redesign the backend unnecessarily.
+
+GOAL:
+
+Make Recall feel significantly better than a basic quiz app from:
+
+LANDING PAGE → SIGN UP → STUDY → ANSWER → FEEDBACK → TEACHING → FOLLOW-UP → MASTERY → RESULTS → NEXT SESSION
+
+LANDING PAGE:
+- Rewrite all copy to feel premium, clear, human, and confident.
+- Strong headline explaining exactly what Recall does.
+- Explain the real advantage: students use their own material, actively recall it, learn from mistakes, and strengthen weak concepts.
+- Add polished How It Works, Why Recall, trust, and CTA sections.
+- Remove generic AI/SaaS marketing language.
+- Make the landing page visually premium without excessive gradients, animations, or clutter.
+
+PRODUCT EXPERIENCE:
+- Make study screens excellent on mobile.
+- Improve typography, spacing, buttons, cards, progress, feedback, loading and empty states.
+- Make correct/incorrect feedback feel rewarding and useful.
+- Make teaching and follow-ups feel like intelligent tutoring.
+- Make results explain WHAT I KNOW, WHAT NEEDS WORK, and WHAT TO STUDY NEXT.
+- Use only real persisted mastery data.
+- Add subtle, purposeful animations.
+- Keep everything fast, clean and distraction-free.
+
+COPY:
+Rewrite visible product copy including:
+- buttons
+- headings
+- onboarding
+- loading
+- saving
+- errors
+- feedback
+- teaching
+- results
+- progress
+
+Keep the tone premium, concise, human and sophisticated.
+
+MOBILE:
+Optimize for 375–402px first, then desktop.
+No overflow, cramped controls, unreadable text, or broken interactions.
+
+PRESERVE:
+Server-authoritative validation, ownership, grounding, mastery calculations, Step 7 and all existing functionality.
+
+VERIFY:
+- existing tests
+- auth/ownership
+- materials
+- question quality
+- typecheck
+- build
+- /api/healthz
+- frontend HTTP
+- mobile and desktop UI
+
+Inspect the actual UI. Do not claim browser interaction was tested if unavailable.
+
+If a genuine defect appears, fix only that defect and rerun the affected check.
+
+FINAL REPORT:
+LANDING_PAGE
+COPY
+STUDY_EXPERIENCE
+TEACHING
+FOLLOW_UP
+MASTERY
+RESULTS
+MOBILE
+DESKTOP
+REGRESSIONS
+TYPECHECK
+BUILD
+RUNTIME
+NOT_VERIFIED
+
+Only report what was actually verified.
+
+STOP AFTER PHASE 3.

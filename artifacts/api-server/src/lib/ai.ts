@@ -11,6 +11,12 @@ export type AnswerEvaluation = {
   explanation: string;
   concept: string;
 };
+export type TeachingResult = {
+  result: "correct" | "incorrect";
+  explanation: string;
+  keyIdea: string;
+  misconception: string | null;
+};
 export type Weakness = {
   concept: string;
   reason: string;
@@ -39,6 +45,12 @@ export interface AIService {
   ): GroundedQuestion[];
   validateQuestions(questions: Question[]): Question[];
   evaluateAnswer(question: Question, answer: AnswerInput): AnswerEvaluation;
+  teachAnswer(
+    question: Question,
+    answer: AnswerInput,
+    isCorrect: boolean,
+    recentFailures: number,
+  ): TeachingResult;
   diagnoseWeaknesses(
     attempts: Array<{ question: Question; isCorrect: boolean; confidence: string }>,
   ): Weakness[];
@@ -75,6 +87,37 @@ const normalizeComparableText = (value: string) =>
     .replace(/[^a-z0-9\s-]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+
+export const questionSimilarity = (left: string, right: string) => {
+  const leftTokens = new Set(normalizeComparableText(left).split(" ").filter(Boolean));
+  const rightTokens = new Set(normalizeComparableText(right).split(" ").filter(Boolean));
+  if (!leftTokens.size || !rightTokens.size) return 0;
+  const intersection = [...leftTokens].filter((token) => rightTokens.has(token)).length;
+  return intersection / new Set([...leftTokens, ...rightTokens]).size;
+};
+
+const maskTerm = (sentence: string, term: string) => {
+  const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return sentence.replace(new RegExp(escapedTerm, "i"), "_____");
+};
+
+const blankCount = (text: string) => (text.match(/_{5,}/g) ?? []).length;
+
+const compactSource = (source: string, focus?: string, maxLength = 140) => {
+  const candidate =
+    source
+      .split(/(?<=[.!?])\s+|\n+/)
+      .map(clean)
+      .find((sentence) => focus && sentence.toLowerCase().includes(focus.toLowerCase())) ??
+    clean(source).split(/(?<=[.!?])\s+|\n+/)[0];
+  if (candidate.length <= maxLength) return candidate;
+  const focusIndex = focus ? candidate.toLowerCase().indexOf(focus.toLowerCase()) : 0;
+  const start = Math.max(0, Math.min(focusIndex - 48, candidate.length - maxLength + 1));
+  const prefix = start > 0 ? "… " : "";
+  const available = maxLength - prefix.length;
+  const clipped = candidate.slice(start, start + available).replace(/^\S*\s+/, "");
+  return `${prefix}${clipped.trim()}${start + available < candidate.length ? " …" : ""}`;
+};
 
 const normalizeShortAnswer = (value: string) => {
   let normalized = normalizeComparableText(value);
@@ -198,9 +241,7 @@ export class DevelopmentAIService implements AIService {
     concepts: GroundedConcept[],
     options: { count?: number; excludeQuestionTexts?: string[] } = {},
   ): GroundedQuestion[] {
-    const excluded = new Set(
-      (options.excludeQuestionTexts ?? []).map((value) => value.trim().toLowerCase()),
-    );
+    const excluded = (options.excludeQuestionTexts ?? []).map((value) => value.trim().toLowerCase());
     const usable = sections
       .map((section) => ({
         ...section,
@@ -214,30 +255,40 @@ export class DevelopmentAIService implements AIService {
           section.excerpt.toLowerCase().includes(candidate.name.toLowerCase()),
         ) ?? concepts[index % Math.max(concepts.length, 1)];
       if (!concept) continue;
-      const terms = termsFrom(section.excerpt);
-      const shortAnswer = terms[0];
-      if (shortAnswer) {
-        generated.push({
-          id: stableId(`${section.id}:short`, index),
+      const sectionConcepts = concepts.filter((candidate) =>
+        section.excerpt.toLowerCase().includes(candidate.name.toLowerCase()),
+      );
+      const coveredConcepts = sectionConcepts.length ? sectionConcepts : [concept];
+      coveredConcepts.forEach((coveredConcept, conceptIndex) => {
+        const focusedSource = compactSource(section.excerpt, coveredConcept.name);
+        const maskedExcerpt = maskTerm(focusedSource, coveredConcept.name);
+        if (blankCount(maskedExcerpt) !== 1) return;
+        const base = {
           materialId: section.materialId,
           sectionId: section.id,
-          questionText: `Which key term is named in this source section about ${concept.name}?`,
-          type: "short_answer",
-          options: [],
-          concept: concept.name,
+          concept: coveredConcept.name,
           difficulty: index % 3 === 0 ? "easy" : index % 3 === 1 ? "medium" : "hard",
           sourceExcerpt: section.excerpt,
           sourcePage: section.sectionIndex + 1,
           sourceSectionId: section.id,
-          explanation: `The source section names “${shortAnswer}”: ${section.excerpt}`,
-          correctAnswer: shortAnswer,
-        });
-      }
+          explanation: `The source section identifies “${coveredConcept.name}”: ${section.excerpt}`,
+          correctAnswer: coveredConcept.name,
+        };
+        generated.push(
+          {
+            ...base,
+            id: stableId(`${section.id}:definition:${coveredConcept.id}`, conceptIndex),
+            questionText: `Complete the sentence: “${maskedExcerpt}”`,
+            type: "short_answer",
+            options: [],
+          },
+        );
+      });
       generated.push({
         id: stableId(`${section.id}:true-false`, index),
-          materialId: section.materialId,
+        materialId: section.materialId,
         sectionId: section.id,
-        questionText: `True or false: ${section.excerpt}`,
+        questionText: `True or false: ${compactSource(section.excerpt)}`,
         type: "true_false",
         options: ["True", "False"],
         concept: concept.name,
@@ -251,20 +302,21 @@ export class DevelopmentAIService implements AIService {
     }
     if (usable.length >= 4) {
       for (const [index, section] of usable.entries()) {
-        const options = usable
-          .slice(Math.floor(index / 4) * 4, Math.floor(index / 4) * 4 + 4)
-          .map((candidate) => candidate.excerpt);
-        if (options.length !== 4) break;
         const concept =
           concepts.find((candidate) =>
             section.excerpt.toLowerCase().includes(candidate.name.toLowerCase()),
           ) ?? concepts[index % Math.max(concepts.length, 1)];
-        if (!concept) continue;
+        const distractors = concepts
+          .filter((candidate) => candidate.id !== concept?.id)
+          .map((candidate) => candidate.name)
+          .slice(0, 3);
+        if (!concept || distractors.length < 3) continue;
+        const options = [concept.name, ...distractors];
         generated.push({
           id: stableId(`${section.id}:multiple-choice`, index),
           materialId: section.materialId,
           sectionId: section.id,
-          questionText: "Which statement is taken from this source section?",
+          questionText: "Which concept is central to this source section?",
           type: "multiple_choice",
           options,
           concept: concept.name,
@@ -273,13 +325,23 @@ export class DevelopmentAIService implements AIService {
           sourcePage: section.sectionIndex + 1,
           sourceSectionId: section.id,
           explanation: `The selected statement is the source excerpt for this section: ${section.excerpt}`,
-          correctAnswer: section.excerpt,
+          correctAnswer: concept.name,
         });
       }
     }
+    // `count` is a requested session size, not a cap on the useful question
+    // bank. Generate the complete grounded candidate set so later practice
+    // selection can choose a varied subset.
+    void options.count;
     return this.validateGroundedQuestions(generated, sections, concepts)
-      .filter((question) => !excluded.has(question.questionText.trim().toLowerCase()))
-      .slice(0, Math.max(1, Math.min(options.count ?? 6, 20)));
+      .filter(
+        (question) =>
+          !excluded.some(
+            (previous) =>
+              previous === question.questionText.trim().toLowerCase() ||
+            questionSimilarity(previous, question.questionText) >= 0.8,
+          ),
+      );
   }
 
   validateGroundedQuestions(
@@ -287,7 +349,7 @@ export class DevelopmentAIService implements AIService {
     sections: GroundedSection[],
     concepts: GroundedConcept[],
   ): GroundedQuestion[] {
-    const seen = new Set<string>();
+    const seen: string[] = [];
     const sectionMap = new Map(sections.map((section) => [section.id, section]));
     const conceptNames = new Set(concepts.map((concept) => concept.name.toLowerCase()));
     return questions.filter((question) => {
@@ -311,18 +373,21 @@ export class DevelopmentAIService implements AIService {
               options.map((option) => option.toLowerCase()).join("|") === "true|false" &&
               ["true", "false"].includes(question.correctAnswer.trim().toLowerCase())
             : options.length === 0;
+      const validCloze =
+        type !== "short_answer" || blankCount(question.questionText) === 1;
       const grounded =
         Boolean(section) &&
         question.materialId === section?.materialId &&
         Boolean(question.sourceExcerpt.trim()) &&
         normalizedSectionContent.includes(normalizedSourceExcerpt) &&
         (type === "multiple_choice"
-          ? question.correctAnswer === question.sourceExcerpt
+          ? normalizedSectionContent.includes(question.correctAnswer.toLowerCase())
           : type === "true_false"
-            ? question.questionText.toLowerCase().includes(question.sourceExcerpt.toLowerCase())
+            ? questionSimilarity(question.questionText, question.sourceExcerpt) >= 0.35
             : question.sourceExcerpt.toLowerCase().includes(question.correctAnswer.toLowerCase()));
       const valid =
         validType &&
+        validCloze &&
         ["easy", "medium", "hard"].includes(difficulty) &&
         validOptions &&
         Boolean(normalizedQuestion) &&
@@ -334,8 +399,12 @@ export class DevelopmentAIService implements AIService {
         question.concept.trim().length >= 2 &&
         grounded &&
         !this.isAmbiguous(question, type) &&
-        !seen.has(normalizedQuestion);
-      if (valid) seen.add(normalizedQuestion);
+        !seen.some(
+          (previous) =>
+            previous === normalizedQuestion ||
+            questionSimilarity(previous, normalizedQuestion) >= 0.8,
+        );
+      if (valid) seen.push(normalizedQuestion);
       return valid;
     });
   }
@@ -343,12 +412,14 @@ export class DevelopmentAIService implements AIService {
   private isAmbiguous(question: GroundedQuestion, type: string) {
     const text = question.questionText.trim().toLowerCase();
     if (type === "multiple_choice") {
-      return !text.includes("which") || question.options.some((option) => option.trim().length < 3);
+      return !text.startsWith("which concept") || question.options.some((option) => option.trim().length < 3);
     }
     if (type === "true_false") {
       return !text.startsWith("true or false:") || text.length < 30;
     }
-    return !text.includes("key term") || text.length < 20;
+    return (
+      !text.startsWith("complete the sentence:")
+    ) || text.length < 20;
   }
 
   validateQuestions(questions: Question[]): Question[] {
@@ -380,9 +451,10 @@ export class DevelopmentAIService implements AIService {
         question.explanation.trim().length > 0 &&
         question.explanation.toLowerCase().includes(question.sourceExcerpt.toLowerCase()) &&
         (type === "multiple_choice"
-          ? question.options.some((option) => option.toLowerCase() === question.correctAnswer.trim().toLowerCase())
+          ? question.options.some((option) => option.toLowerCase() === question.correctAnswer.trim().toLowerCase()) &&
+            question.sourceExcerpt.toLowerCase().includes(question.correctAnswer.toLowerCase())
           : type === "true_false"
-            ? question.questionText.toLowerCase().includes(question.sourceExcerpt.toLowerCase())
+            ? questionSimilarity(question.questionText, question.sourceExcerpt) >= 0.35
             : question.sourceExcerpt.toLowerCase().includes(question.correctAnswer.toLowerCase()));
       if (valid) seen.add(key);
       return valid;
@@ -392,6 +464,46 @@ export class DevelopmentAIService implements AIService {
   evaluateAnswer(question: Question, answer: AnswerInput): AnswerEvaluation {
     const isCorrect = answersMatch(question.correctAnswer, answer.answer, question.type);
     return { isCorrect, concept: question.concept, explanation: this.generateExplanation(question, answer.answer) };
+  }
+
+  teachAnswer(
+    question: Question,
+    answer: AnswerInput,
+    isCorrect: boolean,
+    recentFailures: number,
+  ): TeachingResult {
+    const keyIdea = question.sourceExcerpt.trim();
+    if (isCorrect) {
+      return {
+        result: "correct",
+        explanation:
+          answer.confidence === "low"
+            ? `Your answer matches the source. ${question.explanation}`
+            : question.explanation,
+        keyIdea,
+        misconception: null,
+      };
+    }
+
+    const submitted = answer.answer.trim();
+    const expected = question.correctAnswer.trim();
+    const source = question.sourceExcerpt.trim();
+    const sourceIncludesSubmitted =
+      submitted.length >= 3 && normalizeComparableText(source).includes(normalizeComparableText(submitted));
+    const misconception =
+      sourceIncludesSubmitted && normalizeShortAnswer(submitted) !== normalizeShortAnswer(expected)
+        ? `You may be mixing “${submitted}” with “${expected}”. The source distinguishes them here.`
+        : null;
+    const scaffold =
+      recentFailures >= 2
+        ? `Start with the key distinction: the answer supported by this source is “${expected}”.`
+        : `The source supports “${expected}”, not “${submitted || "an empty answer"}”.`;
+    return {
+      result: "incorrect",
+      explanation: `${scaffold} ${question.explanation}`,
+      keyIdea,
+      misconception,
+    };
   }
 
   diagnoseWeaknesses(
@@ -451,6 +563,7 @@ class RealAIServiceUnavailable implements AIService {
   generateQuestionsFromSections(): never { return this.fail(); }
   validateQuestions(): never { return this.fail(); }
   evaluateAnswer(): never { return this.fail(); }
+  teachAnswer(): never { return this.fail(); }
   diagnoseWeaknesses(): never { return this.fail(); }
   generateTargetedPractice(): never { return this.fail(); }
   generateExplanation(): never { return this.fail(); }
