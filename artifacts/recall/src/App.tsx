@@ -160,6 +160,9 @@ function PracticeSessionPage() {
   ];
   const question = questions[index];
   if (!question) return <Empty icon={Brain} title="No question is available" body="This session has no persisted questions to practice." action={<Link href="/practice" className="text-sm font-semibold text-primary">Build another session</Link>} />;
+  const isFollowUp = followUpQuestions.some((followUp) => followUp.id === question.id);
+  const answeredCount = Math.min(index, questions.length);
+  const progress = questions.length ? (answeredCount / questions.length) * 100 : 0;
   const advance = () => {
     setResult(null);
     setChoice('');
@@ -173,16 +176,89 @@ function PracticeSessionPage() {
       onSuccess: (response: any) => {
         setResult(response);
         if (response.teaching?.followUpQuestion) {
+          const followUp = response.teaching.followUpQuestion;
+          const followUpKey = `${followUp.questionText ?? ''}`.trim().toLowerCase() || String(followUp.id);
           setFollowUpQuestions((current) =>
-            current.some((item) => item.id === response.teaching.followUpQuestion.id)
+            current.some((item) => `${item.questionText ?? ''}`.trim().toLowerCase() === followUpKey || item.id === followUp.id)
               ? current
-              : [...current, response.teaching.followUpQuestion],
+              : [...current, followUp],
           );
         }
       },
     },
   );
-  return <div className="mx-auto max-w-3xl"><div className="mb-8 flex items-center justify-between"><div><Link href="/practice" className="text-sm text-muted-foreground hover:text-foreground" data-testid="link-exit-practice">Exit practice</Link><p className="mt-3 font-bold">{session.title}</p></div><div className="text-right"><p className="mono text-xs text-primary">{String(index + 1).padStart(2, '0')} / {String(questions.length).padStart(2, '0')}</p><div className="mt-2 w-32"><ProgressBar value={((index + 1) / questions.length) * 100} /></div></div></div><Card className="p-6 md:p-10"><div className="flex flex-wrap items-center gap-2"><Badge tone="green">{session.subjectName}</Badge><Badge>{question.concept}</Badge><Badge tone="amber">{question.difficulty}</Badge></div><h1 className="display mt-8 text-4xl leading-tight md:text-5xl">{question.questionText}</h1><div className="mt-8 space-y-3">{question.options.length ? question.options.map((option: string, i: number) => <button key={option} onClick={() => setChoice(option)} className={`flex w-full items-center gap-4 rounded-xl border p-4 text-left text-sm transition-colors ${choice === option ? 'border-primary bg-primary/10' : 'border-border hover:bg-muted'}`} data-testid={`button-answer-option-${i}`}><span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border text-xs font-bold ${choice === option ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground'}`}>{String.fromCharCode(65 + i)}</span>{option}</button>) : <input value={choice} onChange={(event) => setChoice(event.target.value)} placeholder="Type your answer…" className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-ring" data-testid="input-short-answer" />}</div>{!result ? <div className="mt-8 border-t border-border pt-6"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[.12em] text-muted-foreground">How confident are you?</p><div className="mt-2 flex gap-2">{['low', 'medium', 'high'].map(c => <button key={c} onClick={() => setConfidence(c)} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${confidence === c ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-muted'}`} data-testid={`button-confidence-${c}`}>{c}</button>)}</div></div><Button onClick={submit} disabled={!choice.trim() || answer.isPending} data-testid="button-submit-answer">{answer.isPending ? 'Checking…' : 'Lock answer'} <ArrowRight className="h-4 w-4" /></Button></div>{answer.isError && <p className="mt-3 text-sm text-destructive">Recall could not save this answer. Try again.</p>}</div> : <div className={`mt-8 rounded-2xl p-5 ${result.isCorrect ? 'bg-primary/10' : 'bg-accent/15'}`}><div className="flex items-center gap-2 font-bold">{result.isCorrect ? <Check className="h-5 w-5 text-primary" /> : <Target className="h-5 w-5 text-accent-foreground" />}{result.isCorrect ? 'That holds up.' : 'This is the gap to repair.'}</div><p className="mt-3 text-sm leading-6">{result.teaching?.explanation ?? result.explanation}</p>{result.teaching?.misconception && <div className="mt-4 rounded-xl bg-accent/20 p-4"><p className="text-xs font-bold uppercase tracking-[.12em] text-accent-foreground">Possible mix-up</p><p className="mt-1 text-sm leading-6">{result.teaching.misconception}</p></div>}<div className="mt-4 rounded-xl bg-background/60 p-4"><p className="text-xs font-bold uppercase tracking-[.12em] text-primary">Key idea</p><p className="mt-1 text-sm leading-6">{result.teaching?.keyIdea ?? result.sourceExcerpt}</p></div><p className="mt-4 border-l-2 border-primary/40 pl-3 text-xs italic text-muted-foreground">“{result.sourceExcerpt}”</p>{result.teaching?.followUpQuestion && <p className="mt-4 text-xs font-semibold text-primary">A different question on this idea has been added next.</p>}{result.teaching?.followUpStatus === 'none' && <p className="mt-4 text-xs text-muted-foreground">No additional grounded question was available, so you can continue safely.</p>}<Button onClick={advance} className="mt-5" data-testid="button-next-question">{index + 1 === questions.length ? 'See my results' : 'Next question'} <ArrowRight className="h-4 w-4" /></Button></div>}</Card></div>;
+  return <div className="practice-page mx-auto max-w-3xl">
+    <div className="practice-header mb-7">
+      <div className="flex items-start justify-between gap-5">
+        <div className="min-w-0">
+          <Link href="/practice" className="inline-flex items-center text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground" data-testid="link-exit-practice">Exit practice</Link>
+          <p className="mt-3 truncate text-sm font-bold sm:text-base">{session.title}</p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="mono text-xs font-medium text-primary">{String(index + 1).padStart(2, '0')} <span className="text-muted-foreground/60">/</span> {String(questions.length).padStart(2, '0')}</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">{answeredCount} answered</p>
+        </div>
+      </div>
+      <div className="practice-progress-track mt-5" aria-label={`${answeredCount} of ${questions.length} questions answered`}>
+        <div className="practice-progress-fill" style={{ width: `${Math.max(4, progress)}%` }} />
+      </div>
+    </div>
+    <Card className="practice-card overflow-hidden">
+      <div className="border-b border-border/80 bg-muted/25 px-5 py-4 md:px-10">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge tone="green">{session.subjectName}</Badge>
+          <span className="practice-context-separator" aria-hidden="true">/</span>
+          <Badge>{question.concept}</Badge>
+          <Badge tone="amber">{question.difficulty}</Badge>
+          <span className={`practice-question-kind ml-auto ${isFollowUp ? 'text-accent-foreground' : 'text-muted-foreground'}`}>
+            {isFollowUp ? 'Follow-up retrieval' : 'Core question'}
+          </span>
+        </div>
+      </div>
+      <div className="p-5 md:p-10">
+        <p className="mono text-[10px] font-bold uppercase tracking-[.18em] text-primary">Retrieve from memory</p>
+        <h1 className="display mt-4 text-[2.15rem] leading-[1.04] tracking-[-.02em] md:text-5xl">{question.questionText}</h1>
+        <div className="mt-8 space-y-3">
+          {(question.options ?? []).length ? question.options.map((option: string, i: number) => <button key={option} onClick={() => setChoice(option)} disabled={Boolean(result) || answer.isPending} className={`practice-option flex w-full items-center gap-4 rounded-xl border p-4 text-left text-sm transition-colors ${choice === option ? 'practice-option-selected border-primary bg-primary/10' : 'border-border hover:bg-muted'} disabled:cursor-default`} data-testid={`button-answer-option-${i}`}>
+            <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border text-xs font-bold ${choice === option ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground'}`}>{String.fromCharCode(65 + i)}</span>
+            <span className="leading-5">{option}</span>
+          </button>) : <input value={choice} onChange={(event) => setChoice(event.target.value)} disabled={Boolean(result) || answer.isPending} placeholder="Type your answer…" className="w-full rounded-xl border border-input bg-background px-4 py-3.5 text-sm outline-none transition-shadow focus:ring-2 focus:ring-ring disabled:opacity-70" data-testid="input-short-answer" />}
+        </div>
+        {!result ? <div className="mt-8 border-t border-border pt-6">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[.12em] text-muted-foreground">How confident are you?</p>
+              <p className="mt-1 text-xs text-muted-foreground">Your confidence is part of the signal.</p>
+              <div className="mt-3 flex gap-1.5 rounded-full bg-muted/65 p-1">
+                {['low', 'medium', 'high'].map(c => <button key={c} onClick={() => setConfidence(c)} className={`rounded-full px-3 py-1.5 text-xs font-semibold capitalize transition-colors ${confidence === c ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`} data-testid={`button-confidence-${c}`}>{c}</button>)}
+              </div>
+            </div>
+            <div className="sm:text-right">
+              <Button onClick={submit} disabled={!choice.trim() || answer.isPending} className="w-full sm:w-auto" data-testid="button-submit-answer">{answer.isPending ? 'Saving answer…' : 'Lock answer'} <ArrowRight className="h-4 w-4" /></Button>
+              {answer.isPending && <p className="mt-2 text-xs text-muted-foreground">Checking your response against the source.</p>}
+            </div>
+          </div>
+          {answer.isError && <p className="mt-4 rounded-lg bg-destructive/10 px-3 py-2.5 text-sm text-destructive" role="alert">Recall could not save this answer. Try again.</p>}
+        </div> : <div className={`practice-feedback mt-8 rounded-2xl border p-5 md:p-6 ${result.isCorrect ? 'practice-feedback-correct' : 'practice-feedback-incorrect'}`}>
+          <div className="flex items-start gap-3">
+            <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${result.isCorrect ? 'bg-primary text-primary-foreground' : 'bg-accent text-accent-foreground'}`}>{result.isCorrect ? <Check className="h-4 w-4" /> : <Target className="h-4 w-4" />}</span>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[.16em] text-muted-foreground">{result.isCorrect ? 'Answer saved' : 'Useful miss'}</p>
+              <h2 className="mt-1 text-lg font-bold">{result.isCorrect ? 'That holds up.' : 'This is the gap to repair.'}</h2>
+            </div>
+          </div>
+          {!result.isCorrect && (result.correctAnswer ?? question.correctAnswer) && <div className="mt-5 rounded-xl bg-background/65 p-4"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-muted-foreground">A stronger answer</p><p className="mt-1.5 text-sm font-semibold leading-6">{result.correctAnswer ?? question.correctAnswer}</p></div>}
+          <p className="mt-5 text-sm leading-6">{result.teaching?.explanation ?? result.explanation}</p>
+          {result.teaching?.misconception && <div className="mt-4 rounded-xl bg-accent/20 p-4"><p className="text-xs font-bold uppercase tracking-[.12em] text-accent-foreground">Possible mix-up</p><p className="mt-1 text-sm leading-6">{result.teaching.misconception}</p></div>}
+          <div className="key-idea mt-4 rounded-xl bg-background/70 p-4"><div className="flex items-center justify-between gap-3"><p className="text-xs font-bold uppercase tracking-[.12em] text-primary">Key idea</p><span className="mono text-[10px] text-muted-foreground">HOLD ONTO THIS</span></div><p className="mt-1.5 text-sm leading-6">{result.teaching?.keyIdea ?? result.sourceExcerpt}</p></div>
+          <p className="mt-4 border-l-2 border-primary/40 pl-3 text-xs italic leading-5 text-muted-foreground">“{result.sourceExcerpt}”</p>
+          {result.teaching?.followUpQuestion && <p className="mt-4 rounded-lg border border-accent/30 bg-accent/10 px-3 py-2.5 text-xs font-semibold leading-5 text-accent-foreground">A different question on this idea has been added next.</p>}
+          {result.teaching?.followUpStatus === 'none' && <p className="mt-4 text-xs text-muted-foreground">No additional grounded question was available, so you can continue safely.</p>}
+          <Button onClick={advance} disabled={complete.isPending} className="mt-5 w-full sm:w-auto" data-testid="button-next-question">{complete.isPending ? 'Saving session…' : index + 1 === questions.length ? 'See my results' : 'Next question'} <ArrowRight className="h-4 w-4" /></Button>
+        </div>}
+      </div>
+    </Card>
+  </div>;
 }
 
 function ResultsPage() {
@@ -193,7 +269,43 @@ function ResultsPage() {
   const r: any = (q.data as any)?.results;
   if (q.isLoading) return <Loading label="Loading your persisted results" />;
   if (q.isError || !r) return <ErrorState retry={() => q.refetch()} />;
-  return <><PageHead eyebrow="Session complete" title="You found the edge." subtitle="A good session does not make every answer right. It makes the next answer more useful." action={<Button onClick={() => create.mutate({ data: { conceptIds: r.weakConcepts, durationMinutes: 10 } }, { onSuccess: s => setLocation(`/practice/${s.id}`) })} disabled={create.isPending || !r.weakConcepts.length} data-testid="button-retest-results">Retest the gap <ArrowRight className="h-4 w-4" /></Button>} /><div className="grid gap-6 lg:grid-cols-[.8fr_1.2fr]"><Card className="flex flex-col items-center justify-center p-8 text-center"><div className="ring-progress grid h-48 w-48 place-items-center rounded-full" style={{ '--progress': `${r.score}%` } as any}><div className="grid h-36 w-36 place-items-center rounded-full bg-card"><span className="mono text-5xl text-primary">{r.score}</span><span className="text-xs text-muted-foreground">/ 100</span></div></div><p className="mt-6 text-sm font-semibold">A solid working understanding</p></Card><div className="space-y-6"><Card className="p-6"><p className="mono text-[10px] uppercase tracking-[.18em] text-primary">The diagnosis</p><h2 className="display mt-3 text-3xl">Specific beats perfect.</h2><p className="mt-3 text-sm leading-7 text-muted-foreground">{r.diagnosis}</p><div className="mt-6 grid gap-3 sm:grid-cols-2"><ResultMetric label="Correct" value={`${r.correct}/${r.questionsAnswered}`} /><ResultMetric label="Avg. confidence" value={r.averageConfidence} /><ResultMetric label="Response time" value={r.averageResponseTime} /><ResultMetric label="Change" value={`+${r.improvement}%`} /></div></Card><div className="grid gap-4 sm:grid-cols-2"><Card className="p-5"><Badge tone="green">Holding strong</Badge><div className="mt-4 space-y-2">{r.strongConcepts.map((x: string) => <p className="text-sm font-semibold" key={x}><Check className="mr-2 inline h-4 w-4 text-primary" />{x}</p>)}</div></Card><Card className="p-5"><Badge tone="coral">Next attention</Badge><div className="mt-4 space-y-2">{r.needsAttention.map((x: string) => <Link href="/weaknesses" className="block text-sm font-semibold hover:text-primary" key={x} data-testid={`link-result-weakness-${x}`}><Target className="mr-2 inline h-4 w-4 text-accent-foreground" />{x}</Link>)}</div></Card></div></div></div></>;
+  const weakConcepts = r.weakConcepts ?? [];
+  const strongConcepts = r.strongConcepts ?? [];
+  const needsAttention = r.needsAttention ?? [];
+  const retest = () => create.mutate({ data: { conceptIds: weakConcepts, durationMinutes: 10 } }, { onSuccess: s => setLocation(`/practice/${s.id}`) });
+  return <div className="results-page">
+    <PageHead eyebrow="Session complete" title="You found the edge." subtitle="A good session does not make every answer right. It makes the next answer more useful." action={<Button onClick={retest} disabled={create.isPending || !weakConcepts.length} data-testid="button-retest-results">{create.isPending ? 'Building retest…' : 'Retest the gap'} <ArrowRight className="h-4 w-4" /></Button>} />
+    {create.isError && <p className="mb-6 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive" role="alert">Recall could not build that retest. Try again.</p>}
+    <div className="grid gap-5 lg:grid-cols-[.78fr_1.22fr]">
+      <Card className="results-score-card overflow-hidden p-6 sm:p-8">
+        <div className="flex items-start justify-between gap-4">
+          <div><p className="mono text-[10px] uppercase tracking-[.18em] text-primary">Session score</p><p className="mt-2 text-sm text-muted-foreground">From this retrieval pass</p></div>
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-primary/10 text-primary"><Check className="h-4 w-4" /></span>
+        </div>
+        <div className="mt-8 flex items-center justify-center">
+          <div className="ring-progress grid h-44 w-44 place-items-center rounded-full" style={{ '--progress': `${r.score}%` } as any}><div className="grid h-32 w-32 place-items-center rounded-full bg-card text-center"><span className="mono text-5xl text-primary">{r.score}</span><span className="text-xs text-muted-foreground">/ 100</span></div></div>
+        </div>
+        <p className="mt-7 text-center text-sm font-semibold">A solid working understanding</p>
+        <div className="mt-7 border-t border-border pt-5"><div className="flex items-center justify-between text-xs"><span className="text-muted-foreground">Questions answered</span><span className="mono">{r.questionsAnswered}</span></div><ProgressBar value={r.questionsAnswered ? (r.correct / r.questionsAnswered) * 100 : 0} /><p className="mt-2 text-right text-xs text-muted-foreground">{r.correct} correct</p></div>
+      </Card>
+      <div className="space-y-5">
+        <Card className="p-6 sm:p-7">
+          <p className="mono text-[10px] uppercase tracking-[.18em] text-primary">The diagnosis</p>
+          <h2 className="display mt-3 text-3xl">Specific beats perfect.</h2>
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">{r.diagnosis}</p>
+          <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-4"><ResultMetric label="Correct" value={`${r.correct}/${r.questionsAnswered}`} /><ResultMetric label="Avg. confidence" value={r.averageConfidence} /><ResultMetric label="Response time" value={r.averageResponseTime} /><ResultMetric label="Change" value={`+${r.improvement}%`} /></div>
+        </Card>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Card className="result-list-card p-5"><Badge tone="green">Holding strong</Badge><div className="mt-4 space-y-3">{strongConcepts.length ? strongConcepts.map((x: string) => <p className="text-sm font-semibold leading-5" key={x}><Check className="mr-2 inline h-4 w-4 text-primary" />{x}</p>) : <p className="text-sm leading-6 text-muted-foreground">No strong concept signal was recorded in this session.</p>}</div></Card>
+          <Card className="result-list-card p-5"><Badge tone="coral">Next attention</Badge><div className="mt-4 space-y-3">{needsAttention.length ? needsAttention.map((x: string) => <Link href="/weaknesses" className="block text-sm font-semibold leading-5 hover:text-primary" key={x} data-testid={`link-result-weakness-${x}`}><Target className="mr-2 inline h-4 w-4 text-accent-foreground" />{x}</Link>) : <p className="text-sm leading-6 text-muted-foreground">Nothing was flagged for another pass.</p>}</div></Card>
+        </div>
+      </div>
+    </div>
+    <Card className="mt-5 flex flex-col gap-5 border-primary/20 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+      <div><p className="mono text-[10px] uppercase tracking-[.18em] text-primary">Next action</p><h2 className="mt-2 text-lg font-bold">{weakConcepts.length ? 'Return to the concepts that need another pass.' : 'Keep the thread going with another focused session.'}</h2><p className="mt-1 text-sm text-muted-foreground">{weakConcepts.length ? `${weakConcepts.length} concept${weakConcepts.length === 1 ? '' : 's'} from this session are ready for retrieval.` : 'Choose a subject and let Recall set the next boundary.'}</p></div>
+      {weakConcepts.length ? <Button onClick={retest} disabled={create.isPending} className="shrink-0" data-testid="button-results-next-action">{create.isPending ? 'Building retest…' : 'Retest the gap'} <ArrowRight className="h-4 w-4" /></Button> : <Link href="/practice" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-primary/30 bg-card px-4 py-2.5 text-sm font-bold hover:bg-muted" data-testid="link-results-next-action">Start another session <ArrowRight className="h-4 w-4" /></Link>}
+    </Card>
+  </div>;
 }
 function ResultMetric({ label, value }: any) { return <div className="rounded-xl bg-muted/60 p-3"><p className="text-xs text-muted-foreground">{label}</p><p className="mono mt-1 text-lg">{value}</p></div>; }
 

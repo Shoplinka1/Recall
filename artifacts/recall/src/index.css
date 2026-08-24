@@ -400,3 +400,58 @@
 .stagger > *:nth-child(4) { animation-delay: .18s; }
 @keyframes page-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .ring-progress { background: conic-gradient(hsl(var(--primary)) var(--progress), hsl(var(--muted)) 0); }
+
+/* Phase 2 practice: a quieter, denser instrument than the rest of the workspace. */
+.practice-page,
+.results-page { animation: page-in .45s ease both; }
+.practice-header { padding-top: .15rem; }
+.practice-progress-track {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: hsl(var(--muted));
+}
+.practice-progress-fill {
+  height: 100%;
+  min-width: 5px;
+  border-radius: inherit;
+  background: hsl(var(--primary));
+  transition: width .35s ease;
+}
+.practice-card {
+  border-color: hsl(var(--card-border) / .9);
+  box-shadow: 0 16px 42px hsl(var(--foreground) / .055);
+}
+.practice-context-separator { color: hsl(var(--muted-foreground) / .45); }
+.practice-question-kind {
+  font-family: var(--app-font-mono);
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.practice-option { min-height: 62px; }
+.practice-option:not(:disabled):hover { border-color: hsl(var(--primary) / .5); }
+.practice-option-selected { box-shadow: inset 3px 0 0 hsl(var(--primary)); }
+.practice-feedback { box-shadow: 0 10px 26px hsl(var(--foreground) / .035); }
+.practice-feedback-correct {
+  border-color: hsl(var(--primary) / .28);
+  background: hsl(var(--primary) / .085);
+}
+.practice-feedback-incorrect {
+  border-color: hsl(var(--accent) / .42);
+  background: hsl(var(--accent) / .105);
+}
+.key-idea { border: 1px solid hsl(var(--primary) / .18); }
+.results-score-card {
+  background:
+    linear-gradient(145deg, hsl(var(--secondary) / .36), transparent 58%),
+    hsl(var(--card));
+}
+.result-list-card { min-height: 164px; }
+
+@media (max-width: 639px) {
+  .practice-header { margin-bottom: 1.25rem; }
+  .practice-question-kind { width: 100%; margin-left: 0; padding-top: .2rem; }
+  .practice-card { border-radius: 1rem; }
+  .practice-option { min-height: 58px; padding: .8rem .85rem; }
+}
