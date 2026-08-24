@@ -99,12 +99,15 @@ for (const type of ["multiple_choice", "true_false", "short_answer"]) {
 }
 
 const selectedQuestions = [...byType.values()];
+const intentionallyWrongQuestion = selectedQuestions.find((question) => question.type !== "short_answer");
+assert.ok(intentionallyWrongQuestion, "practice should include a question suitable for the intentional miss");
 for (const [index, question] of selectedQuestions.entries()) {
+  const isIntentionalWrong = question.id === intentionallyWrongQuestion.id;
   const answer =
-    question.type === "short_answer"
-      ? `The process of ${question.correctAnswer.toUpperCase()}.`
-      : index === 0
-        ? "__intentionally_wrong__"
+    isIntentionalWrong
+      ? "__intentionally_wrong__"
+      : question.type === "short_answer"
+        ? `The process of ${question.correctAnswer.toUpperCase()}.`
         : question.correctAnswer;
   const result = await userA.json(`/api/practice/${session.body.id}`, "POST", {
     questionId: question.id,
@@ -115,7 +118,7 @@ for (const [index, question] of selectedQuestions.entries()) {
   expectStatus(result, 200, `${question.type} answer submission`);
   assert.equal(
     result.body.isCorrect,
-    question.type === "short_answer" ? true : index !== 0,
+    !isIntentionalWrong,
     `${question.type} should be scored from persisted data`,
   );
 }
