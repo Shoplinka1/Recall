@@ -414,6 +414,8 @@
   background-size: 28px 28px;
 }
 .text-balance { text-wrap: balance; }
+.soft-grid main > section,
+.soft-grid main > section > div { min-width: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }

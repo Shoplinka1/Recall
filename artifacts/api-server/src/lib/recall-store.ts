@@ -21,7 +21,7 @@ import type {
   Subject,
   Subscription,
 } from "@workspace/api-zod";
-import { getAIService } from "./ai";
+import { answersMatch, getAIService } from "./ai";
 import type { GroundedConcept, GroundedSection } from "./ai";
 import {
   extractConceptNames,
@@ -802,9 +802,11 @@ export async function answerPractice(
     if (!row || row.question.userId !== userId) return null;
     if (session.completedAt) return { sessionCompleted: true as const };
     const normalizedAnswer = input.answer.trim().replace(/\s+/g, " ");
-    const normalizedCorrectAnswer = row.question.correctAnswer.trim().replace(/\s+/g, " ");
-    const isCorrect =
-      normalizedCorrectAnswer.toLowerCase() === normalizedAnswer.toLowerCase();
+    const isCorrect = answersMatch(
+      row.question.correctAnswer,
+      normalizedAnswer,
+      row.question.type,
+    );
     await tx
       .update(sessionQuestionsTable)
       .set({

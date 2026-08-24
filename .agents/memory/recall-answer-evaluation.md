@@ -7,4 +7,4 @@ Short-answer scoring may accept grounded terminology aliases, singular/plural va
 
 **Why:** Exact string matching penalizes legitimate scientific answers, while broad token-overlap matching can mark unrelated answers correct.
 
-**How to apply:** Keep flexibility type-specific and conservative. Extend the explicit alias set only when the equivalence is unambiguous and grounded in the persisted question/material context.
+**How to apply:** Keep flexibility type-specific and conservative. Extend the explicit alias set only when the equivalence is unambiguous and grounded in the persisted question/material context. Every persisted answer path should call this shared evaluator rather than reimplementing exact string comparison.
