@@ -1,0 +1,90 @@
+RECALL — PHASE 6B: PRICING + PRODUCTION PREPARATION
+
+IMPORTANT: This is an existing Recall project. DO NOT treat it as a new/demo project.
+
+First verify origin/main contains commit 8308274 and the working tree is clean. Do not reset, rollback, discard, overwrite, or replace existing Recall work.
+
+Continue from the existing Recall codebase and Git history.
+
+Before production deployment, complete the paid-plan configuration and prepare Recall for real production.
+
+PRICING
+- Monthly: $9.99/month
+- Yearly: $99/year
+- Replace the old disconnected $8 pricing.
+- Show both plans in the landing page AND in-app upgrade/billing UI.
+- Connect frontend pricing to the existing backend billing configuration.
+- Frontend displays USD.
+- Paystack backend charges use NGN.
+- Do NOT silently convert USD to NGN.
+- Keep actual NGN amounts configurable server-side.
+- Do not invent Paystack Live plan codes or credentials.
+- Server remains authoritative for plan, price, currency, subscription status, and entitlement.
+
+PAYSTACK
+- Verify Phase 6A server-side Paystack infrastructure.
+- Verify monthly/yearly plan selection.
+- Verify checkout initialization architecture.
+- Verify transaction/reference handling.
+- Verify server-side verification.
+- Verify callback/webhook handling.
+- Verify duplicate/reused-reference protection.
+- Verify entitlement creation/revocation.
+- Never trust frontend payment status.
+- Never expose secret keys.
+- Never use fake/test payment success.
+- If Live keys/plan codes are missing, report exactly what is required.
+
+PRODUCTION
+- PostgreSQL
+- private App Storage
+- production SESSION_SECRET
+- production APP_URL/domain
+- production migrations
+- web + API deployment configuration
+- AI_MODE=real + Gemini configuration
+
+AI
+- Preserve the existing development AI exactly as it works now.
+- Real Gemini only when AI_MODE=real and a valid credential exists.
+- No fake AI responses.
+- Test missing-credential/error handling without paid API calls.
+
+IMPORTANT
+- Do NOT start Step 8.
+- Do NOT redesign Recall.
+- Do NOT modify Step 7, mastery, grounding, authentication, ownership, persistence, or question-generation behavior.
+- Do NOT weaken/delete tests.
+- Do NOT invent credentials, plan codes, exchange rates, or payment success.
+- Do NOT expose secrets.
+
+Run:
+- all available regressions
+- typecheck
+- build
+- /api/healthz
+- frontend check
+- inspect pricing/upgrade UI at mobile and desktop sizes
+
+FINAL REPORT:
+GIT
+PRICING
+MONTHLY_PLAN
+YEARLY_PLAN
+PAYSTACK
+DATABASE
+STORAGE
+AI
+DEPLOYMENT
+SECURITY
+TESTS
+BLOCKERS
+NOT_VERIFIED
+
+Clearly separate:
+IMPLEMENTED
+REQUIRES MY PAYSTACK CREDENTIALS
+REQUIRES MY GEMINI CREDENTIAL
+NOT_VERIFIED
+
+STOP AFTER PHASE 6B.

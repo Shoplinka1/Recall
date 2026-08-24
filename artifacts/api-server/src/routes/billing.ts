@@ -26,6 +26,33 @@ const configuredPlan = (interval: string) =>
 
 const appUrl = () => (process.env.APP_URL ?? "").replace(/\/+$/, "");
 
+const planConfig = (interval: "monthly" | "annual") => ({
+  interval,
+  name: "Plus",
+  usdPrice: interval === "annual" ? 99 : 9.99,
+  currency: "USD",
+  ngnAmount: Number.parseInt(
+    process.env[interval === "annual" ? "PAYSTACK_PRO_ANNUAL_AMOUNT_NGN" : "PAYSTACK_PRO_MONTHLY_AMOUNT_NGN"] ?? "",
+    10,
+  ) || null,
+  planCode: configuredPlan(interval),
+});
+
+router.get("/plans", (_req, res) => {
+  const plans = (["monthly", "annual"] as const).map((interval) => {
+    const plan = planConfig(interval);
+    return {
+      interval: plan.interval,
+      name: plan.name,
+      usdPrice: plan.usdPrice,
+      currency: plan.currency,
+      ngnAmount: plan.ngnAmount,
+      configured: Boolean(plan.planCode && plan.ngnAmount && appUrl()),
+    };
+  });
+  res.json({ plans });
+});
+
 async function persistSuccessfulPayment(
   transaction: typeof paymentTransactionsTable.$inferSelect,
   verified: Awaited<ReturnType<ReturnType<typeof createPaystackClient>["verifyTransaction"]>>,
@@ -35,6 +62,10 @@ async function persistSuccessfulPayment(
   }
   if (verified.plan?.plan_code && verified.plan.plan_code !== transaction.planCode) {
     throw new Error("Paystack verification returned an unexpected plan");
+  }
+  const expectedAmount = planConfig(transaction.interval === "annual" ? "annual" : "monthly").ngnAmount;
+  if (!expectedAmount || verified.currency !== "NGN" || verified.amount !== expectedAmount) {
+    throw new Error("Paystack payment amount or currency does not match the configured plan");
   }
   const [user] = await db
     .select({ email: usersTable.email })
@@ -136,12 +167,13 @@ async function applyPaystackEvent(event: string, payload: Record<string, unknown
 router.post("/checkout", requireAuth, async (req, res, next) => {
   try {
     const input = CreateCheckoutBody.parse(req.body);
-    const planCode = configuredPlan(input.interval);
-    if (!process.env.PAYSTACK_SECRET_KEY || !planCode || !appUrl()) {
+    const interval = input.interval === "annual" ? "annual" : "monthly";
+    const plan = planConfig(interval);
+    if (!process.env.PAYSTACK_SECRET_KEY || !plan.planCode || !plan.ngnAmount || !appUrl()) {
       res.status(503).json({
         url: null,
         configured: false,
-        message: "Paystack requires a server secret, plan code, and public APP_URL.",
+        message: "Paystack requires a server secret, plan code, NGN amount, and public APP_URL.",
       });
       return;
     }
@@ -151,8 +183,8 @@ router.post("/checkout", requireAuth, async (req, res, next) => {
       .values({
         userId: req.auth!.id,
         reference,
-        interval: input.interval,
-        planCode,
+        interval,
+        planCode: plan.planCode,
         status: "pending",
         metadata: { userId: req.auth!.id, interval: input.interval },
       })
@@ -161,9 +193,9 @@ router.post("/checkout", requireAuth, async (req, res, next) => {
       const checkout = await createPaystackClient().initializeTransaction({
         email: req.auth!.email,
         reference,
-        plan: planCode,
+        plan: plan.planCode,
         callbackUrl: `${appUrl()}/api/billing/callback`,
-        metadata: { userId: req.auth!.id, reference, interval: input.interval },
+         metadata: { userId: req.auth!.id, reference, interval },
       });
       await db
         .update(paymentTransactionsTable)

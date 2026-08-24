@@ -22,6 +22,7 @@ import type {
 import type {
   AnswerInput,
   AnswerResult,
+  BillingPlans,
   Checkout,
   CheckoutInput,
   Concept,
@@ -1704,6 +1705,83 @@ export const useCreateCheckout = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getCreateCheckoutMutationOptions(options));
     }
+
+export const getGetBillingPlansUrl = () => {
+
+
+
+
+  return `/api/billing/plans`
+}
+
+/**
+ * @summary Get public billing plan display configuration
+ */
+export const getBillingPlans = async ( options?: Parameters<typeof customFetch>[1]): Promise<BillingPlans> => {
+
+  return customFetch<BillingPlans>(getGetBillingPlansUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBillingPlansQueryKey = () => {
+    return [
+    `/api/billing/plans`
+    ] as const;
+    }
+
+
+export const getGetBillingPlansQueryOptions = <TData = Awaited<ReturnType<typeof getBillingPlans>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBillingPlans>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBillingPlansQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBillingPlans>>> = ({ signal }) => getBillingPlans({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBillingPlans>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetBillingPlansQueryResult = NonNullable<Awaited<ReturnType<typeof getBillingPlans>>>
+export type GetBillingPlansQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get public billing plan display configuration
+ */
+
+export function useGetBillingPlans<TData = Awaited<ReturnType<typeof getBillingPlans>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBillingPlans>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetBillingPlansQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetSessionUrl = () => {
 

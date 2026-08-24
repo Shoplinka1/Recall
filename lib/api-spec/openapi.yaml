@@ -355,6 +355,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Checkout"
+  /billing/plans:
+    get:
+      operationId: getBillingPlans
+      tags: [billing]
+      summary: Get public billing plan display configuration
+      responses:
+        "200":
+          description: Billing plans
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingPlans"
   /auth/session:
     get:
       operationId: getSession
@@ -661,7 +673,7 @@ components:
     CheckoutInput:
       type: object
       properties:
-        interval: { type: string }
+        interval: { type: string, enum: [monthly, annual] }
       required: [interval]
     Checkout:
       type: object
@@ -670,6 +682,24 @@ components:
         configured: { type: boolean }
         message: { type: string }
       required: [url, configured, message]
+    BillingPlan:
+      type: object
+      properties:
+        interval: { type: string, enum: [monthly, annual] }
+        name: { type: string }
+        usdPrice: { type: number }
+        currency: { type: string, enum: [USD] }
+        ngnAmount: { type: ["number", "null"] }
+        configured: { type: boolean }
+      required: [interval, name, usdPrice, currency, ngnAmount, configured]
+    BillingPlans:
+      type: object
+      properties:
+        plans:
+          type: array
+          items:
+            $ref: "#/components/schemas/BillingPlan"
+      required: [plans]
     Session:
       type: object
       properties:

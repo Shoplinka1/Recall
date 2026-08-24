@@ -5,8 +5,8 @@
  * Recall learning workspace API
  * OpenAPI spec version: 0.1.0
  */
-import type { CheckoutInputInterval } from './checkoutInputInterval';
+import type { BillingPlan } from './billingPlan';
 
-export interface CheckoutInput {
-  interval: CheckoutInputInterval;
+export interface BillingPlans {
+  plans: BillingPlan[];
 }
