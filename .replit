@@ -58,3 +58,6 @@ timeoutMs = 20000
 
 [nix]
 channel = "stable-25_05"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-5d1a3014-7e62-40c1-b893-93bd985fe114"
