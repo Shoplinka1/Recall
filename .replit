@@ -60,4 +60,4 @@ timeoutMs = 20000
 channel = "stable-25_05"
 
 [objectStorage]
-defaultBucketID = "replit-objstore-a2a3b57c-3174-4669-a40e-4c7bb19ffa0b"
+defaultBucketID = "replit-objstore-7b950bf0-236a-4ac3-b744-4c2810e0c1c6"
