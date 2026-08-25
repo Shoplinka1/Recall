@@ -1,0 +1,135 @@
+RECALL — FIX FIRST-USER SUBJECT CREATION BLOCKER
+
+Continue from origin/main. The latest commit is 24d0b81.
+
+Do NOT reset, rollback, or discard existing work.
+
+We found a likely real-user blocker in Add Study Material:
+
+A brand-new user may have NO existing subjects.
+
+The current UI appears to require choosing an existing subject, but does not provide a clear way to CREATE a subject from the Add Study Material flow.
+
+This can leave:
+- no subject available to select
+- Add to Recall disabled
+- no clear explanation of what the user must do
+- first-time users unable to add their first material
+
+Fix the REAL cause.
+
+FIRST-USER FLOW MUST WORK:
+
+New account
+→ Add Study Material
+→ enter/paste material
+→ choose an existing subject OR create a new subject
+→ subject is persisted for the authenticated user
+→ Add to Recall becomes enabled
+→ submit
+→ real upload/processing
+→ material becomes READY
+→ sections/concepts persist
+→ material appears in library
+→ user can build a study session
+
+SUBJECT UX
+
+If the user has no subjects:
+- clearly show that a subject is required
+- provide an obvious "Create subject" action
+- allow the user to enter a subject name
+- validate empty/invalid subject names
+- create the subject through the real authenticated API
+- associate it with the current authenticated user only
+- automatically select the newly created subject
+- then enable Add to Recall when the rest of the material form is valid
+
+If subjects already exist:
+- allow selecting an existing subject
+- still provide a clear way to create another subject
+
+IMPORTANT:
+- Do NOT hardcode a fake subject.
+- Do NOT silently select another user's subject.
+- Do NOT seed demo subjects.
+- Do NOT bypass authentication/ownership.
+- Use the existing real subject API/database path where possible.
+- Preserve existing material upload/storage/processing logic.
+- Preserve grounding, question generation, Step 7, mastery, authentication, persistence, AI and Paystack logic.
+- Do NOT start Step 8.
+- Do NOT redesign the application.
+
+VERIFY WITH A FRESH USER:
+
+1. Create a completely fresh account.
+2. Confirm the user starts with zero subjects.
+3. Open Add Study Material.
+4. Confirm the UI explains that a subject is required.
+5. Create a subject.
+6. Confirm it persists to the database.
+7. Confirm it belongs to the authenticated user.
+8. Confirm it becomes selected.
+9. Paste real study material.
+10. Confirm Add to Recall becomes enabled.
+11. Submit.
+12. Confirm real processing occurs.
+13. Confirm material reaches READY.
+14. Confirm sections/concepts persist.
+15. Confirm material appears in the user's library.
+16. Confirm the user can build a study session.
+
+Also test:
+- existing subject selection
+- empty subject name
+- duplicate/rapid subject creation
+- duplicate material submission
+- upload/processing errors
+- another user cannot access the created subject/material
+
+Do NOT fake App Storage.
+
+If private App Storage is still unavailable:
+- verify everything up to the real storage boundary
+- clearly mark TXT/PDF/DOCX/PPTX upload flows NOT_VERIFIED
+- do not claim they work
+
+RESPONSIVE:
+- 375px
+- 390px
+- 402px
+- desktop
+
+RUN:
+- subject/material tests
+- auth/ownership tests
+- relevant regressions
+- typecheck
+- build
+- /api/healthz
+- frontend check
+
+FINAL REPORT:
+GIT
+FIRST_USER
+SUBJECT_CREATION
+SUBJECT_SELECTION
+BUTTON_VALIDATION
+PASTE_TEXT
+UPLOAD
+PROCESSING
+PERSISTENCE
+OWNERSHIP
+ERROR_STATES
+MOBILE
+DESKTOP
+TESTS
+TYPECHECK
+BUILD
+HEALTH
+BLOCKERS
+NOT_VERIFIED
+
+Only report what was actually tested.
+
+STOP AFTER THIS FIX.

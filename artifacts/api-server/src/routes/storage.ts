@@ -5,7 +5,7 @@ import { requestPrivateUpload } from "../lib/object-storage";
 const router: IRouter = Router();
 router.use(requireAuth);
 
-router.post("/storage/uploads/request-url", async (req, res, next) => {
+router.post("/uploads/request-url", async (req, res, next) => {
   try {
     const { name, size, contentType } = req.body ?? {};
     if (

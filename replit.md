@@ -4,12 +4,14 @@ Recall turns a student's own learning material into grounded practice, weakness 
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
+- `PORT=8080 pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
+- `PORT=23566 pnpm --filter @workspace/recall run dev` — run the Recall web app
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string; `PRIVATE_OBJECT_DIR`, `DEFAULT_OBJECT_STORAGE_BUCKET_ID`, and `PUBLIC_OBJECT_SEARCH_PATHS` are required for private App Storage uploads
+- Production billing requires `PAYSTACK_SECRET_KEY`, `PAYSTACK_PUBLIC_KEY`, both Paystack plan codes, both exact NGN plan amounts, and a public `APP_URL`; the UI displays USD ($9.99/month or $99/year)
 
 ## Stack
 
@@ -48,6 +50,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 - Run `pnpm --filter @workspace/api-spec run codegen` after changing `lib/api-spec/openapi.yaml`.
 - The API server and web app are managed workflows; restart them through their existing workflow names after runtime changes.
 - The initial experience is intentionally demo-safe. Real auth, object storage, AI provider credentials, and Paystack configuration should be connected before treating it as a production launch.
+- Paystack checkout stays unavailable until server-side credentials, plan codes, NGN amounts, and `APP_URL` are configured; frontend state cannot mark a payment successful.
 
 ## Pointers
 

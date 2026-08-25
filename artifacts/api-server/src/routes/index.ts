@@ -9,7 +9,7 @@ const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use("/auth", authRouter);
-router.use(storageRouter);
+  router.use("/storage", storageRouter);
 router.use("/billing", billingRouter);
 router.use(recallRouter);
 

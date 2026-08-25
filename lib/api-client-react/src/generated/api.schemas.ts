@@ -239,8 +239,16 @@ export interface Subscription {
   resetDate: string;
 }
 
+export type CheckoutInputInterval = typeof CheckoutInputInterval[keyof typeof CheckoutInputInterval];
+
+
+export const CheckoutInputInterval = {
+  monthly: 'monthly',
+  annual: 'annual',
+} as const;
+
 export interface CheckoutInput {
-  interval: string;
+  interval: CheckoutInputInterval;
 }
 
 export interface Checkout {
@@ -248,6 +256,35 @@ export interface Checkout {
   url: string | null;
   configured: boolean;
   message: string;
+}
+
+export type BillingPlanInterval = typeof BillingPlanInterval[keyof typeof BillingPlanInterval];
+
+
+export const BillingPlanInterval = {
+  monthly: 'monthly',
+  annual: 'annual',
+} as const;
+
+export type BillingPlanCurrency = typeof BillingPlanCurrency[keyof typeof BillingPlanCurrency];
+
+
+export const BillingPlanCurrency = {
+  USD: 'USD',
+} as const;
+
+export interface BillingPlan {
+  interval: BillingPlanInterval;
+  name: string;
+  usdPrice: number;
+  currency: BillingPlanCurrency;
+  /** @nullable */
+  ngnAmount: number | null;
+  configured: boolean;
+}
+
+export interface BillingPlans {
+  plans: BillingPlan[];
 }
 
 /**

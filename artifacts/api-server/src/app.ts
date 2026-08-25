@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { ObjectStorageConfigurationError } from "./lib/object-storage";
 
 const app: Express = express();
 
@@ -42,6 +43,10 @@ app.use("/api", router);
 app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error({ err: error }, "Unhandled request error");
   if (res.headersSent) return;
+  if (error instanceof ObjectStorageConfigurationError) {
+    res.status(503).json({ error: error.message });
+    return;
+  }
   if (error && typeof error === "object" && "issues" in error) {
     res.status(400).json({ error: "Invalid request" });
     return;

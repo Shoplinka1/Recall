@@ -1,0 +1,104 @@
+RECALL — FIX AND VERIFY REAL MATERIAL INGESTION
+
+Do NOT redesign Recall or start Step 8.
+
+There is a real usability/blocker issue in the Add Study Material flow.
+
+If private App Storage is unavailable in this environment, do not fake the upload; clearly separate what can be verified locally from what requires production storage configuration.
+
+On mobile, after entering/selecting material, the “Add to Recall” button can remain disabled and the UI does not clearly explain why.
+
+Inspect and fix the REAL cause.
+
+REAL USER FLOW TO VERIFY:
+
+Add Study Material
+→ paste notes OR select/upload file
+→ choose/create subject when required
+→ validation
+→ Add to Recall becomes enabled when valid
+→ submit
+→ loading/progress state
+→ material upload/processing
+→ material becomes READY
+→ sections/concepts persist
+→ material appears in the user's library
+→ user can build a study session from it.
+
+VERIFY ALL SUPPORTED INPUTS:
+- pasted text
+- TXT
+- PDF
+- DOCX
+- PPTX
+- normal valid filenames/extensions
+- files near the size limit
+- invalid/unsupported files
+- empty text
+- missing subject
+- missing file
+- duplicate/rapid submission
+- network/API failure
+- processing failure
+
+IMPORTANT:
+- Do not fake successful uploads.
+- Use the existing real API/storage/database.
+- Do not delete/reset existing user data.
+- Preserve authentication and ownership.
+- Preserve grounding, question generation, Step 7, mastery, and persistence logic.
+- Do not weaken or delete tests.
+
+UX REQUIREMENTS:
+- The Add to Recall button should enable exactly when the form is valid.
+- If disabled, clearly show what is missing.
+- Show clear validation errors.
+- Prevent accidental double submission.
+- Show a proper uploading/processing state.
+- Show success only after the server confirms the material was persisted.
+- Show a useful error if upload/processing fails.
+- Make the flow work properly at 375px, 390px, 402px and desktop.
+- Do not solve this by simply forcing the button to always be enabled.
+
+TEST THE REAL FLOW with a fresh authenticated user:
+paste text → add → verify persisted material
+TXT → add → verify persisted material
+PDF → add → verify persisted material
+DOCX → add → verify persisted material
+PPTX → add → verify persisted material
+
+Also verify that another user cannot access the material.
+
+Run:
+- relevant material/storage tests
+- auth/ownership tests
+- question-generation tests if affected
+- typecheck
+- build
+- /api/healthz
+- frontend check
+
+FINAL REPORT:
+BUTTON_VALIDATION
+PASTE_TEXT
+TXT
+PDF
+DOCX
+PPTX
+UPLOAD
+PROCESSING
+PERSISTENCE
+OWNERSHIP
+ERROR_STATES
+MOBILE
+DESKTOP
+TESTS
+TYPECHECK
+BUILD
+HEALTH
+BLOCKERS
+NOT_VERIFIED
+
+Only report what was actually tested.
+
+STOP AFTER THIS MATERIAL-INGESTION FIX.

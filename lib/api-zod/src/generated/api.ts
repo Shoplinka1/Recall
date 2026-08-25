@@ -568,13 +568,28 @@ export const GetSubscriptionResponse = zod.object({
  * @summary Create a billing checkout session
  */
 export const CreateCheckoutBody = zod.object({
-  "interval": zod.string()
+  "interval": zod.enum(['monthly', 'annual'])
 })
 
 export const CreateCheckoutResponse = zod.object({
   "url": zod.string().nullable(),
   "configured": zod.boolean(),
   "message": zod.string()
+})
+
+
+/**
+ * @summary Get public billing plan display configuration
+ */
+export const GetBillingPlansResponse = zod.object({
+  "plans": zod.array(zod.object({
+  "interval": zod.enum(['monthly', 'annual']),
+  "name": zod.string(),
+  "usdPrice": zod.number(),
+  "currency": zod.enum(['USD']),
+  "ngnAmount": zod.number().nullable(),
+  "configured": zod.boolean()
+}))
 })
 
 
