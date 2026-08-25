@@ -1,0 +1,180 @@
+RECALL — FINAL COMPLETION PASS BEFORE STEP 8
+Do not ask me what to do next. Execute the completion pass below.
+
+RECALL — FINAL COMPLETION PASS BEFORE STEP 8
+
+Continue from the latest origin/main.
+Continue from the latest origin/main.
+
+FIRST:
+1. Verify branch is main.
+2. Verify working tree is clean.
+3. Verify HEAD == origin/main.
+4. Verify commit cb40131 is present.
+5. Do NOT reset, rebase, force-push, or discard existing work.
+6. Do NOT create another App Storage bucket. The existing managed Private App Storage configuration is the one to use.
+
+IMPORTANT:
+I am trying to FINISH the application now. Do not stop after discovering a blocker and do not spend the entire run only auditing. Fix genuine blockers and then verify them.
+
+PROTECTED AREAS:
+Do not redesign Recall.
+Do not break Steps 1–7.
+Do not change the persistence architecture.
+Do not weaken authentication or ownership.
+Do not replace real storage with fake/in-memory storage.
+Do not bypass Paystack.
+Do not fake successful payments.
+Do not start Step 8.
+
+REMAINING WORK:
+
+A) FILE UPLOADS / STORAGE
+The existing managed Private App Storage bucket is already provisioned.
+
+Verify that the current API process receives the managed storage configuration.
+
+Then test REAL uploads:
+- TXT → upload → PROCESSING → READY → persisted
+- PDF → upload → PROCESSING → READY → persisted
+- DOCX → upload → PROCESSING → READY → persisted
+- PPTX → upload → PROCESSING → READY → persisted
+
+Verify:
+- extracted content
+- sections
+- concepts
+- library visibility
+- PostgreSQL persistence
+- cross-user ownership
+
+If PDF/TXT/DOCX/PPTX already work, DO NOT modify their implementation.
+
+B) STEP 7 TEACHING / FOLLOW-UP
+The remaining Step 7 gaps must be completed if they are genuinely missing:
+
+- dedicated teaching feedback
+- key idea
+- misconception
+- grounded differentiated follow-up question
+- follow-up submission
+- follow-up persistence
+- repeated-answer idempotency
+
+Use the existing Recall architecture and existing AI/grounding/persistence services.
+
+Requirements:
+- Teaching must be grounded in the material/question.
+- Do not invent unsupported facts.
+- Persist the teaching intervention using the existing Step 7 schema.
+- A repeated submission of the same attempt must not create duplicate teaching interventions.
+- Follow-up questions must be grounded and must not simply duplicate the original question.
+- Follow-up answers must persist normally.
+- Preserve ownership boundaries.
+- Add focused tests for these behaviors.
+
+C) PAYSTACK / BILLING
+The billing page currently has a serious problem:
+- opening the plan/pricing page can log the user out
+- the $9.99 plan/checkout button is not clickable
+- Paystack checkout is not confirmed working
+
+Investigate the REAL cause.
+
+Trace:
+- authenticated session
+- billing/pricing page
+- plan selection
+- checkout button disabled state
+- API billing endpoint
+- Paystack initialization
+- payment authorization URL/checkout flow
+- return/callback handling
+- subscription/payment persistence
+
+Fix only genuine billing bugs.
+
+IMPORTANT:
+- Do not fake Paystack success.
+- Do not mark payment as successful without Paystack confirmation.
+- Do not remove authentication checks just to make the button clickable.
+- If live Paystack credentials are unavailable, make the UI/API report that clearly instead of pretending checkout works.
+- If the issue is caused by a frontend auth/session bug, fix that real bug.
+- If the button is disabled because required configuration is missing, identify exactly which configuration is missing.
+- Preserve existing Paystack architecture.
+
+D) FINAL REGRESSION
+After fixes, run:
+
+1. Real TXT upload
+2. Real PDF upload
+3. Real DOCX upload
+4. Real PPTX upload
+5. Step 7 teaching test
+6. Step 7 follow-up test
+7. Step 7 idempotency test
+8. Learning-state E2E
+9. Step 4 tests
+10. Step 5 tests
+11. Step 6 tests
+12. Auth/ownership tests
+13. Relevant billing/Paystack tests
+14. Typecheck
+15. Build
+16. /api/healthz
+17. Browser smoke test:
+    - login
+    - dashboard
+    - Add Material
+    - PDF upload
+    - library
+    - practice
+    - weakness/recommendation
+    - pricing page
+    - plan selection
+    - checkout button
+
+Use real authenticated persisted data wherever possible.
+
+Do not mark anything VERIFIED unless it actually worked.
+
+IF A LIVE EXTERNAL CREDENTIAL IS REQUIRED:
+Do not invent credentials.
+Do not fake the result.
+Report exactly what configuration is missing and continue verifying everything else that can be verified.
+
+GIT:
+At the end:
+- show git status
+- show latest commit
+- if code was changed, commit the necessary changes with a clear message
+- push to origin/main
+- confirm working tree is clean
+- confirm HEAD == origin/main
+
+FINAL REPORT FORMAT:
+
+GIT
+STORAGE
+TXT
+PDF
+DOCX
+PPTX
+STEP7_TEACHING
+STEP7_FOLLOW_UP
+STEP7_IDEMPOTENCY
+LEARNING_STATE
+OWNERSHIP
+PAYSTACK
+BILLING_UI
+TYPECHECK
+BUILD
+HEALTH
+BROWSER
+CHANGES
+BLOCKERS
+NOT_VERIFIED
+
+Do not start Step 8.
+
+STOP after this final completion pass.
