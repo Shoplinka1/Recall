@@ -1,0 +1,185 @@
+RECALL — FINAL LAUNCH COMPLETION PASS
+
+Continue from the latest origin/main.
+
+I want to finish Recall completely and prepare it for launch. Do not ask me what to do next. Execute this entire completion pass.
+
+IMPORTANT GIT:
+- Verify branch is main.
+- Verify working tree and current commit.
+- Do not reset, rebase, force-push, or discard existing work.
+- Preserve all existing Recall work.
+- At the end, commit all necessary application changes and push to origin/main.
+- Confirm HEAD == origin/main and working tree is clean.
+
+IMPORTANT STORAGE:
+I want to use a NEW managed Replit Private App Storage bucket for Recall.
+Do NOT use the old bucket.
+Do NOT fake or bypass object storage.
+Provision/configure ONE new managed Private App Storage bucket through Replit's supported storage setup.
+Do not manually invent storage environment values.
+
+After provisioning, verify that the running API receives:
+- PRIVATE_OBJECT_DIR
+- DEFAULT_OBJECT_STORAGE_BUCKET_ID
+- PUBLIC_OBJECT_SEARCH_PATHS
+
+Restart the Recall API after provisioning so the process receives the new configuration.
+
+Then perform REAL authenticated upload tests:
+- TXT
+- PDF
+- DOCX
+- PPTX
+
+For every type verify:
+upload → PROCESSING → READY → extracted content → sections → concepts → PostgreSQL persistence → library visibility → reload persistence → ownership isolation.
+
+Do not mark any format VERIFIED unless a real file was uploaded and persisted.
+
+STEP 7:
+Finish any genuinely missing Step 7 behavior.
+
+Verify and, only if necessary, fix:
+- teaching feedback
+- explanation
+- key idea
+- misconception
+- grounded differentiated follow-up question
+- follow-up submission
+- follow-up persistence
+- repeated-answer idempotency
+- weakness detection
+- targeted weakness practice
+- recommendations
+- mastery/progress
+- reload persistence
+- cross-user isolation
+
+Use the existing Recall architecture and existing database/AI/grounding services.
+Do not redesign Steps 1–6.
+Do not start Step 8.
+
+PAYSTACK / BILLING:
+Fully investigate the current pricing and checkout flow.
+
+First identify exactly which Paystack configuration variables the existing application expects.
+
+Do NOT guess variable names.
+Do NOT invent credentials.
+Do NOT fake successful payments.
+
+Check:
+- authentication/session persistence
+- pricing page
+- plan loading
+- $9.99 plan
+- checkout button disabled state
+- billing API
+- Paystack initialization
+- authorization URL
+- callback/return handling
+- payment verification
+- subscription/payment persistence
+
+If the only blocker is missing Paystack credentials/configuration, STOP at that point and report the EXACT environment variables required so I can provide the credentials.
+
+If credentials are already available, test the real Paystack flow.
+
+If the public key is required for the frontend, explicitly tell me which public-key environment variable the existing code expects.
+
+Do not remove authentication checks.
+Do not make checkout clickable by bypassing configuration.
+Do not fake payment success.
+
+IMPORTANT:
+If external Paystack credentials are required and unavailable, continue verifying everything else and clearly report the exact missing configuration. Do not modify unrelated billing architecture.
+
+FINAL REGRESSION:
+After all possible fixes/configuration:
+
+1. Real TXT upload
+2. Real PDF upload
+3. Real DOCX upload
+4. Real PPTX upload
+5. Step 7 teaching
+6. Step 7 key idea
+7. Step 7 misconception
+8. Step 7 follow-up
+9. Step 7 follow-up persistence
+10. Step 7 idempotency
+11. Learning-state E2E
+12. Step 4 regression
+13. Step 5 regression
+14. Step 6 regression
+15. Auth/ownership
+16. Billing/Paystack tests
+17. Typecheck
+18. Build
+19. /api/healthz
+20. Browser smoke test:
+   - signup/login
+   - dashboard
+   - create subject
+   - Add Material
+   - TXT upload
+   - PDF upload
+   - DOCX upload
+   - PPTX upload
+   - library
+   - practice
+   - wrong answer
+   - teaching feedback
+   - follow-up question
+   - weakness
+   - targeted practice
+   - recommendation
+   - mastery/progress
+   - reload
+   - pricing page
+   - $9.99 plan
+   - checkout
+
+Use real authenticated persisted data wherever possible.
+
+Do not claim VERIFIED unless actually tested.
+
+Do not start Step 8.
+
+FINAL REPORT:
+
+GIT
+STORAGE
+TXT
+PDF
+DOCX
+PPTX
+STEP7_TEACHING
+STEP7_KEY_IDEA
+STEP7_MISCONCEPTION
+STEP7_FOLLOW_UP
+STEP7_PERSISTENCE
+STEP7_IDEMPOTENCY
+WEAKNESS
+TARGETED_PRACTICE
+RECOMMENDATIONS
+MASTERY
+LEARNING_STATE
+OWNERSHIP
+PAYSTACK
+BILLING_UI
+TYPECHECK
+BUILD
+HEALTH
+BROWSER
+CHANGES
+BLOCKERS
+NOT_VERIFIED
+
+At the end:
+- commit necessary code/config changes
+- push origin/main
+- verify HEAD == origin/main
+- verify working tree is clean
+
+STOP AFTER THIS FINAL LAUNCH COMPLETION PASS.
