@@ -12,6 +12,7 @@
     "test:quality": "tsx ./question-generation-quality-test.mjs",
     "test:step5": "tsx ./practice-engine-test.mjs"
     ,"test:step6": "tsx ./step6-mastery-test.mjs"
+    ,"test:learning-state": "tsx ./learning-state-e2e-test.mjs"
     ,"test:infrastructure": "tsx ./payment-ai-infrastructure-test.mjs"
   },
   "devDependencies": {
