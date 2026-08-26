@@ -28,6 +28,7 @@ import {
   listSubjects,
   listMaterialSections,
   processMaterial,
+  RecallLimitError,
 } from "../lib/recall-store";
 import { requireAuth } from "../middlewares/auth";
 
@@ -126,6 +127,10 @@ router.post("/materials", async (req, res, next) => {
     if (!input.storagePath && !input.pastedText?.trim()) {
       res.status(400).json({ error: "Upload a file or paste non-empty text" });
       return;
+    }
+    const subscription = await getSubscription(user.id);
+    if (subscription.status !== "active" && subscription.materialsUsed >= subscription.materialsLimit) {
+      throw new RecallLimitError("materials", subscription.materialsLimit);
     }
     const material = await createMaterial(user.id, input);
     res.status(201).json(material);

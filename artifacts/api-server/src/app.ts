@@ -5,6 +5,7 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { ObjectStorageConfigurationError } from "./lib/object-storage";
+import { RecallLimitError } from "./lib/recall-store";
 
 const app: Express = express();
 
@@ -45,6 +46,10 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
   if (res.headersSent) return;
   if (error instanceof ObjectStorageConfigurationError) {
     res.status(503).json({ error: error.message });
+    return;
+  }
+  if (error instanceof RecallLimitError) {
+    res.status(402).json({ error: error.message, code: "FREE_LIMIT_REACHED", resource: error.resource, limit: error.limit });
     return;
   }
   if (error && typeof error === "object" && "issues" in error) {

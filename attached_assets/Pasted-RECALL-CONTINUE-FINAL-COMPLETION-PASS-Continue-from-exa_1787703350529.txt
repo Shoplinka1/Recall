@@ -1,0 +1,280 @@
+RECALL — CONTINUE FINAL COMPLETION PASS
+
+Continue from exactly where the previous agent stopped. Do NOT start Step 8.
+
+You intentionally stopped because the Replit Agent daily limit was reached. Do not redo completed work unnecessarily. First inspect the current repository state, existing changes, running services, and previous test results, then continue from the first genuinely incomplete item.
+
+IMPORTANT:
+- Do not repeatedly restart services if they are already running.
+- Do not create another storage bucket.
+- Do not reset, rebase, force-push, discard, or overwrite existing work.
+- Do not redesign Recall.
+- Preserve Steps 1–6.
+- Do not fake Paystack, AI, storage, subscription, entitlement, or test results.
+- Only mark VERIFIED after actually exercising the behavior.
+- Do not start Step 8.
+
+PAYSTACK
+
+The real Paystack credentials have been configured through Replit Secrets.
+
+Verify configuration without printing or exposing secret values.
+
+Expected configuration:
+- PAYSTACK_SECRET_KEY
+- PAYSTACK_PUBLIC_KEY
+- PAYSTACK_PRO_MONTHLY_PLAN_CODE
+- PAYSTACK_PRO_ANNUAL_PLAN_CODE
+- PAYSTACK_PRO_MONTHLY_AMOUNT_NGN
+- PAYSTACK_PRO_ANNUAL_AMOUNT_NGN
+- APP_URL
+
+If monthly/annual plan codes are missing, determine whether the existing Paystack implementation can obtain/use them from the configured environment. Do NOT invent plan codes.
+
+Verify the real Paystack flow as far as the available credentials/configuration allow:
+
+pricing
+→ select monthly/annual
+→ checkout
+→ Paystack authorization
+→ payment
+→ callback/verification
+→ persistence
+→ entitlement
+→ Pro access
+
+Also verify cancelled/failed/invalid configuration behavior.
+
+Never grant Pro merely because checkout was clicked.
+
+BILLING PAGE
+
+Finish the billing-page redesign only.
+
+Make it polished, trustworthy, modern, responsive, and conversion-focused.
+
+Include:
+- Clear Pro value proposition
+- Free vs Pro comparison
+- Strong visual emphasis on Pro
+- Monthly/annual selector
+- Correct configured pricing
+- Annual savings only when actually configured
+- "Upgrade to Pro" CTA
+- Continue with Free option
+- Benefit-focused explanations
+- Mobile-friendly layout
+
+Only advertise capabilities that actually exist.
+
+Do not use fake testimonials, fake user counts, fake guarantees, fake scarcity, or dark patterns.
+
+FREE LIMITS / UPGRADE FLOW
+
+Inspect the existing entitlement and free-user limits.
+
+When a user actually reaches a configured free limit:
+- Show a clear limit message.
+- Explain what Pro unlocks.
+- Show Upgrade to Pro.
+- Link directly to billing/checkout.
+- Preserve existing learning data.
+- Do not allow bypassing the limit without an actual Pro entitlement.
+
+Verify this at the actual point where the limit is encountered.
+
+STEP 7
+
+Complete only genuine remaining gaps:
+
+- teaching feedback
+- key idea
+- misconception
+- grounded differentiated follow-up
+- follow-up submission
+- follow-up persistence
+- repeated-answer idempotency
+
+Use the existing architecture and schema.
+
+Requirements:
+- teaching must be grounded in the user's material/question
+- key idea must be grounded
+- misconception must not invent unsupported information
+- follow-up must be grounded
+- follow-up must differ from the original question
+- follow-up answers must persist
+- repeated submission of the same attempt must not create duplicate teaching interventions
+- ownership must remain enforced
+
+Add focused tests where necessary.
+
+STORAGE / FILES
+
+Use the existing managed Private App Storage bucket.
+
+Do NOT create another bucket.
+
+Verify real authenticated:
+- TXT
+- PDF
+- DOCX
+- PPTX
+
+For each:
+upload
+→ PROCESSING
+→ READY
+→ extraction
+→ sections
+→ concepts
+→ PostgreSQL persistence
+→ library visibility
+→ reload
+→ ownership isolation
+
+Use a valid PDF fixture. Do not modify the parser just to accommodate a malformed test file.
+
+FULL LEARNING FLOW
+
+Verify:
+
+signup/login
+→ dashboard
+→ create subject
+→ add material
+→ PDF upload
+→ library
+→ practice
+→ incorrect answer
+→ teaching feedback
+→ follow-up
+→ weakness
+→ targeted practice
+→ recommendation
+→ mastery/progress
+
+Then verify:
+
+pricing page
+→ monthly plan
+→ annual plan
+→ checkout
+→ Paystack return/verification
+→ Pro entitlement
+→ free-user limit
+→ upgrade prompt
+
+TESTS
+
+Run the remaining relevant tests and regressions:
+
+- TXT upload
+- PDF upload
+- DOCX upload
+- PPTX upload
+- Step 7 teaching
+- key idea
+- misconception
+- follow-up
+- follow-up persistence
+- idempotency
+- weakness
+- targeted practice
+- recommendations
+- mastery
+- learning-state E2E
+- auth/ownership
+- billing/Paystack tests
+- typecheck
+- build
+- /api/healthz
+
+BROWSER
+
+Use the existing running services where possible.
+
+Verify:
+- signup/login
+- dashboard
+- create subject
+- add material
+- PDF upload
+- library
+- practice
+- incorrect answer
+- teaching feedback
+- follow-up
+- weakness
+- targeted practice
+- recommendation
+- pricing page
+- monthly plan
+- annual plan
+- checkout
+- payment return
+- Pro entitlement
+- free-user limit
+- upgrade prompt
+
+Do not claim a browser flow is verified if it was only inspected statically.
+
+GIT
+
+At the end:
+
+1. git status
+2. inspect the final diff
+3. commit only necessary application/config/test changes
+4. push to origin/main
+5. verify HEAD == origin/main
+6. verify working tree is clean
+
+Do not commit:
+- secrets
+- Paystack credentials
+- generated screenshots
+- temporary files
+- uploaded user materials
+- the attached brief
+
+FINAL REPORT
+
+GIT
+STORAGE
+TXT
+PDF
+DOCX
+PPTX
+STEP7_TEACHING
+STEP7_KEY_IDEA
+STEP7_MISCONCEPTION
+STEP7_FOLLOW_UP
+STEP7_PERSISTENCE
+STEP7_IDEMPOTENCY
+WEAKNESS
+TARGETED_PRACTICE
+RECOMMENDATIONS
+MASTERY
+PAYSTACK
+BILLING_PAGE
+FREE_LIMITS
+UPGRADE_FLOW
+LEARNING_STATE
+OWNERSHIP
+TYPECHECK
+BUILD
+HEALTH
+BROWSER
+CHANGES
+BLOCKERS
+NOT_VERIFIED
+
+For every item:
+- VERIFIED only if actually tested
+- BLOCKED if an external configuration/credential/platform issue prevents testing
+- NOT_VERIFIED if the implementation exists but was not actually exercised
+
+Do not start Step 8.
+
+STOP after this completion pass.

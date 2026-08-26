@@ -1,0 +1,259 @@
+RECALL — FINAL BILLING + PDF + STEP 7 COMPLETION PASS
+
+Continue from the latest origin/main.
+
+Do NOT start Step 8.
+
+I am now providing the real Paystack credentials through Replit Secrets. NEVER put secret credentials in source code, Git, logs, screenshots, or client-side JavaScript.
+
+PAYSTACK CONFIGURATION
+
+The existing application expects:
+
+PAYSTACK_SECRET_KEY
+PAYSTACK_PUBLIC_KEY
+PAYSTACK_PRO_MONTHLY_PLAN_CODE
+PAYSTACK_PRO_ANNUAL_PLAN_CODE
+PAYSTACK_PRO_MONTHLY_AMOUNT_NGN
+PAYSTACK_PRO_ANNUAL_AMOUNT_NGN
+APP_URL
+
+Use the existing Paystack architecture.
+
+I will provide/configure the Paystack secret and public key in Replit Secrets.
+
+After the credentials are present:
+1. Verify the backend receives PAYSTACK_SECRET_KEY without exposing its value.
+2. Verify the frontend receives only the appropriate public configuration.
+3. Determine the actual Paystack monthly and annual plan codes required by the existing implementation.
+4. Do not invent plan codes.
+5. Do not hardcode credentials.
+6. Do not fake payment success.
+
+If plan codes or other required configuration are missing, tell me exactly what is required instead of pretending checkout works.
+
+BILLING PAGE — REDESIGN
+
+Redesign the existing Recall pricing/billing page to look polished, trustworthy, modern, and conversion-focused.
+
+Do NOT redesign the rest of Recall.
+
+The billing page should make the value of Pro immediately understandable.
+
+Include:
+- Clear headline explaining the benefit of upgrading
+- Free vs Pro comparison
+- Strong visual emphasis on the recommended Pro plan
+- Monthly and annual billing options
+- Clear $9.99/month pricing if that is the configured price
+- Show annual savings when the annual price is configured
+- Strong primary CTA such as "Upgrade to Pro"
+- Secondary option to continue using Free
+- Short benefit-focused feature explanations
+- Trustworthy, clean visual hierarchy
+- Responsive mobile design
+- No fake testimonials
+- No fake user counts
+- No fake guarantees
+- No misleading scarcity
+- No dark patterns
+
+The page should communicate benefits such as:
+- More learning/practice capacity
+- More access to Recall's learning features
+- Better study continuity
+- Weakness-based practice and recommendations
+- Whatever additional Pro capabilities actually exist in the current application
+
+Only advertise features that actually exist.
+
+FREE USER LIMITS
+
+Inspect the existing free-user limits and subscription entitlement logic.
+
+When a free user genuinely reaches a configured limit:
+- Clearly explain that they reached the limit.
+- Explain what upgrading unlocks.
+- Show an attractive upgrade prompt.
+- Provide a direct Upgrade to Pro button.
+- Take them to the billing page or checkout flow.
+- Preserve their current learning state.
+- Do not erase their data.
+- Do not allow the user to bypass the limit without payment.
+- Do not fake subscription status.
+
+The upgrade prompt should appear at the actual point where the user encounters the limit, not just somewhere on the dashboard.
+
+If the existing application does not yet have a proper centralized entitlement check, implement the minimum necessary change using the existing persistence/authentication architecture. Do not redesign the entire subscription system.
+
+PAYSTACK FLOW
+
+Verify the real flow:
+
+Pricing page
+→ choose monthly/annual
+→ checkout
+→ Paystack authorization
+→ successful payment
+→ callback/verification
+→ subscription/payment persistence
+→ user entitlement changes
+→ Pro features become available
+
+Also test:
+- cancelled payment
+- failed payment
+- invalid/missing configuration
+- unauthenticated access
+- duplicate verification/webhook behavior if supported by the existing architecture
+
+Never mark a user as paid merely because they clicked the checkout button.
+
+Only Paystack-confirmed payment should activate Pro.
+
+PDF
+
+Use a valid real PDF fixture and complete the actual authenticated flow:
+
+upload
+→ storage
+→ PROCESSING
+→ READY
+→ PDF extraction
+→ sections
+→ concepts
+→ PostgreSQL persistence
+→ library visibility
+→ reload
+→ ownership isolation
+
+Do not modify the PDF parser merely to make a test fixture pass.
+
+STEP 7
+
+Complete and verify the remaining genuine gaps:
+
+- teaching feedback
+- key idea
+- misconception
+- grounded differentiated follow-up
+- follow-up submission
+- follow-up persistence
+- repeated-answer idempotency
+
+Use existing Recall architecture.
+
+Add focused tests where needed.
+
+A repeated submission of the same answer/attempt must not create duplicate teaching interventions.
+
+Follow-up questions must be grounded in the material and must not simply duplicate the original question.
+
+FINAL TESTS
+
+Run:
+
+- TXT real upload
+- PDF real upload
+- DOCX real upload
+- PPTX real upload
+- Step 7 teaching
+- key idea
+- misconception
+- follow-up
+- follow-up persistence
+- idempotency
+- weakness
+- targeted practice
+- recommendations
+- mastery
+- learning-state E2E
+- ownership
+- billing tests
+- Paystack tests
+- typecheck
+- build
+- /api/healthz
+
+BROWSER SMOKE TEST
+
+Test:
+
+- signup/login
+- dashboard
+- create subject
+- add material
+- PDF upload
+- library
+- practice
+- incorrect answer
+- teaching feedback
+- follow-up
+- weakness
+- targeted practice
+- recommendation
+- pricing page
+- monthly plan
+- annual plan
+- checkout
+- payment return
+- Pro entitlement
+- free-user limit
+- upgrade prompt
+
+IMPORTANT
+
+Do not waste the run repeatedly restarting services.
+
+Do not create another storage bucket.
+
+Do not modify Steps 1–6 unless a genuine regression is discovered.
+
+Do not start Step 8.
+
+Do not fake any payment, subscription, storage result, AI result, or test result.
+
+Only mark VERIFIED after the behavior actually works.
+
+GIT
+
+At the end:
+- inspect git status
+- commit necessary application changes
+- push to origin/main
+- verify HEAD == origin/main
+- verify working tree is clean
+
+FINAL REPORT:
+
+GIT
+STORAGE
+TXT
+PDF
+DOCX
+PPTX
+STEP7_TEACHING
+STEP7_KEY_IDEA
+STEP7_MISCONCEPTION
+STEP7_FOLLOW_UP
+STEP7_PERSISTENCE
+STEP7_IDEMPOTENCY
+WEAKNESS
+TARGETED_PRACTICE
+RECOMMENDATIONS
+MASTERY
+PAYSTACK
+BILLING_PAGE
+FREE_LIMITS
+UPGRADE_FLOW
+LEARNING_STATE
+OWNERSHIP
+TYPECHECK
+BUILD
+HEALTH
+BROWSER
+CHANGES
+BLOCKERS
+NOT_VERIFIED
+
+STOP AFTER THIS PASS.

@@ -39,6 +39,20 @@ const iso = (value: Date | null | undefined) =>
   value ? value.toISOString() : null;
 const normalizedProcessingStatus = (value: string) => value.toUpperCase();
 
+export class RecallLimitError extends Error {
+  constructor(
+    public readonly resource: "materials" | "sessions",
+    public readonly limit: number,
+  ) {
+    super(
+      resource === "materials"
+        ? `You reached the free plan limit of ${limit} study materials. Upgrade to Plus for unlimited materials.`
+        : `You reached the free plan limit of ${limit} practice sessions. Upgrade to Plus for unlimited practice.`,
+    );
+    this.name = "RecallLimitError";
+  }
+}
+
 const questionToApi = (row: QuestionWithConcept): Question => ({
   id: row.question.id,
   questionText: row.question.questionText,
@@ -589,6 +603,10 @@ export async function createPractice(
   input: { subjectId?: string; materialId?: string; questionCount: number; sessionType: string },
   selectedConceptIds?: string[],
 ): Promise<PracticeSession | undefined> {
+  const subscription = await getSubscription(userId);
+  if (subscription.status !== "active" && subscription.sessionsUsed >= subscription.sessionsLimit) {
+    throw new RecallLimitError("sessions", subscription.sessionsLimit);
+  }
   if (input.materialId) {
     const [material] = await db
       .select({ id: materialsTable.id })
