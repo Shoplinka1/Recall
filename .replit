@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "web", "bash"]
+modules = ["nodejs-20", "web", "bash", "postgresql-16"]
 
 [deployment]
 router = "application"
@@ -60,7 +60,7 @@ timeoutMs = 20000
 channel = "stable-25_05"
 
 [objectStorage]
-defaultBucketID = "replit-objstore-fb4d79bb-5035-467f-a871-5f3383ad3039"
+defaultBucketID = "replit-objstore-f57936ee-8c95-4485-a96e-773e6999f121"
 
 [userenv]
 
