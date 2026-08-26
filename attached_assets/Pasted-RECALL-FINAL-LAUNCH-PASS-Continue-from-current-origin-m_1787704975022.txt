@@ -1,0 +1,69 @@
+RECALL — FINAL LAUNCH PASS
+
+Continue from current origin/main. DO NOT start Step 8.
+
+I have already configured the real Paystack public/secret keys and created the Monthly + Annual Recall Pro subscription plans. Their plan codes, NGN amounts, and APP_URL are in Replit Secrets.
+
+First verify these 7 variables exist WITHOUT exposing values:
+PAYSTACK_SECRET_KEY, PAYSTACK_PUBLIC_KEY, PAYSTACK_PRO_MONTHLY_PLAN_CODE, PAYSTACK_PRO_ANNUAL_PLAN_CODE, PAYSTACK_PRO_MONTHLY_AMOUNT_NGN, PAYSTACK_PRO_ANNUAL_AMOUNT_NGN, APP_URL.
+
+Do not create another storage bucket. Do not fake payments, subscriptions, AI, uploads, or test results. Do not expose secrets.
+
+FINISH AND VERIFY EVERYTHING NEEDED FOR LAUNCH:
+
+• TXT/PDF/DOCX/PPTX upload → storage → processing → extraction → persistence → library → reload → ownership
+• Learning state, teaching, key idea, misconception, grounded follow-up, follow-up persistence and idempotency
+• Weakness, targeted practice, recommendations, mastery/progress
+• Free-user limits and upgrade prompt
+• Billing/pricing page and monthly/annual checkout
+
+PAYSTACK MUST WORK END-TO-END:
+
+Pricing → plan selection → Paystack authorization → payment → callback/verification → persisted payment/subscription → Pro entitlement.
+
+Only Paystack-confirmed payment activates Pro.
+
+Verify cancelled/failed payments do NOT activate Pro.
+
+PRO ENTITLEMENT:
+• After successful verified payment, user becomes Pro immediately.
+• Pro features/limits unlock according to the existing product rules.
+• Subscription status and expiry are persisted.
+• When the subscription expires/cancels, entitlement automatically returns to Free.
+• Free limits are enforced again after expiry.
+• Never delete the user's learning data when moving between Free and Pro.
+• Prevent bypassing limits without a valid Pro entitlement.
+• Monthly and annual subscriptions must both use their correct Paystack plan and entitlement period.
+
+BROWSER SMOKE TEST:
+Login → dashboard → subject → material → PDF → library → practice → wrong answer → teaching → follow-up → weakness → targeted practice → recommendation → pricing → monthly/annual → checkout → payment return → Pro entitlement → free-limit/upgrade flow.
+
+Run the existing learning-state, Steps 4–6, auth/ownership, billing/Paystack tests, typecheck, build and /api/healthz.
+
+Fix only genuine issues. Do not redesign anything outside billing. Do not repeatedly restart services.
+
+At the end, commit necessary code changes and push origin/main. Confirm:
+HEAD == origin/main
+working tree clean
+
+REPORT ONLY:
+GIT
+STORAGE
+UPLOADS
+STEP7
+LEARNING_STATE
+PAYSTACK
+BILLING
+PRO_ENTITLEMENT
+FREE_LIMITS
+UPGRADE_FLOW
+OWNERSHIP
+TYPECHECK
+BUILD
+HEALTH
+BROWSER
+CHANGES
+BLOCKERS
+NOT_VERIFIED
+
+Only mark VERIFIED after actually testing it. STOP after this pass.
