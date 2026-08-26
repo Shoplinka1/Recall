@@ -1,0 +1,67 @@
+RECALL — FINAL LAUNCH PASS
+
+Continue from the current GitHub main branch. We are preparing to launch.
+
+If any required secret/configuration is missing, tell me exactly which variable is missing and continue testing everything else. Never print secret values.
+
+Do NOT start Step 8.
+Do NOT redesign Recall.
+Do NOT create another storage bucket.
+Do NOT fake payments, subscriptions, AI, uploads, or test results.
+Do not expose secrets.
+
+First verify:
+- main is synchronized with origin/main
+- working tree is clean
+- Paystack secrets, plan codes, amounts, and APP_URL exist without revealing values
+- managed storage configuration exists
+
+Then TEST the entire real application and FIX ONLY genuine issues:
+
+Signup/login → dashboard → create subject → TXT/PDF/DOCX/PPTX upload → library → practice → incorrect answer → teaching feedback → key idea/misconception → grounded follow-up → weakness → targeted practice → recommendations → mastery/progress → pricing → monthly/annual checkout → Paystack authorization → callback/verification → payment persistence → Pro entitlement → Pro features → free limits → upgrade prompt.
+
+Verify:
+- successful Paystack payment activates Pro
+- failed/cancelled payment does NOT activate Pro
+- Pro users receive Pro access
+- expired/cancelled Pro returns to Free
+- free limits are enforced server-side
+- upgrade prompts work without losing learning data
+- authentication and cross-user ownership remain secure
+- Step 7 persistence and repeated-answer idempotency work
+
+Run the existing regression tests, billing/Paystack tests, upload tests, typecheck, build, health check, and browser smoke test.
+
+Do not repeatedly restart services.
+
+If something genuinely fails, fix it, retest it, and continue. Do not stop merely because you discover a blocker unless an external credential/action from me is absolutely required.
+
+At the end:
+- commit necessary fixes
+- push to origin/main
+- verify HEAD == origin/main
+- verify working tree clean
+
+FINAL REPORT:
+GIT
+STORAGE
+UPLOADS
+STEP7
+LEARNING
+OWNERSHIP
+PAYSTACK
+BILLING
+PRO_ENTITLEMENT
+FREE_LIMITS
+UPGRADE_FLOW
+TYPECHECK
+BUILD
+HEALTH
+BROWSER
+CHANGES
+BLOCKERS
+NOT_VERIFIED
+
+Only mark VERIFIED after actually testing it.
+
+STOP after the final launch pass.
