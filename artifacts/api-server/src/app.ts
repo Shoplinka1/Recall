@@ -52,6 +52,10 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
     res.status(402).json({ error: error.message, code: "FREE_LIMIT_REACHED", resource: error.resource, limit: error.limit });
     return;
   }
+  if (error instanceof Error && error.message.startsWith("Paystack request failed:")) {
+    res.status(502).json({ error: error.message });
+    return;
+  }
   if (error && typeof error === "object" && "issues" in error) {
     res.status(400).json({ error: "Invalid request" });
     return;
