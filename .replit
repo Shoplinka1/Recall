@@ -61,3 +61,8 @@ channel = "stable-25_05"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-fb4d79bb-5035-467f-a871-5f3383ad3039"
+
+[userenv]
+
+[userenv.shared]
+APP_URL = "https://3d25ab31-51fc-4559-a03a-dd9dba985dc0-00-3nb2g4k3mu8ca.riker.replit.dev/"
