@@ -9,6 +9,14 @@ import { RecallLimitError } from "./lib/recall-store";
 
 const app: Express = express();
 
+const isProduction = process.env.NODE_ENV === "production";
+const configuredOrigins = new Set(
+  [process.env.FRONTEND_URL, ...(process.env.CORS_ORIGINS ?? "").split(",")]
+    .map((origin) => origin?.trim().replace(/\/+$/, ""))
+    .filter(Boolean),
+);
+const allowAnyDevelopmentOrigin = !isProduction && configuredOrigins.size === 0;
+
 app.use(
   pinoHttp({
     logger,
@@ -28,7 +36,18 @@ app.use(
     },
   }),
 );
-app.use(cors({ credentials: true, origin: true }));
+app.use(
+  cors({
+    credentials: true,
+    origin: (origin, callback) => {
+      if (!origin || allowAnyDevelopmentOrigin || configuredOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(null, false);
+    },
+  }),
+);
 app.use(cookieParser());
 app.use(
   express.json({
