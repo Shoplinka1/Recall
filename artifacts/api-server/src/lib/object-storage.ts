@@ -33,7 +33,7 @@ async function signObjectUrl(input: {
   objectName: string;
   method: "GET" | "PUT";
 }) {
-  const response = await fetch(`${SIDECAR_ENDPOINT}/object-storage/signed-object-url`, {
+  const response: globalThis.Response = await fetch(`${SIDECAR_ENDPOINT}/object-storage/signed-object-url`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -81,7 +81,7 @@ export async function downloadPrivateObject(objectPath: string) {
     objectName: `${privatePrefix}/${relativeObjectName}`,
     method: "GET",
   });
-  const response = await fetch(url, { signal: AbortSignal.timeout(60_000) });
+  const response: globalThis.Response = await fetch(url, { signal: AbortSignal.timeout(60_000) });
   if (!response.ok) throw new Error(`Private object download failed (${response.status})`);
   return Buffer.from(await response.arrayBuffer());
 }
