@@ -6,6 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './adminDashboard';
+export * from './adminDashboardMetrics';
+export * from './adminPayment';
+export * from './adminPaymentInterval';
+export * from './adminSignup';
+export * from './adminSignupPlan';
 export * from './answerInput';
 export * from './answerResult';
 export * from './billingPlan';

@@ -5,6 +5,7 @@ import {
   deleteSession,
   findUserByEmail,
   getUserForSession,
+  isAdminEmail,
   SESSION_COOKIE,
   SESSION_TTL_MS,
   verifyPassword,
@@ -109,6 +110,7 @@ const currentSession = async (req: Request, res: Response, next: NextFunction) =
     res.json({
       authenticated: Boolean(user),
       user: user ?? null,
+      isAdmin: Boolean(user && isAdminEmail(user.email)),
     });
   } catch (error) {
     next(error);

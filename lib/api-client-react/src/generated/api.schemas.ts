@@ -300,6 +300,63 @@ export interface Session {
   authenticated: boolean;
   /** @nullable */
   user: SessionUser;
+  isAdmin: boolean;
+}
+
+export interface AdminDashboardMetrics {
+  totalUsers: number;
+  freeUsers: number;
+  proUsers: number;
+  successfulPayments: number;
+  revenueNgn: number;
+  activeMonthlySubscribers: number;
+  activeAnnualSubscribers: number;
+}
+
+export type AdminPaymentInterval = typeof AdminPaymentInterval[keyof typeof AdminPaymentInterval];
+
+
+export const AdminPaymentInterval = {
+  monthly: 'monthly',
+  annual: 'annual',
+} as const;
+
+export interface AdminPayment {
+  id: string;
+  name: string;
+  email: string;
+  reference: string;
+  interval: AdminPaymentInterval;
+  /** @nullable */
+  amount: number | null;
+  /** @nullable */
+  currency: string | null;
+  status: string;
+  /** @nullable */
+  paidAt: string | null;
+  createdAt: string;
+}
+
+export type AdminSignupPlan = typeof AdminSignupPlan[keyof typeof AdminSignupPlan];
+
+
+export const AdminSignupPlan = {
+  free: 'free',
+  plus: 'plus',
+} as const;
+
+export interface AdminSignup {
+  id: string;
+  name: string;
+  email: string;
+  plan: AdminSignupPlan;
+  createdAt: string;
+}
+
+export interface AdminDashboard {
+  metrics: AdminDashboardMetrics;
+  recentPayments: AdminPayment[];
+  recentSignups: AdminSignup[];
 }
 
 /**

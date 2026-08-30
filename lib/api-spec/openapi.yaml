@@ -17,6 +17,7 @@ tags:
   - name: progress
   - name: billing
   - name: auth
+  - name: admin
 paths:
   /healthz:
     get:
@@ -367,6 +368,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BillingPlans"
+  /admin/dashboard:
+    get:
+      operationId: getAdminDashboard
+      tags: [admin]
+      summary: Get the protected admin dashboard
+      responses:
+        "200":
+          description: Admin dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboard"
+        "401":
+          description: Authentication required
+        "403":
+          description: Admin access required
   /auth/session:
     get:
       operationId: getSession
@@ -711,5 +728,54 @@ components:
             name: { type: string }
             email: { type: string }
           required: [id, name, email]
-      required: [authenticated, user]
+        isAdmin: { type: boolean }
+      required: [authenticated, user, isAdmin]
+    AdminDashboardMetrics:
+      type: object
+      properties:
+        totalUsers: { type: number, format: int32 }
+        freeUsers: { type: number, format: int32 }
+        proUsers: { type: number, format: int32 }
+        successfulPayments: { type: number, format: int32 }
+        revenueNgn: { type: number, format: int32 }
+        activeMonthlySubscribers: { type: number, format: int32 }
+        activeAnnualSubscribers: { type: number, format: int32 }
+      required: [totalUsers, freeUsers, proUsers, successfulPayments, revenueNgn, activeMonthlySubscribers, activeAnnualSubscribers]
+    AdminPayment:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        reference: { type: string }
+        interval: { type: string, enum: [monthly, annual] }
+        amount: { type: ["number", "null"], format: int32 }
+        currency: { type: ["string", "null"] }
+        status: { type: string }
+        paidAt: { type: ["string", "null"] }
+        createdAt: { type: string }
+      required: [id, name, email, reference, interval, amount, currency, status, paidAt, createdAt]
+    AdminSignup:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        plan: { type: string, enum: [free, plus] }
+        createdAt: { type: string }
+      required: [id, name, email, plan, createdAt]
+    AdminDashboard:
+      type: object
+      properties:
+        metrics:
+          $ref: "#/components/schemas/AdminDashboardMetrics"
+        recentPayments:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminPayment"
+        recentSignups:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminSignup"
+      required: [metrics, recentPayments, recentSignups]
 

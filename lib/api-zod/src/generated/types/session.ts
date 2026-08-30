@@ -11,4 +11,5 @@ export interface Session {
   authenticated: boolean;
   /** @nullable */
   user: SessionUser;
+  isAdmin: boolean;
 }

@@ -594,6 +594,41 @@ export const GetBillingPlansResponse = zod.object({
 
 
 /**
+ * @summary Get the protected admin dashboard
+ */
+export const GetAdminDashboardResponse = zod.object({
+  "metrics": zod.object({
+  "totalUsers": zod.number(),
+  "freeUsers": zod.number(),
+  "proUsers": zod.number(),
+  "successfulPayments": zod.number(),
+  "revenueNgn": zod.number(),
+  "activeMonthlySubscribers": zod.number(),
+  "activeAnnualSubscribers": zod.number()
+}),
+  "recentPayments": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "reference": zod.string(),
+  "interval": zod.enum(['monthly', 'annual']),
+  "amount": zod.number().nullable(),
+  "currency": zod.string().nullable(),
+  "status": zod.string(),
+  "paidAt": zod.string().nullable(),
+  "createdAt": zod.string()
+})),
+  "recentSignups": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "plan": zod.enum(['free', 'plus']),
+  "createdAt": zod.string()
+}))
+})
+
+
+/**
  * @summary Get the current session
  */
 export const GetSessionResponse = zod.object({
@@ -602,7 +637,8 @@ export const GetSessionResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "email": zod.string()
-}).nullable()
+}).nullable(),
+  "isAdmin": zod.boolean()
 })
 
 

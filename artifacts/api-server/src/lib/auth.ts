@@ -12,6 +12,17 @@ if (!sessionSecret) {
   throw new Error("SESSION_SECRET must be set.");
 }
 
+const configuredAdminEmails = () =>
+  new Set(
+    (process.env.ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean),
+  );
+
+export const isAdminEmail = (email: string) =>
+  configuredAdminEmails().has(email.trim().toLowerCase());
+
 export type AuthenticatedUser = {
   id: string;
   name: string;
